@@ -10,6 +10,11 @@ param(
     [switch]$NoElevate
 )
 $ErrorActionPreference = 'Stop'
+# 控制台统一 UTF-8：修正中文在 GBK 代码页窗口里的乱码（显示问题，不影响执行）
+try {
+    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+    $OutputEncoding = [System.Text.Encoding]::UTF8
+} catch { }
 . (Join-Path $PSScriptRoot 'scripts/lib/common.ps1')
 
 $sw = [System.Diagnostics.Stopwatch]::StartNew()

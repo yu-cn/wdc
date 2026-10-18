@@ -4,6 +4,11 @@
 [CmdletBinding()]
 param()
 $ErrorActionPreference = 'Stop'
+# 控制台统一 UTF-8：修正中文在 GBK 代码页窗口里的乱码
+try {
+    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+    $OutputEncoding = [System.Text.Encoding]::UTF8
+} catch { }
 . (Join-Path $PSScriptRoot 'scripts/lib/common.ps1')
 
 $failCount = 0
