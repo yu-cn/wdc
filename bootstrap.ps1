@@ -34,7 +34,7 @@ function Invoke-Stage {
 # Stage 0/4 · Preflight 预检
 # ---------------------------------------------------------------------------
 $elevated = $false
-$null = Invoke-Stage 'Stage 0/4 - Preflight 预检' {
+$null = Invoke-Stage 'Stage 0/5 - Preflight 预检' {
     $script:elevated = Test-IsElevated
     if ($elevated) { Write-Step '提权状态' 'OK' '管理员 - 全部阶段可执行' }
     else { Write-Step '提权状态' 'SKIP' '普通用户 - HKLM 注册表与全机安装将受限' }
@@ -58,9 +58,9 @@ if (-not $elevated -and -not $ValidateOnly -and -not $NoElevate) {
 }
 
 # ---------------------------------------------------------------------------
-# Stage 1/4 · Validate 无副作用校验
+# Stage 1/5 · Validate 无副作用校验
 # ---------------------------------------------------------------------------
-$null = Invoke-Stage 'Stage 1/4 - Validate 无副作用校验' {
+$null = Invoke-Stage 'Stage 1/5 - Validate 无副作用校验' {
     # 子进程 stdout 不入本阶段返回值：显式转发到 Host，返回值只留 bool
     $out = & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'validate.ps1') 2>&1
     $out | ForEach-Object { Write-Host $_ }
@@ -70,9 +70,9 @@ $null = Invoke-Stage 'Stage 1/4 - Validate 无副作用校验' {
 }
 
 # ---------------------------------------------------------------------------
-# Stage 2/4 · Apply 应用声明配置（winget configure，按依赖序：设置 -> 软件）
+# Stage 2/5 · Apply 应用声明配置（winget configure，按依赖序：设置 -> 软件）
 # ---------------------------------------------------------------------------
-$null = Invoke-Stage 'Stage 2/4 - Apply 应用声明配置' {
+$null = Invoke-Stage 'Stage 2/5 - Apply 应用声明配置' {
     if ($ValidateOnly) { Write-Step '应用配置' 'SKIP' '-ValidateOnly 模式不执行'; return $true }
     if (-not $elevated) {
         Write-Step '应用配置' 'SKIP' '需要管理员；本阶段已跳过（其余用户级阶段继续）'
@@ -93,9 +93,36 @@ $null = Invoke-Stage 'Stage 2/4 - Apply 应用声明配置' {
 }
 
 # ---------------------------------------------------------------------------
-# Stage 3/4 · Dotfiles 安装（工单 02 实装，此前为占位）
+# Stage 3/5 · 用户级安装（vp + VSCode 扩展；无需提权）
 # ---------------------------------------------------------------------------
-$null = Invoke-Stage 'Stage 3/4 - Dotfiles 安装' {
+$null = Invoke-Stage 'Stage 3/5 - 用户级安装（vp + VSCode 扩展）' {
+    if ($ValidateOnly) { Write-Step '用户级安装' 'SKIP' '-ValidateOnly 模式不执行'; return $true }
+    $allOk = $true
+    foreach ($s in 'install-languages.ps1', 'install-vscode-extensions.ps1') {
+        $out = & pwsh -NoProfile -File (Join-Path $PSScriptRoot "scripts/$s") 2>&1
+        $code = $LASTEXITCODE
+        $out | ForEach-Object { Write-Host $_ }
+        if ($code -eq 0) { Write-Step $s 'OK' } else { Write-Step $s 'FAIL' "退出码 $code"; $allOk = $false }
+    }
+    return $allOk
+}
+
+# ---------------------------------------------------------------------------
+# Stage 4/5 · 移除清单（先装后拆：languages 已就位后才清旧轨）
+# ---------------------------------------------------------------------------
+$null = Invoke-Stage 'Stage 4/5 - 移除清单（先装后拆）' {
+    if ($ValidateOnly) { Write-Step '移除清单' 'SKIP' '-ValidateOnly 模式不执行'; return $true }
+    $out = & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'scripts/remove-leftovers.ps1') 2>&1
+    $code = $LASTEXITCODE
+    $out | ForEach-Object { Write-Host $_ }
+    if ($code -eq 0) { Write-Step '移除清单' 'OK'; return $true }
+    Write-Step '移除清单' 'FAIL' "退出码 $code"; return $false
+}
+
+# ---------------------------------------------------------------------------
+# Stage 5/5 · Dotfiles 安装
+# ---------------------------------------------------------------------------
+$null = Invoke-Stage 'Stage 5/5 - Dotfiles 安装' {
     $installer = Join-Path $PSScriptRoot 'scripts/install-dotfiles.ps1'
     if (-not (Test-Path $installer)) {
         Write-Step 'dotfiles' 'SKIP' 'install-dotfiles.ps1 尚未创建（工单 02）'

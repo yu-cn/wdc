@@ -1,5 +1,5 @@
-# cli-tools 域 - 基础 CLI 工具与现代化命令行（01 工单为雏形，后续工单补全清单）
-# 应用: 由 bootstrap 统一调用 winget configure --file
+# cli-tools 域 - 基础 CLI 工具与现代化命令行（通用核心清单，Q11/共识总表）
+# 语言管理器（vp/uv 本体中的 uv 也在此）之外的具体语言版本由 bootstrap 编排层负责
 $schema: https://raw.githubusercontent.com/PowerShell/DSC/main/schemas/2023/08/config/document.json
 metadata:
   winget:
@@ -7,6 +7,26 @@ metadata:
       identifier: dscv3
 resources:
 
+# --- 基础 ---
+- type: Microsoft.WinGet/Package
+  name: Git
+  properties:
+    id: Git.Git
+    source: winget
+    useLatest: true
+  metadata:
+    description: Git（.gitconfig 由 dotfiles 层管理）
+
+- type: Microsoft.WinGet/Package
+  name: GitHubCLI
+  properties:
+    id: GitHub.cli
+    source: winget
+    useLatest: true
+  metadata:
+    description: GitHub CLI
+
+# --- 提示符与查找 ---
 - type: Microsoft.WinGet/Package
   name: Starship
   properties:
@@ -14,7 +34,7 @@ resources:
     source: winget
     useLatest: true
   metadata:
-    description: Starship 提示符（三 shell 统一主题的引擎）
+    description: Starship 提示符（三 shell 统一主题引擎；oh-my-posh 由移除清单清掉）
 
 - type: Microsoft.WinGet/Package
   name: Fzf
@@ -23,4 +43,106 @@ resources:
     source: winget
     useLatest: true
   metadata:
-    description: fzf 模糊查找（Ctrl-R 历史搜索等的引擎）
+    description: fzf 模糊查找
+
+- type: Microsoft.WinGet/Package
+  name: Fd
+  properties:
+    id: sharkdp.fd
+    source: winget
+    useLatest: true
+  metadata:
+    description: fd 文件查找（fzf 搜索源）
+
+- type: Microsoft.WinGet/Package
+  name: Ripgrep
+  properties:
+    id: BurntSushi.ripgrep.MSVC
+    source: winget
+    useLatest: true
+  metadata:
+    description: ripgrep
+
+- type: Microsoft.WinGet/Package
+  name: Zoxide
+  properties:
+    id: ajeetdsouza.zoxide
+    source: winget
+    useLatest: true
+  metadata:
+    description: zoxide 智能跳目录
+
+# --- 数据与构建 ---
+- type: Microsoft.WinGet/Package
+  name: Bat
+  properties:
+    id: sharkdp.bat
+    source: winget
+    useLatest: true
+  metadata:
+    description: bat（cat 替代）
+
+- type: Microsoft.WinGet/Package
+  name: Jq
+  properties:
+    id: jqlang.jq
+    source: winget
+    useLatest: true
+  metadata:
+    description: jq
+
+- type: Microsoft.WinGet/Package
+  name: Delta
+  properties:
+    id: dandavison.delta
+    source: winget
+    useLatest: true
+  metadata:
+    description: delta（git diff 美化器，.gitconfig 已挂）
+
+- type: Microsoft.WinGet/Package
+  name: Make
+  properties:
+    id: ezwinports.make
+    source: winget
+    useLatest: true
+  metadata:
+    description: GNU make（ezwinports）
+
+- type: Microsoft.WinGet/Package
+  name: Uv
+  properties:
+    id: astral-sh.uv
+    source: winget
+    useLatest: true
+  metadata:
+    description: uv——Python 的安装与项目管理器（Python 全权归 uv，直装版由移除清单清掉）
+
+# --- 效率 ---
+- type: Microsoft.WinGet/Package
+  name: Everything
+  properties:
+    id: voidtools.Everything
+    source: winget
+    useLatest: true
+  metadata:
+    description: Everything 文件秒搜
+
+- type: Microsoft.WinGet/Package
+  name: PowerToys
+  properties:
+    id: Microsoft.PowerToys
+    source: winget
+    useLatest: true
+  metadata:
+    description: PowerToys（注意：依赖 .NET Desktop 运行时——故移除清单明确保留之）
+
+# --- 浏览器（开发主力）---
+- type: Microsoft.WinGet/Package
+  name: Chrome
+  properties:
+    id: Google.Chrome
+    source: winget
+    useLatest: true
+  metadata:
+    description: Chrome（开发主力浏览器；Edge 为系统自带，不声明）
