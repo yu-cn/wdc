@@ -120,9 +120,24 @@ $null = Invoke-Stage 'Stage 4/5 - 移除清单（先装后拆）' {
 }
 
 # ---------------------------------------------------------------------------
-# Stage 5/5 · Dotfiles 安装
+# Stage 5/6 · WSL 侧（安装编排 + 发行版内环境）
 # ---------------------------------------------------------------------------
-$null = Invoke-Stage 'Stage 5/5 - Dotfiles 安装' {
+$null = Invoke-Stage 'Stage 5/6 - WSL 侧（安装编排 + 发行版环境）' {
+    if ($ValidateOnly) { Write-Step 'WSL' 'SKIP' '-ValidateOnly 模式不执行'; return $true }
+    $allOk = $true
+    foreach ($s in 'install-wsl.ps1', 'install-wsl-env.ps1') {
+        $out = & pwsh -NoProfile -File (Join-Path $PSScriptRoot "scripts/$s") 2>&1
+        $code = $LASTEXITCODE
+        $out | ForEach-Object { Write-Host $_ }
+        if ($code -eq 0) { Write-Step $s 'OK' } else { Write-Step $s 'FAIL' "退出码 $code"; $allOk = $false }
+    }
+    return $allOk
+}
+
+# ---------------------------------------------------------------------------
+# Stage 6/6 · Dotfiles 安装
+# ---------------------------------------------------------------------------
+$null = Invoke-Stage 'Stage 6/6 - Dotfiles 安装' {
     $installer = Join-Path $PSScriptRoot 'scripts/install-dotfiles.ps1'
     if (-not (Test-Path $installer)) {
         Write-Step 'dotfiles' 'SKIP' 'install-dotfiles.ps1 尚未创建（工单 02）'

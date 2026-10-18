@@ -1,0 +1,105 @@
+# ~/.bashrc — WSL 侧（WDC 仓库管理；模板吸收自机器上 2026-09-28 优化版，去除 nvm/Homebrew、接管 Node 归 vp）
+# 提示符 starship | 模糊搜索 fzf | 智能跳转 zoxide | ls→eza cat→bat grep→rg find→fd
+
+# 非交互 shell 直接返回
+case $- in *i*) ;; *) return;; esac
+
+## ---------- 历史 ----------
+HISTCONTROL=ignoreboth:erasedups   # 忽略重复和空格开头的命令，去重
+HISTSIZE=50000
+HISTFILESIZE=100000
+HISTTIMEFORMAT='%F %T '
+shopt -s histappend checkwinsize
+# 每条命令执行后立即写入历史文件，多终端共享历史（在文件末尾统一挂载，见 PROMPT_COMMAND 守卫）
+
+## ---------- Shell 行为增强 ----------
+shopt -s globstar   # ** 递归匹配所有文件
+shopt -s autocd     # 直接输入目录名即可 cd
+shopt -s cdspell    # cd 拼写错误自动纠正
+shopt -s dirspell   # 目录名拼写错误自动纠正
+
+# 让 less 支持查看非文本文件
+[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
+
+## ---------- PATH 与工具链 ----------
+case ":$PATH:" in *":$HOME/bin:"*) ;; *) PATH="$HOME/bin:$PATH";; esac
+case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) PATH="$HOME/.local/bin:$PATH";; esac
+# uv
+[ -f "$HOME/.local/bin/env" ] && . "$HOME/.local/bin/env"
+command -v uv >/dev/null 2>&1 && eval "$(uv generate-shell-completion bash)"
+command -v uvx >/dev/null 2>&1 && eval "$(uvx --generate-shell-completion bash)"
+# Go（官方 tarball 装于 /usr/local/go，由 setup-ubuntu.sh root 阶段维护）
+if [ -d /usr/local/go/bin ]; then
+    case ":$PATH:" in *":/usr/local/go/bin:"*) ;; *) PATH="/usr/local/go/bin:$PATH";; esac
+fi
+case ":$PATH:" in *":$HOME/go/bin:"*) ;; *) PATH="$HOME/go/bin:$PATH";; esac
+# vp（Vite+，Node 托管；安装器生成的 env 脚本存在则启用——不同版本路径不同，逐个尝试）
+for _vp_env in "$HOME/.config/vite-plus/env" "$HOME/.local/share/vite-plus/env.sh" "$HOME/.local/share/vite-plus/env"; do
+    [ -f "$_vp_env" ] && . "$_vp_env" && break
+done
+
+## ---------- 现代工具别名 ----------
+if command -v eza >/dev/null 2>&1; then
+    alias ls='eza --icons'
+    alias ll='eza -la --icons --git'
+    alias la='eza -a --icons'
+    alias lt='eza --tree --icons'
+else
+    alias ls='ls --color=auto'
+    alias ll='ls -alF'
+    alias la='ls -A'
+fi
+command -v bat >/dev/null 2>&1 && alias cat='bat'
+command -v rg  >/dev/null 2>&1 && alias grep='rg' || alias grep='grep --color=auto'
+command -v fd  >/dev/null 2>&1 && alias find='fd'
+
+# Git 快捷方式（与 Windows 侧同义：走 gitconfig 里的 st/lg 别名）
+alias gs='git st'
+alias gl='git lg'
+alias gd='git diff'
+alias gco='git checkout'
+alias ga='git add'
+alias gc='git commit'
+alias gp='git push'
+
+# 其他
+alias ..='cd ..'
+alias ...='cd ../..'
+alias reload='source ~/.bashrc && echo "bashrc 已重载"'
+
+## ---------- fzf（Ctrl-R 搜历史 / Ctrl-T 搜文件 / Alt-C 跳目录） ----------
+if command -v fzf >/dev/null 2>&1; then
+    # 用 fd 替代默认 find，更快且自动忽略 .git / node_modules
+    if command -v fd >/dev/null 2>&1; then
+        export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git --exclude node_modules'
+        export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+        export FZF_ALT_C_COMMAND='fd --type d --hidden --follow --exclude .git'
+    fi
+    export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
+    [ -f /usr/share/doc/fzf/examples/key-bindings.bash ] && . /usr/share/doc/fzf/examples/key-bindings.bash
+    [ -f /usr/share/doc/fzf/examples/completion.bash ] && . /usr/share/doc/fzf/examples/completion.bash
+fi
+
+## ---------- 补全 ----------
+if ! shopt -oq posix; then
+  if [ -f /usr/share/bash-completion/bash_completion ]; then
+    . /usr/share/bash-completion/bash_completion
+  elif [ -f /etc/bash_completion ]; then
+    . /etc/bash_completion
+  fi
+fi
+
+## ---------- 提示符与目录智能跳转 ----------
+# 后备提示符（starship 不在时）
+PS1='\[\e]0;\u@\h: \w\a\]\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
+if [[ ${TERM:-} != "dumb" ]] && command -v starship >/dev/null 2>&1; then
+    eval "$(starship init bash)"
+fi
+command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init bash)"   # z 跳转
+command -v direnv >/dev/null 2>&1 && eval "$(direnv hook bash)"
+
+# starship 会整体替换 PROMPT_COMMAND，这里在所有钩子挂完后再补上即时写历史（幂等）
+case ";${PROMPT_COMMAND:-};" in
+    *";history -a;"*) ;;
+    *) PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND;}history -a" ;;
+esac
