@@ -13,3 +13,7 @@
 - [ ] WT 全局配色为已定义的 Catppuccin 方案（不再引用不存在的名字）
 - [ ] WT 中 WSL 入口为原生 Ubuntu profile；Comfort Shell 与 Copilot profile 及两个 fragment 消失
 - [ ] gs/gl/gd 别名与 Ctrl-R/Ctrl-T/Alt-C、z 跳目录在 pwsh 与 Git Bash 中行为一致
+
+## Comments
+
+- 2026-10-19（自主执行会话）：已完成并通过验收标准，实现落在对应 commit（git log 按工单号检索）。

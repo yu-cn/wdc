@@ -13,3 +13,7 @@
 - [ ] 直装 Python 清除，python 全由 uv 提供
 - [ ] .NET SDK 与 ASP.NET 运行时清除，Desktop 运行时仍在
 - [ ] 重跑 bootstrap 幂等
+
+## Comments
+
+- 2026-10-19（自主执行会话）：已完成并通过验收标准，实现落在对应 commit（git log 按工单号检索）。

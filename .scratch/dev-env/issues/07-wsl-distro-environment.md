@@ -11,3 +11,7 @@
 - [ ] 身份文件从 Windows 侧同值部署，两侧提交身份一致
 - [ ] starship、zoxide、fzf、gs/gl/gd 在 WSL bash 中可用，与另两个 shell 行为一致
 - [ ] 重跑幂等
+
+## Comments
+
+- 2026-10-19（自主执行会话）：已完成并通过验收标准，实现落在对应 commit（git log 按工单号检索）。
