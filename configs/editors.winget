@@ -1,0 +1,18 @@
+# editors 域 - VSCode 本体（扩展不走 DSC：VSCodeExtension 资源会死锁 dscv3 模块拉取，
+# 扩展改由编排层 scripts/install-vscode-extensions.ps1 + configs/vscode-extensions.txt 管理）
+# Settings Sync 关闭由 dotfiles 的 settings.json 声明
+$schema: https://raw.githubusercontent.com/PowerShell/DSC/main/schemas/2023/08/config/document.json
+metadata:
+  winget:
+    processor:
+      identifier: dscv3
+resources:
+
+- type: Microsoft.WinGet/Package
+  name: VSCode
+  properties:
+    id: Microsoft.VisualStudioCode
+    source: winget
+    useLatest: true
+  metadata:
+    description: VS Code（winget 用户版；商店 MSIX 由移除清单清掉，收敛为单版本）

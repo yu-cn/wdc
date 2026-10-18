@@ -1,0 +1,34 @@
+# VSCode 扩展清单（快照自环境主人在用集合，Q10-b；不钉版本，跟随最新）
+# 由 scripts/install-vscode-extensions.ps1 逐个 `code --install-extension` 安装（幂等）
+# 增删扩展：改这个文件后重跑 bootstrap（或直接跑该脚本）
+
+# --- Python 套件 ---
+ms-python.python
+ms-python.vscode-pylance
+ms-python.debugpy
+ms-python.vscode-python-envs
+charliermarsh.ruff
+astral-sh.ty
+
+# --- Jupyter 套件 ---
+ms-toolsai.jupyter
+ms-toolsai.jupyter-keymap
+ms-toolsai.jupyter-renderers
+ms-toolsai.vscode-jupyter-cell-tags
+ms-toolsai.vscode-jupyter-slideshow
+ms-toolsai.datawrangler
+
+# --- remote 全家（WSL/SSH/容器）---
+ms-vscode-remote.remote-wsl
+ms-vscode-remote.remote-ssh
+ms-vscode-remote.remote-ssh-edit
+ms-vscode.remote-explorer
+ms-vscode.remote-server
+ms-vscode-remote.remote-containers
+ms-azuretools.vscode-containers
+
+# --- Web 与杂项 ---
+esbenp.prettier-vscode
+ms-vscode.live-server
+formulahendry.code-runner
+ms-ceintl.vscode-language-pack-zh-hans

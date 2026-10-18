@@ -27,7 +27,7 @@
     ],
     "profiles": {
         "defaults": {
-            "colorScheme": "Ottosson",
+            "colorScheme": "Catppuccin Mocha",
             "compatibility.allowDECRQCRA": true,
             "experimental.rainbowSuggestions": true,
             "experimental.repositionCursorWithMouse": true,
@@ -65,10 +65,9 @@
                 "startingDirectory": "%USERPROFILE%"
             },
             {
-                "colorScheme": "Ubuntu",
                 "guid": "{1f07d651-79bf-54c2-8981-430700af05ff}",
-                "hidden": true,
-                "name": "WSL Ubuntu",
+                "hidden": false,
+                "name": "Ubuntu",
                 "source": "Microsoft.WSL"
             },
             {
@@ -82,16 +81,34 @@
                 "guid": "{61c54bbd-c2c6-5271-96e7-009a87ff44bf}",
                 "hidden": true,
                 "name": "Windows PowerShell"
-            },
-            {
-                "guid": "{b9471bcd-1d41-0698-65e5-57b480a18442}",
-                "hidden": false,
-                "name": "Comfort Shell - Ubuntu",
-                "source": "ComfortShell"
             }
         ]
     },
-    "schemes": [],
+    "schemes": [
+        {
+            "name": "Catppuccin Mocha",
+            "background": "#1E1E2E",
+            "foreground": "#CDD6F4",
+            "cursorColor": "#A6E3A1",
+            "selectionBackground": "#45475A",
+            "black": "#45475A",
+            "red": "#F38BA8",
+            "green": "#A6E3A1",
+            "yellow": "#F9E2AF",
+            "blue": "#89B4FA",
+            "purple": "#CBA6F7",
+            "cyan": "#94E2D5",
+            "white": "#BAC2DE",
+            "brightBlack": "#585B70",
+            "brightRed": "#F38BA8",
+            "brightGreen": "#A6E3A1",
+            "brightYellow": "#F9E2AF",
+            "brightBlue": "#89B4FA",
+            "brightPurple": "#CBA6F7",
+            "brightCyan": "#94E2D5",
+            "brightWhite": "#A6ADC8"
+        }
+    ],
     "tabWidthMode": "equal",
     "theme": "dark",
     "themes": [],

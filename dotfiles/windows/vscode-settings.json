@@ -2,6 +2,25 @@
     "[jsonc]": {
         "editor.defaultFormatter": "vscode.json-language-features"
     },
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.codeActionsOnSave": {
+            "source.organizeImports.ruff": "explicit",
+            "source.fixAll.ruff": "explicit"
+        }
+    },
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[json]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[css]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
     "breadcrumbs.showEditorType": true,
     "chat.agentHost.enabled": true,
     "chat.disableAIFeatures": true,
@@ -23,6 +42,17 @@
     "explorer.compactFolders": false,
     "files.autoGuessEncoding": true,
     "files.autoSave": "afterDelay",
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+    "files.watcherExclude": {
+        "**/.venv/**": true,
+        "**/__pycache__/**": true
+    },
+    "search.exclude": {
+        "**/.venv": true,
+        "**/__pycache__": true
+    },
     "git.autofetch": true,
     "git.enableSmartCommit": true,
     "js/ts.format.semicolons": "insert",
