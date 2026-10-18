@@ -1,0 +1,328 @@
+# base-windows 域 - 系统 opinion（注册表声明）
+# 来源：上游 dev-config 的保留项（Q14 沉默即同意）+ 两个反转项（恢复通知、关闭远程桌面）
+# 说明：WT 默认 shell = pwsh（R11）不由本域承担——terminal-settings.json 已由 dotfiles 层管理
+# 提权：HKLM 键需要管理员；HKCU 键普通用户即可。统一由 bootstrap 提权后应用。
+$schema: https://raw.githubusercontent.com/PowerShell/DSC/main/schemas/2023/08/config/document.json
+metadata:
+  winget:
+    processor:
+      identifier: dscv3
+resources:
+
+# =============================================================================
+# 开发域核心（R2/R3）
+# =============================================================================
+
+- type: Microsoft.Windows/Registry
+  name: Sudo
+  properties:
+    keyPath: HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Sudo
+    valueName: Enabled
+    valueData:
+      DWord: 3
+    _exist: true
+  metadata:
+    description: 启用 Sudo（内联模式）
+
+- type: Microsoft.Windows/Registry
+  name: DeveloperMode
+  properties:
+    keyPath: HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock
+    valueName: AllowDevelopmentWithoutDevLicense
+    valueData:
+      DWord: 1
+  metadata:
+    description: 开发者模式（symlink 创建等依赖它）
+
+- type: Microsoft.Windows/Registry
+  name: LongPaths
+  properties:
+    keyPath: HKLM\SYSTEM\CurrentControlSet\Control\FileSystem
+    valueName: LongPathsEnabled
+    valueData:
+      DWord: 1
+  metadata:
+    description: Win32 长路径支持
+
+# =============================================================================
+# 反转项（Q14 明确反转，与上游设置值互逆）
+# =============================================================================
+
+- type: Microsoft.Windows/Registry
+  name: RemoteDesktopOff
+  properties:
+    keyPath: HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server
+    valueName: fDenyTSConnections
+    valueData:
+      DWord: 1
+  metadata:
+    description: 反转上游：关闭远程桌面（fDenyTSConnections=1 为拒绝连接）
+
+- type: Microsoft.Windows/Registry
+  name: NotificationsOn
+  properties:
+    keyPath: HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Notifications\Settings
+    valueName: NOC_GLOBAL_SETTING_TOASTS_ENABLED
+    valueData:
+      DWord: 1
+  metadata:
+    description: 反转上游：恢复系统通知（勿扰需要时手动开）
+
+# =============================================================================
+# 主题（R1）
+# =============================================================================
+
+- type: Microsoft.Windows/Registry
+  name: DarkThemeApps
+  properties:
+    keyPath: HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize
+    valueName: AppsUseLightTheme
+    valueData:
+      DWord: 0
+  metadata:
+    description: 应用深色主题
+
+- type: Microsoft.Windows/Registry
+  name: DarkThemeSystem
+  properties:
+    keyPath: HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize
+    valueName: SystemUsesLightTheme
+    valueData:
+      DWord: 0
+  metadata:
+    description: 系统深色主题
+
+# =============================================================================
+# 资源管理器（R6 套装）
+# =============================================================================
+
+- type: Microsoft.Windows/Registry
+  name: ShowFileExtensions
+  properties:
+    keyPath: HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced
+    valueName: HideFileExt
+    valueData:
+      DWord: 0
+  metadata:
+    description: 显示文件扩展名
+
+- type: Microsoft.Windows/Registry
+  name: ShowHiddenFiles
+  properties:
+    keyPath: HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced
+    valueName: Hidden
+    valueData:
+      DWord: 1
+  metadata:
+    description: 显示隐藏文件
+
+- type: Microsoft.Windows/Registry
+  name: FullPathTitlebar
+  properties:
+    keyPath: HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced
+    valueName: FullPathAddress
+    valueData:
+      DWord: 1
+    _exist: true
+  metadata:
+    description: 标题栏显示完整路径
+
+- type: Microsoft.Windows/Registry
+  name: OpenThisPC
+  properties:
+    keyPath: HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced
+    valueName: LaunchTo
+    valueData:
+      DWord: 1
+    _exist: true
+  metadata:
+    description: 资源管理器默认打开「此电脑」
+
+- type: Microsoft.Windows/Registry
+  name: FrequentFolders
+  properties:
+    keyPath: HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced
+    valueName: ShowFrequent
+    valueData:
+      DWord: 0
+    _exist: true
+  metadata:
+    description: 快速访问中隐藏常用文件夹
+
+- type: Microsoft.Windows/Registry
+  name: FrequentFiles
+  properties:
+    keyPath: HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer
+    valueName: ShowRecent
+    valueData:
+      DWord: 0
+    _exist: true
+  metadata:
+    description: 快速访问中隐藏最近文件
+
+- type: Microsoft.Windows/Registry
+  name: RecommendedFiles
+  properties:
+    keyPath: HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer
+    valueName: ShowCloudFilesInQuickAccess
+    valueData:
+      DWord: 0
+    _exist: true
+  metadata:
+    description: 快速访问中隐藏推荐项
+
+- type: Microsoft.Windows/Registry
+  name: GitCodeFolders
+  properties:
+    keyPath: HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced
+    valueName: NavPaneShowVersionControl
+    valueData:
+      DWord: 1
+    _exist: true
+  metadata:
+    description: 导航窗格 Git 集成
+
+- type: Microsoft.Windows/Registry
+  name: TipsOff
+  properties:
+    keyPath: HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced
+    valueName: ShowSyncProviderNotifications
+    valueData:
+      DWord: 0
+    _exist: true
+  metadata:
+    description: 关闭同步提供程序通知（营销提示）
+
+- type: Microsoft.Windows/Registry
+  name: AccountInsights
+  properties:
+    keyPath: HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\SystemSettings\AccountNotifications
+    valueName: EnableAccountNotifications
+    valueData:
+      DWord: 0
+    _exist: true
+  metadata:
+    description: 关闭账户洞察通知
+
+# =============================================================================
+# 任务栏（R7）
+# =============================================================================
+
+- type: Microsoft.Windows/Registry
+  name: TaskbarHideWidgets
+  properties:
+    keyPath: HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced
+    valueName: TaskbarDa
+    valueData:
+      DWord: 0
+  metadata:
+    description: 隐藏任务栏小组件按钮
+
+- type: Microsoft.Windows/Registry
+  name: BluetoothOff
+  properties:
+    keyPath: HKCU\Control Panel\Bluetooth
+    valueName: Notification Area Icon
+    valueData:
+      DWord: 0
+  metadata:
+    description: 隐藏蓝牙通知区域图标
+
+- type: Microsoft.Windows/Registry
+  name: EndTask
+  properties:
+    keyPath: HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced
+    valueName: TaskbarEndTask
+    valueData:
+      DWord: 1
+  metadata:
+    description: 任务栏 End Task
+
+# =============================================================================
+# 开始菜单与搜索（R8）
+# =============================================================================
+
+- type: Microsoft.Windows/Registry
+  name: WebSearchOff
+  properties:
+    keyPath: HKCU\SOFTWARE\Policies\Microsoft\Windows\Explorer
+    valueName: DisableSearchBoxSuggestions
+    valueData:
+      DWord: 1
+    _exist: true
+  metadata:
+    description: 开始菜单关闭 Web 搜索
+
+- type: Microsoft.Windows/Registry
+  name: StartRecommendations
+  properties:
+    keyPath: HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced
+    valueName: Start_Layout
+    valueData:
+      DWord: 1
+    _exist: true
+  metadata:
+    description: 开始菜单关闭推荐
+
+# =============================================================================
+# 隐私三件（R9）
+# =============================================================================
+
+- type: Microsoft.Windows/Registry
+  name: ClickToDo
+  properties:
+    keyPath: HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\ClickToDoAndScreenCapture
+    valueName: Enabled
+    valueData:
+      DWord: 0
+    _exist: true
+  metadata:
+    description: 关闭 Click To Do
+
+- type: Microsoft.Windows/Registry
+  name: RecallOff
+  properties:
+    keyPath: HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Recall
+    valueName: Enabled
+    valueData:
+      DWord: 0
+    _exist: true
+  metadata:
+    description: 关闭 Recall
+
+- type: Microsoft.Windows/Registry
+  name: WidgetServiceOff
+  properties:
+    keyPath: HKLM\SOFTWARE\Policies\Microsoft\Dsh
+    valueName: AllowNewsAndInterests
+    valueData:
+      DWord: 0
+    _exist: true
+  metadata:
+    description: 关闭小组件服务
+
+# =============================================================================
+# Edge（R10 保留：用户日常使用 Edge）
+# =============================================================================
+
+- type: Microsoft.Windows/Registry
+  name: EdgeNewTab
+  properties:
+    keyPath: HKLM\SOFTWARE\Policies\Microsoft\Edge
+    valueName: NewTabPageLocation
+    valueData:
+      String: about:blank
+    _exist: true
+  metadata:
+    description: Edge 新标签页空白
+
+- type: Microsoft.Windows/Registry
+  name: EdgeOOBE
+  properties:
+    keyPath: HKLM\SOFTWARE\Policies\Microsoft\Edge
+    valueName: HideFirstRunExperience
+    valueData:
+      DWord: 1
+    _exist: true
+  metadata:
+    description: 跳过 Edge 首次运行体验
