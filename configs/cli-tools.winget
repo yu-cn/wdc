@@ -1,0 +1,26 @@
+# cli-tools 域 - 基础 CLI 工具与现代化命令行（01 工单为雏形，后续工单补全清单）
+# 应用: 由 bootstrap 统一调用 winget configure --file
+$schema: https://raw.githubusercontent.com/PowerShell/DSC/main/schemas/2023/08/config/document.json
+metadata:
+  winget:
+    processor:
+      identifier: dscv3
+resources:
+
+- type: Microsoft.WinGet/Package
+  name: Starship
+  properties:
+    id: Starship.Starship
+    source: winget
+    useLatest: true
+  metadata:
+    description: Starship 提示符（三 shell 统一主题的引擎）
+
+- type: Microsoft.WinGet/Package
+  name: Fzf
+  properties:
+    id: junegunn.fzf
+    source: winget
+    useLatest: true
+  metadata:
+    description: fzf 模糊查找（Ctrl-R 历史搜索等的引擎）

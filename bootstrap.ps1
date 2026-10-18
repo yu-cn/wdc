@@ -1,0 +1,126 @@
+#Requires -Version 7
+# bootstrap.ps1 - WDC 开发环境唯一入口（GLOSSARY: bootstrap）
+# 用法:
+#   pwsh bootstrap.ps1                # 完整收敛（需要管理员，未提权时自动请求）
+#   pwsh bootstrap.ps1 -ValidateOnly  # 只做无副作用校验
+#   pwsh bootstrap.ps1 -NoElevate     # 不请求提权，只跑用户级阶段
+[CmdletBinding()]
+param(
+    [switch]$ValidateOnly,
+    [switch]$NoElevate
+)
+$ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'scripts/lib/common.ps1')
+
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+$script:Stages = [System.Collections.Generic.List[object]]::new()
+
+function Invoke-Stage {
+    param(
+        [Parameter(Mandatory)][string]$Name,
+        [Parameter(Mandatory)][scriptblock]$Body
+    )
+    Write-Phase $Name
+    $ok = $true
+    try { $ok = & $Body } catch {
+        Write-Step $Name 'FAIL' $_.Exception.Message
+        $ok = $false
+    }
+    $script:Stages.Add([pscustomobject]@{ Name = $Name; Ok = $ok })
+    return $ok
+}
+
+# ---------------------------------------------------------------------------
+# Stage 0/4 · Preflight 预检
+# ---------------------------------------------------------------------------
+$elevated = $false
+$null = Invoke-Stage 'Stage 0/4 - Preflight 预检' {
+    $script:elevated = Test-IsElevated
+    if ($elevated) { Write-Step '提权状态' 'OK' '管理员 - 全部阶段可执行' }
+    else { Write-Step '提权状态' 'SKIP' '普通用户 - HKLM 注册表与全机安装将受限' }
+    Write-Step '工作目录' 'INFO' $PSScriptRoot
+    return $true
+}
+
+# 未提权且需要完整收敛时：自动请求提权重启（交互场景一次 UAC）
+if (-not $elevated -and -not $ValidateOnly -and -not $NoElevate) {
+    Write-Phase '提权'
+    $relaunchArgs = @('-NoExit', '-File', "`"$PSCommandPath`"")
+    if ($ValidateOnly) { $relaunchArgs += '-ValidateOnly' }
+    try {
+        Start-Process pwsh -Verb RunAs -ArgumentList $relaunchArgs
+        Write-Step '提权重启' 'OK' '已在新的管理员窗口继续，本窗口可关闭'
+        exit 0
+    } catch {
+        Write-Step '提权重启' 'FAIL' '被取消或不可用。可重试，或用 -NoElevate 只跑用户级阶段'
+        exit 1
+    }
+}
+
+# ---------------------------------------------------------------------------
+# Stage 1/4 · Validate 无副作用校验
+# ---------------------------------------------------------------------------
+$null = Invoke-Stage 'Stage 1/4 - Validate 无副作用校验' {
+    # 子进程 stdout 不入本阶段返回值：显式转发到 Host，返回值只留 bool
+    $out = & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'validate.ps1') 2>&1
+    $out | ForEach-Object { Write-Host $_ }
+    if ($LASTEXITCODE -eq 0) { return $true }
+    Write-Step '校验' 'FAIL' 'validate.ps1 未通过，中止后续阶段'
+    return $false
+}
+
+# ---------------------------------------------------------------------------
+# Stage 2/4 · Apply 应用声明配置（winget configure，按依赖序：设置 -> 软件）
+# ---------------------------------------------------------------------------
+$null = Invoke-Stage 'Stage 2/4 - Apply 应用声明配置' {
+    if ($ValidateOnly) { Write-Step '应用配置' 'SKIP' '-ValidateOnly 模式不执行'; return $true }
+    if (-not $elevated) {
+        Write-Step '应用配置' 'SKIP' '需要管理员；本阶段已跳过（其余用户级阶段继续）'
+        return $true
+    }
+    $domainOrder = 'base-windows', 'cli-tools', 'editors', 'languages'
+    $allOk = $true
+    foreach ($domain in $domainOrder) {
+        $file = Join-Path $PSScriptRoot "configs/$domain.winget"
+        if (-not (Test-Path $file)) { Write-Step $domain 'SKIP' '尚未创建（后续工单）'; continue }
+        $out = & winget configure --file $file --accept-configuration-agreements --disable-interactivity 2>&1
+        $code = $LASTEXITCODE
+        $out | ForEach-Object { Write-Host $_ }
+        if ($code -eq 0) { Write-Step $domain 'OK' }
+        else { Write-Step $domain 'FAIL' "winget configure 退出码 $code"; $allOk = $false }
+    }
+    return $allOk
+}
+
+# ---------------------------------------------------------------------------
+# Stage 3/4 · Dotfiles 安装（工单 02 实装，此前为占位）
+# ---------------------------------------------------------------------------
+$null = Invoke-Stage 'Stage 3/4 - Dotfiles 安装' {
+    $installer = Join-Path $PSScriptRoot 'scripts/install-dotfiles.ps1'
+    if (-not (Test-Path $installer)) {
+        Write-Step 'dotfiles' 'SKIP' 'install-dotfiles.ps1 尚未创建（工单 02）'
+        return $true
+    }
+    $out = & pwsh -NoProfile -File $installer 2>&1
+    $code = $LASTEXITCODE
+    $out | ForEach-Object { Write-Host $_ }
+    if ($code -eq 0) { Write-Step 'dotfiles' 'OK'; return $true }
+    Write-Step 'dotfiles' 'FAIL' "退出码 $code"; return $false
+}
+
+# ---------------------------------------------------------------------------
+# Stage 4/4 · Summary 汇总
+# ---------------------------------------------------------------------------
+Write-Phase 'Summary 汇总'
+$failed = @($script:Stages | Where-Object { -not $_.Ok })
+foreach ($s in $script:Stages) {
+    Write-Step $s.Name ($s.Ok ? 'OK' : 'FAIL')
+}
+Write-Step '耗时' 'INFO' "$([int]$sw.Elapsed.TotalSeconds)s"
+if ($failed.Count -eq 0) {
+    Write-Step 'bootstrap' 'OK' '收敛完成（幂等：重跑应零变更）'
+    exit 0
+} else {
+    Write-Step 'bootstrap' 'FAIL' "$($failed.Count) 个阶段未通过"
+    exit 1
+}
