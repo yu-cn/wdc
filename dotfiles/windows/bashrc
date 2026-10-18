@@ -1,0 +1,52 @@
+# ~/.bashrc — Git Bash 交互式配置（WDC 仓库管理；此模板同时是 WSL 侧 bashrc 的蓝本）
+
+# --- PATH ---
+# uv 安装的 python/python3/uvx 等可执行文件
+export PATH="$HOME/.local/bin:$PATH"
+# Windows 应用执行别名 (winget / wt 等)
+export PATH="$PATH:$LOCALAPPDATA/Microsoft/WindowsApps"
+
+# --- 历史 ---
+HISTSIZE=10000
+HISTFILESIZE=20000
+HISTCONTROL=ignoreboth:erasedups
+shopt -s histappend cmdhist
+PROMPT_COMMAND='history -a'
+
+# --- 编辑器 ---
+export EDITOR="code --wait"
+export VISUAL="code --wait"
+
+# --- less: 中文友好,退出不清屏 ---
+export LESS='-FRXi'
+
+# --- 补全忽略大小写 ---
+bind 'set completion-ignore-case on' 2>/dev/null
+
+# --- 别名 ---
+alias ll='ls -alF --color=auto'
+alias la='ls -A --color=auto'
+alias l='ls -CF --color=auto'
+alias grep='grep --color=auto'
+# git 快捷方式,呼应 ~/.gitconfig 中的 alias
+alias gs='git st'
+alias gl='git lg'
+alias gd='git diff'
+alias gco='git checkout'
+alias serve='python -m http.server 8000'
+export COREPACK_NPM_REGISTRY=https://registry.npmmirror.com  # corepack 不读 .npmrc,避免走官方源
+export PATH="$PATH:/c/Program Files/PowerShell/7"  # pwsh 7
+
+# --- fzf: Ctrl-R 搜历史 / Ctrl-T 选文件 / Alt-C 跳目录 ---
+# 用 fd 做搜索源: 更快, 自动跳过 .git / node_modules
+export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git --exclude node_modules'
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+export FZF_ALT_C_COMMAND='fd --type d --hidden --follow --exclude .git --exclude node_modules'
+export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border rounded --info=inline'
+command -v fzf >/dev/null 2>&1 && eval "$(fzf --bash)"
+
+# --- zoxide: z 命令智能跳目录 ---
+command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init bash)"
+
+# --- starship 提示符（三 shell 统一主题；二进制缺失时静默跳过）---
+command -v starship >/dev/null 2>&1 && eval "$(starship init bash)"

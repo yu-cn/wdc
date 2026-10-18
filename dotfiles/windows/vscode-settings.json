@@ -1,0 +1,51 @@
+{
+    "[jsonc]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "breadcrumbs.showEditorType": true,
+    "chat.agentHost.enabled": true,
+    "chat.disableAIFeatures": true,
+    "code-runner.runInTerminal": true,
+    "dataWrangler.experiments.autoDetectCsvDelimiter": true,
+    "dataWrangler.experiments.datatypes.pyspark": true,
+    "dataWrangler.experiments.fastCsvParsing": true,
+    "editor.bracketPairColorization.independentColorPoolPerBracketType": true,
+    "editor.fontFamily": "'Cascadia Code NF',Consolas, 'Courier New', monospace",
+    "editor.fontSize": 18,
+    "editor.formatOnSave": true,
+    "editor.formatOnSaveMode": "file",
+    "editor.mouseWheelZoom": true,
+    "editor.renderWhitespace": "all",
+    "editor.smoothScrolling": true,
+    "emmet.variables": {
+        "lang": "zh-CN"
+    },
+    "explorer.compactFolders": false,
+    "files.autoGuessEncoding": true,
+    "files.autoSave": "afterDelay",
+    "git.autofetch": true,
+    "git.enableSmartCommit": true,
+    "js/ts.format.semicolons": "insert",
+    "livePreview.autoRefreshPreview": "On Changes to Saved Files",
+    "livePreview.customExternalBrowser": "Chrome",
+    "livePreview.tasks.runTaskWithExternalPreview": true,
+    "notebook.lineNumbers": "on",
+    "notebook.outline.showCodeCells": true,
+    "telemetry.editStats.enabled": false,
+    "telemetry.feedback.enabled": false,
+    "terminal.external.windowsExec": "wt",
+    "terminal.integrated.defaultProfile.windows": "PowerShell",
+    "terminal.integrated.fontFamily": "'Cascadia Mono NF'",
+    "terminal.integrated.fontLigatures.enabled": true,
+    "terminal.integrated.fontSize": 16,
+    "terminal.integrated.initialHint": false,
+    "terminal.integrated.mouseWheelZoom": true,
+    "window.autoDetectColorScheme": true,
+    "workbench.experimental.modernUI": true,
+    "workbench.preferredDarkColorTheme": "Dark Modern",
+    "workbench.preferredLightColorTheme": "Light Modern",
+    "workbench.secondarySideBar.defaultVisibility": "hidden",
+    "[html]": {
+        "editor.defaultFormatter": "vscode.html-language-features"
+    }
+}
