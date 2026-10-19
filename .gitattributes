@@ -1,2 +1,4 @@
 # dotfiles 经符号链接被 WSL 侧 git 读取：必须 LF，否则 include 等带路径的值被 \r 破坏（工单14）
 dotfiles/** text eol=lf
+# shell 脚本由 WSL bash 执行：CRLF 会让 bash 把 \r 当命令名（同一族防护）
+*.sh text eol=lf
