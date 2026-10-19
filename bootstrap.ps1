@@ -129,6 +129,12 @@ $null = Invoke-Stage 'Stage 4/5 - 移除清单（先装后拆）' {
 # ---------------------------------------------------------------------------
 $null = Invoke-Stage 'Stage 5/6 - WSL 侧（安装编排 + 发行版环境）' {
     if ($ValidateOnly) { Write-Step 'WSL' 'SKIP' '-ValidateOnly 模式不执行'; return $true }
+    # wsl.exe 在提权上下文里经管道捕获输出会挂起（已知问题），而 WSL 阶段本身无需提权：
+    # 提权跑时跳过，收尾后用 `pwsh bootstrap.ps1 -NoElevate` 补齐
+    if ($elevated) {
+        Write-Step 'WSL' 'SKIP' '提权上下文跳过（wsl.exe 已知挂起问题；此阶段无需提权）——请稍后运行 pwsh bootstrap.ps1 -NoElevate 补齐'
+        return $true
+    }
     $allOk = $true
     foreach ($s in 'install-wsl.ps1', 'install-wsl-env.ps1') {
         $out = & pwsh -NoProfile -File (Join-Path $PSScriptRoot "scripts/$s") 2>&1

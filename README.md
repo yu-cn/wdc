@@ -19,7 +19,7 @@ bootstrap 会依次跑六个阶段（预检 → 无副作用校验 → 应用声
 3. **重启续跑**——全新机器启用 WSL 功能后需重启一次，重启后重跑 `bootstrap.ps1` 继续
 4. **填写身份**——bootstrap 生成 `~/.gitidentity` 占位后，填上**本机**的 git name/email（各机身份不同；不填则 git 拒绝提交，这是防错护栏）
 
-重跑 bootstrap 幂等：已就位的全部跳过，只有漂移会被收敛。
+重跑 bootstrap 幂等：已就位的全部跳过，只有漂移会被收敛。**提权跑完后请再以普通权限跑一次 `pwsh bootstrap.ps1 -NoElevate`** 补齐 WSL 阶段（该阶段无需提权，且 wsl.exe 在提权上下文有已知挂起问题）。
 
 ## 常用命令
 
