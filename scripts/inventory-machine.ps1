@@ -73,8 +73,9 @@ if (Test-Path $wt) {
     } catch { 'settings.json 解析失败' }
 } else { '未找到 WT settings' }
 
-Section 'git 身份（本机当前）'
-KV 'user.name' (git config --global user.name)
-KV 'user.email' (git config --global user.email)
+Section 'git 身份（本机当前，只报有无不报值——红线）'
+# 全栈查询才展开 include（--global 按设计不展开，会假阴性，见工单14）
+KV 'user.name' ([bool](git config user.name) ? '已设置' : '未设置')
+KV 'user.email' ([bool](git config user.email) ? '已设置' : '未设置')
 
 "`n## 盘点结束`n"
