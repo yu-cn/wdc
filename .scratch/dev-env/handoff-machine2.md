@@ -39,10 +39,13 @@ WDC 是环境主人的个人 Windows 开发环境声明式仓库（基于 micros
 - 事实自己查（脚本/仓库），决策交给环境主人
 - 吸收勾选参照主机会话处理上游的做法：沉默=自留地，点名=进核心
 
-## 建议技能（Skill tool）
+## 建议技能（本机已装全套 matt skills）
 
-- 出故障排查：`diagnosing-bugs`（先建反馈回路再动手）
-- 其余任务为脚本驱动，无需其他技能
+- 出故障排查：`diagnosing-bugs`（先建反馈回路再动手；logs/ 下的 bootstrap 日志就是现成的现场）
+- 需要改仓库代码修复问题时：`implement`（小修直接 commit main，pre-commit 钩子会把关；大改先在 `.scratch/` 开工单）
+- 发现的问题不一定要当场修：在 `.scratch/<feature>/issues/` 开一张工单（约定见仓库 AGENTS.md），
+  两侧机器共用同一个本地 tracker，主机会话会接走
+- 本机任务是脚本驱动为主，预计用不上 spec/tickets 类技能
 
 ## 红线
 
