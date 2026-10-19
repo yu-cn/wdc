@@ -16,3 +16,5 @@
 - 2026-10-19（第二台机会话）：真机验收（工单 10）中发现。安装器 ps1 静态阅读结论：头部声明 `VP_HOME` 未设时「复用现有 %USERPROFILE%\.vite-plus 安装」；LOCALAPPDATA 属「Windows Local and Roaming folders select the roots」的选根模式——主开发机的布局来自该模式（历史安装方式所致）。附带影响：主开发机若重装/换机，同样可能落在 `.vite-plus` 布局。是否顺势统一两机布局（主开发机迁移到官方默认）由主机会话定夺，本工单只修可移植性。
 
 - 2026-10-19（第二台机会话）：范围扩大——WSL 探测同病（本机 WSL `~/.vite-plus` 布局，探测行钉 `~/.local/share/vite-plus` 且 `command -v` 在非登录 shell 恒空）；`Remove-WingetPackage` 多版本歧义也归并本工单（同属「主开发机形态固化」）。
+
+- 2026-10-20（第二台机会话）：同族补刀两处，见本批 commit：verify-machine WSL 探测默认用户由硬编码 `ubuntu` 改为自动探测；dotfiles/wsl/bashrc 内置可移植 vp PATH 引导（双布局，防 `vp env on` 写穿追加）。

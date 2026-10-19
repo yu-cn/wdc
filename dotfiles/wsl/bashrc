@@ -103,3 +103,7 @@ case ";${PROMPT_COMMAND:-};" in
     *";history -a;"*) ;;
     *) PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND;}history -a" ;;
 esac
+
+# vp（Vite+）shims 进 PATH（与 vp env on 等价；两种官方布局都认，工单12/13）
+[ -f "$HOME/.vite-plus/env" ] && . "$HOME/.vite-plus/env"
+[ -f "$HOME/.local/share/vite-plus/env" ] && . "$HOME/.local/share/vite-plus/env"

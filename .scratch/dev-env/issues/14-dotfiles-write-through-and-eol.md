@@ -4,11 +4,11 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** needs-triage
+**Status:** ready-for-human
 
 - [x] 应急处置（第二台机）：credential 块迁入 WSL `~/.gitidentity`（模板 include 的机器本地文件，ADR-0003 身份数据模式），仓库模板还原 pristine，WSL 侧认证/身份实测不受影响
 - [x] 防护：新增 `.gitattributes`（`dotfiles/** text eol=lf`），dotfiles 永久钉 LF
-- [ ] 定夺（主机会话）：写穿防护的长期方案——例如 bootstrap/verify 增加「dotfiles 与 HEAD 的一致性断言」（漂移即 FAIL），或文档化「WSL 内先关链接再跑会写配置的工具」
+- [x] 定夺（环境主人 2026-10-20 批准）：长期方案=verify 增加「dotfiles 与 HEAD 一致」断言（漂移即 FAIL），已实现并首战告捷——上线当轮即抓住 `vp env on` 写穿 bashrc（工单13 联动）
 
 ## Comments
 

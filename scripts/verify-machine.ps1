@@ -33,6 +33,8 @@ foreach ($k in $map.Keys) {
     $name = $k
     Assert $name { (Get-Item $map[$name] -ErrorAction SilentlyContinue).LinkType -eq 'SymbolicLink' }
 }
+# dotfiles 是符号链接的落点，被机器侧工具写穿会直接污染仓库（gh auth login 实锤，工单14）——验收前必须与 HEAD 一致
+Assert 'dotfiles 模板与 HEAD 一致（防写穿）' { @(git -C $repo status --porcelain -- dotfiles).Count -eq 0 }
 
 Write-Phase '2/6 · 身份与注册表断言'
 Assert '身份文件有实值' { (git config --file (Join-Path $HOME '.gitidentity') --get user.name) -and (git config --file (Join-Path $HOME '.gitidentity') --get user.email) }
@@ -46,7 +48,12 @@ Assert 'nvm 目录已清' { -not (Test-Path (Join-Path $env:LOCALAPPDATA 'nvm'))
 Assert '.NET SDK 已卸' { $null = winget list --id Microsoft.DotNet.SDK.10 -e --accept-source-agreements 2>$null; $LASTEXITCODE -ne 0 }
 Assert 'VSCode 单版本(MSIX 已卸)' { -not (Get-AppxPackage -Name 'Microsoft.VisualStudioCode' -ErrorAction SilentlyContinue) }
 Assert '.NET Desktop 运行时保留' { ((Get-ChildItem "$env:ProgramFiles\dotnet\shared\Microsoft.WindowsDesktop.App" -EA SilentlyContinue | Measure-Object).Count -ge 1) -or ((Get-ChildItem "${env:ProgramFiles(x86)}\dotnet\shared\Microsoft.WindowsDesktop.App" -EA SilentlyContinue | Measure-Object).Count -ge 1) }
-Assert '扩展 >= 23' { @(& code --list-extensions 2>$null).Count -ge 23 }
+# 清单精确核销（只核有无缺失；机器自装扩展属自留地不核销，ADR-0003）
+Assert '扩展清单全部在位' {
+    $wanted = @(Get-Content (Join-Path $repo 'configs\vscode-extensions.txt') | Where-Object { $_ -and $_ -notmatch '^\s*#' })
+    $have = @(& code --list-extensions 2>$null)
+    @($wanted | Where-Object { $have -notcontains $_ }).Count -eq 0
+}
 
 Write-Phase '4/6 · 语言栈'
 # 两种官方布局都认（工单12）：单体 ~/.vite-plus（安装器默认/复用现有安装）与 LOCALAPPDATA\vite-plus（选根模式）
@@ -61,8 +68,10 @@ Assert 'vp Windows 侧 = 钉子' {
 Assert 'node 走 vp shim' { (Get-Command node -ErrorAction SilentlyContinue).Source -like '*vite-plus*' }
 Assert 'uv 就位' { Get-Command uv -ErrorAction SilentlyContinue }
 
+# WSL 默认用户自动探测（与 install-wsl-env.ps1 同法；硬编码 ubuntu 会误伤默认用户名不同的机器，工单12族）
+$wslUser = (((& wsl.exe -d Ubuntu -e bash -c 'whoami') 2>$null) -replace "`0", '').Trim()
 Write-Phase '5/6 · WSL 侧'
-$wslProbe = (& wsl.exe -d Ubuntu -u ubuntu -e bash -c 'echo "bash:$(getent passwd $(whoami) | cut -d: -f7) go:$(/usr/local/go/bin/go version 2>/dev/null | cut -d" " -f3) uv:$(~/.local/bin/uv --version 2>/dev/null | cut -d" " -f2) node:$(if [ -x ~/.vite-plus/bin/node ]; then ~/.vite-plus/bin/node -v; elif [ -x ~/.local/share/vite-plus/bin/node ]; then ~/.local/share/vite-plus/bin/node -v; else echo MISSING; fi) links:$(readlink ~/.bashrc 2>/dev/null | grep -ci wdc) id:$(git config user.name 2>/dev/null)"') 2>&1
+$wslProbe = (& wsl.exe -d Ubuntu -u $wslUser -e bash -c 'echo "bash:$(getent passwd $(whoami) | cut -d: -f7) go:$(/usr/local/go/bin/go version 2>/dev/null | cut -d" " -f3) uv:$(~/.local/bin/uv --version 2>/dev/null | cut -d" " -f2) node:$(if [ -x ~/.vite-plus/bin/node ]; then ~/.vite-plus/bin/node -v; elif [ -x ~/.local/share/vite-plus/bin/node ]; then ~/.local/share/vite-plus/bin/node -v; else echo MISSING; fi) links:$(readlink ~/.bashrc 2>/dev/null | grep -ci wdc) id:$(git config user.name 2>/dev/null)"') 2>&1
 $p = ($wslProbe -replace "`0", '') -join ' '
 Write-Step 'WSL 探测' 'INFO' $p
 Assert 'WSL bash 默认' { $p -match 'bash:/bin/bash' }

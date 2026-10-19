@@ -46,12 +46,28 @@ fi
 
 # ---------------- user 阶段 ----------------
 log "uv（管 Python）"
-if ! have uv; then curl -LsSf https://astral.sh/uv/install.sh | sh >/dev/null; fi
+# 显式路径探测：非登录 shell 的 PATH 看不到 ~/.local/bin（同 vp 的问题，工单13）
+if [ ! -x "$HOME/.local/bin/uv" ]; then curl -LsSf https://astral.sh/uv/install.sh | sh >/dev/null; fi
 [ -f "$HOME/.local/bin/env" ] && . "$HOME/.local/bin/env"
 
 log "vp ${VP_VERSION}（管 Node，与 Windows 侧同工具同钉子）"
-export VP_VERSION
-if ! have vp; then curl -fsSL https://vite.plus/sh | bash >/dev/null; fi   # 注意：官方给的是 |sh，但其脚本含 bash 语法，Ubuntu 的 sh=dash 会 Bad substitution
+# 显式路径探测：非登录 shell 的 PATH 看不到已装的 vp（工单13）；两种官方布局都认（工单12）
+vp_bin=""
+for d in "$HOME/.vite-plus/bin/vp" "$HOME/.local/share/vite-plus/bin/vp"; do
+    if [ -x "$d" ]; then vp_bin="$d"; break; fi
+done
+if [ -z "$vp_bin" ]; then
+    export VP_VERSION
+    curl -fsSL https://vite.plus/sh | bash >/dev/null   # 注意：官方给的是 |sh，但其脚本含 bash 语法，Ubuntu 的 sh=dash 会 Bad substitution
+    for d in "$HOME/.vite-plus/bin/vp" "$HOME/.local/share/vite-plus/bin/vp"; do
+        if [ -x "$d" ]; then vp_bin="$d"; break; fi
+    done
+fi
+if [ -z "$vp_bin" ]; then log "ERROR: vp 二进制未找到（安装器执行后仍缺失）"; exit 1; fi
+# 默认跟随 LTS：与 Windows 侧 install-languages.ps1 三步对齐（工单13——此前干净机器 WSL 侧无 Node）
+"$vp_bin" env default lts
+"$vp_bin" env install lts
+"$vp_bin" env on
 
 log "starship"
 if ! have starship; then curl -sS https://starship.rs/install.sh | sh -s -- -y >/dev/null; fi
