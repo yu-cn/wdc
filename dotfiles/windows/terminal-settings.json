@@ -65,10 +65,11 @@
                 "startingDirectory": "%USERPROFILE%"
             },
             {
+                "commandline": "wsl.exe -d Ubuntu",
                 "guid": "{1f07d651-79bf-54c2-8981-430700af05ff}",
                 "hidden": false,
                 "name": "Ubuntu",
-                "source": "Microsoft.WSL"
+                "startingDirectory": "~"
             },
             {
                 "guid": "{b453ae62-4e3d-5e58-b989-0a998ec441b8}",
