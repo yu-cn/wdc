@@ -14,3 +14,5 @@
 ## Comments
 
 - 2026-10-19（自主执行会话）：仓库侧已就绪，执行需环境主人在场（UAC/VM/重启）；提权跑 pwsh bootstrap.ps1 即触发全部待提权项。
+
+- 2026-10-19：环境主人选定真机验收路线——用另一台在用开发机（协作者接入）跑 bootstrap + verify-machine 全量断言替代 VM 冒烟；断言已由 scripts/verify-machine.ps1 承载。

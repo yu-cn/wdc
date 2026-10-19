@@ -54,6 +54,13 @@ wsl -d Ubuntu -u root -e bash -c "curl -fsSL https://get.docker.com | sh && user
 # 之后 wsl 内重新登录即可免 sudo 用 docker
 ```
 
+## 第二台开发机接入（真机验收 + 反向吸收）
+
+1. **协作者授权**：仓库 owner 在 GitHub → Settings → Collaborators 添加该机的 GitHub 账号（或 `gh api repos/<owner>/WDC/collaborators/<用户名> -X PUT`）
+2. **该机上**：`gh auth login` → 按上文「快速开始」走 bootstrap（五步）→ **验收**：`pwsh scripts/verify-machine.ps1`（全绿即与声明一致）
+3. **反向吸收**：该机上跑 `pwsh scripts/inventory-machine.ps1 > .scratch/inventory-<机器名>-<日期>.md`，报告带回主仓库——按 ADR-0003 通用核心判据逐项决定是否吸收进 configs/dotfiles，吸收后在 [docs/upstream-ledger.md](docs/upstream-ledger.md) 记一笔
+4. 该机的改进直接 push `main`（pre-commit 钩子已在两侧把关）；个性需求仍走机器自留地，不进仓库
+
 ## 文档
 
 - 词汇表：[GLOSSARY.md](GLOSSARY.md) · 决策：[docs/adr/](docs/adr/) · 上游调研：[docs/research/](docs/research/) · 吸收账本：[docs/upstream-ledger.md](docs/upstream-ledger.md)
