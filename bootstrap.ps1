@@ -20,6 +20,12 @@ try {
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
 $script:Stages = [System.Collections.Generic.List[object]]::new()
 
+# 日志落盘：排障不再依赖事后拍状态快照（logs/ 已被 .gitignore 的 *.log 覆盖）
+$logDir = Join-Path $PSScriptRoot 'logs'
+if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Path $logDir | Out-Null }
+$logFile = Join-Path $logDir ("bootstrap-{0}.log" -f (Get-Date -Format 'yyyyMMdd-HHmmss'))
+try { Start-Transcript -Path $logFile -ErrorAction SilentlyContinue | Out-Null } catch { }
+
 function Invoke-Stage {
     param(
         [Parameter(Mandatory)][string]$Name,
@@ -172,8 +178,11 @@ foreach ($s in $script:Stages) {
 Write-Step '耗时' 'INFO' "$([int]$sw.Elapsed.TotalSeconds)s"
 if ($failed.Count -eq 0) {
     Write-Step 'bootstrap' 'OK' '收敛完成（幂等：重跑应零变更）'
+    try { Stop-Transcript | Out-Null } catch { }
     exit 0
 } else {
     Write-Step 'bootstrap' 'FAIL' "$($failed.Count) 个阶段未通过"
+    Write-Step '日志' 'INFO' $logFile
+    try { Stop-Transcript | Out-Null } catch { }
     exit 1
 }

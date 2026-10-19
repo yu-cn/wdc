@@ -123,6 +123,18 @@ if (Test-Path 'C:\nvm4w') {
         $pendingElevation++
     }
 }
+# nvm 主目录（用户级；若被仍在运行的旧 node 进程占用则提示重启后重跑）
+$nvmAppDir = Join-Path $env:LOCALAPPDATA 'nvm'
+if (Test-Path $nvmAppDir) {
+    Remove-Item $nvmAppDir -Recurse -Force -ErrorAction SilentlyContinue
+    if (Test-Path $nvmAppDir) {
+        Write-Step 'nvm 目录' 'SKIP' '删除失败（多半被运行中的旧 node 占用）——重启后重跑 bootstrap 即清'
+    } else {
+        Write-Step 'nvm 目录' 'CHANGED' '已删除'
+    }
+} else {
+    Write-Step 'nvm 目录' 'OK' '不存在'
+}
 
 # ---------------------------------------------------------------------------
 # 5/5 · .NET 旧轨（用户完全不用 .NET 开发；Desktop 运行时明确保留——PowerToys 等依赖）
