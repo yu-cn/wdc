@@ -1,6 +1,7 @@
 # editors 域 - VSCode 本体（扩展不走 DSC：VSCodeExtension 资源会死锁 dscv3 模块拉取，
 # 扩展改由编排层 scripts/install-vscode-extensions.ps1 + configs/vscode-extensions.txt 管理）
-# Settings Sync 关闭由 dotfiles 的 settings.json 声明
+# 注意：Settings Sync 是账号级应用状态，settings.json 管不到——关闭它是新机首次启动时的
+# 人工一步（README 快速开始有指引），否则云端同步会与仓库 dotfiles 两个主人打架。
 $schema: https://raw.githubusercontent.com/PowerShell/DSC/main/schemas/2023/08/config/document.json
 metadata:
   winget:
