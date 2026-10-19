@@ -10,9 +10,14 @@ $ErrorActionPreference = 'Stop'
 $vpVersion = '1.3.0'
 
 Write-Phase 'Languages - vp 安装（钉版本）'
-# 用绝对路径探测与调用：新装的会话 PATH 可能尚未包含 vite-plus\bin，不能依赖 Get-Command
-$vpExe = Join-Path $env:LOCALAPPDATA 'vite-plus\bin\vp.exe'
-if (Test-Path $vpExe) {
+# 用绝对路径探测与调用：新装的会话 PATH 可能尚未包含 vite-plus\bin，不能依赖 Get-Command。
+# 两种官方布局都认：单体 ~/.vite-plus（安装器默认/复用现有安装）与 LOCALAPPDATA\vite-plus（选根模式）
+$vpCandidates = @(
+    (Join-Path $env:USERPROFILE '.vite-plus\bin\vp.exe')
+    (Join-Path $env:LOCALAPPDATA 'vite-plus\bin\vp.exe')
+)
+$vpExe = $vpCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+if ($vpExe) {
     $installed = (& $vpExe --version) 2>$null
     if ($installed -match [regex]::Escape($vpVersion)) {
         Write-Step 'vp' 'OK' "已安装 $installed（与钉子一致）"
@@ -25,7 +30,8 @@ if (Test-Path $vpExe) {
     $env:VP_VERSION = $vpVersion
     # 官方安装方式（用户指定）：irm 管道。安装器未签名，全新机器首次可能遇 SmartScreen 需放行。
     Invoke-RestMethod https://vite.plus/ps1 | Invoke-Expression
-    if (Test-Path $vpExe) {
+    $vpExe = $vpCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+    if ($vpExe) {
         Write-Step 'vp' 'CHANGED' "已安装 $((& $vpExe --version) 2>$null)（VP_VERSION=$vpVersion）"
     } else {
         Write-Step 'vp' 'FAIL' "安装脚本执行后仍找不到 $vpExe"

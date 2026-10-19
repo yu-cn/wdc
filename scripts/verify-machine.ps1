@@ -49,7 +49,15 @@ Assert '.NET Desktop 运行时保留' { ((Get-ChildItem "$env:ProgramFiles\dotne
 Assert '扩展 >= 23' { @(& code --list-extensions 2>$null).Count -ge 23 }
 
 Write-Phase '4/6 · 语言栈'
-Assert 'vp Windows 侧 = 钉子' { (& (Join-Path $env:LOCALAPPDATA 'vite-plus\bin\vp.exe') --version) -match '1\.3\.0' }
+# 两种官方布局都认（工单12）：单体 ~/.vite-plus（安装器默认/复用现有安装）与 LOCALAPPDATA\vite-plus（选根模式）
+$vpWinCandidates = @(
+    (Join-Path $env:USERPROFILE '.vite-plus\bin\vp.exe')
+    (Join-Path $env:LOCALAPPDATA 'vite-plus\bin\vp.exe')
+)
+Assert 'vp Windows 侧 = 钉子' {
+    $vp = $vpWinCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+    $vp -and ((& $vp --version) -match '1\.3\.0')
+}
 Assert 'node 走 vp shim' { (Get-Command node -ErrorAction SilentlyContinue).Source -like '*vite-plus*' }
 Assert 'uv 就位' { Get-Command uv -ErrorAction SilentlyContinue }
 
