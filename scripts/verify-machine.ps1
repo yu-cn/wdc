@@ -62,7 +62,7 @@ Assert 'node 走 vp shim' { (Get-Command node -ErrorAction SilentlyContinue).Sou
 Assert 'uv 就位' { Get-Command uv -ErrorAction SilentlyContinue }
 
 Write-Phase '5/6 · WSL 侧'
-$wslProbe = (& wsl.exe -d Ubuntu -u ubuntu -e bash -c 'echo "bash:$(getent passwd $(whoami) | cut -d: -f7) go:$(/usr/local/go/bin/go version 2>/dev/null | cut -d" " -f3) uv:$(~/.local/bin/uv --version 2>/dev/null | cut -d" " -f2) node:$(~/.local/share/vite-plus/bin/node -v 2>/dev/null) links:$(readlink ~/.bashrc 2>/dev/null | grep -ci wdc) id:$(git config user.name 2>/dev/null)"') 2>&1
+$wslProbe = (& wsl.exe -d Ubuntu -u ubuntu -e bash -c 'echo "bash:$(getent passwd $(whoami) | cut -d: -f7) go:$(/usr/local/go/bin/go version 2>/dev/null | cut -d" " -f3) uv:$(~/.local/bin/uv --version 2>/dev/null | cut -d" " -f2) node:$(if [ -x ~/.vite-plus/bin/node ]; then ~/.vite-plus/bin/node -v; elif [ -x ~/.local/share/vite-plus/bin/node ]; then ~/.local/share/vite-plus/bin/node -v; else echo MISSING; fi) links:$(readlink ~/.bashrc 2>/dev/null | grep -ci wdc) id:$(git config user.name 2>/dev/null)"') 2>&1
 $p = ($wslProbe -replace "`0", '') -join ' '
 Write-Step 'WSL 探测' 'INFO' $p
 Assert 'WSL bash 默认' { $p -match 'bash:/bin/bash' }

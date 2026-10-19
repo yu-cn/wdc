@@ -34,18 +34,18 @@ function Remove-WingetPackage {
         $script:pendingElevation++
         return
     }
-    $target = if ($NamePattern) { $NamePattern } else { $Id }
-    $useId = -not $NamePattern
-    if ($useId) {
-        winget uninstall --id $Id -e --silent --accept-source-agreements 2>$null
-    } else {
-        winget uninstall --name $NamePattern --silent --accept-source-agreements 2>$null
+    # 多版本并存时 --id -e/--name 匹配歧义（本机 .NET SDK 双版本 → 0x8A150014）：逐版本显式卸载
+    $installed = @(winget list --id $Id -e --accept-source-agreements 2>$null |
+        Where-Object { $_ -match [regex]::Escape($Id) })
+    $allOk = $installed.Count -gt 0
+    foreach ($line in $installed) {
+        if ($line -notmatch '(\d+(\.\d+)+)') { continue }
+        $ver = $Matches[1]
+        winget uninstall --id $Id -e --version $ver --silent --accept-source-agreements 2>$null
+        if ($LASTEXITCODE -eq 0) { Write-Step $label 'CHANGED' "已卸载 $ver" }
+        else { Write-Step $label 'SKIP' "$ver 卸载退出码 $LASTEXITCODE（提权重跑时自动完成）"; $allOk = $false }
     }
-    if ($LASTEXITCODE -eq 0) { Write-Step $label 'CHANGED' '已卸载' }
-    else {
-        Write-Step $label 'SKIP' "卸载退出码 $LASTEXITCODE（若为权限问题，提权重跑时自动完成）"
-        $script:pendingElevation++
-    }
+    if (-not $allOk) { $script:pendingElevation++ }
 }
 
 # ---------------------------------------------------------------------------

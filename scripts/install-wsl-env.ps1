@@ -41,8 +41,9 @@ $userOut | ForEach-Object { Write-Host ($_ -replace "`0", '') }
 if ($LASTEXITCODE -ne 0) { Write-Step 'user 阶段' 'FAIL' "退出码 $LASTEXITCODE"; exit 1 }
 Write-Step 'user 阶段' 'OK' 'uv/vp/starship/dotfiles/身份 完成'
 
-# 验证（显式路径探测：非交互 shell 里 bashrc 会提前 return，不能依赖其 PATH）
-$probeCmd = 'echo "go:$(/usr/local/go/bin/go version 2>/dev/null | cut -d" " -f3 || echo MISSING) uv:$(~/.local/bin/uv --version 2>/dev/null | cut -d" " -f2 || echo MISSING) vp:$(command -v vp >/dev/null 2>&1 && echo OK || echo MISSING) node:$(~/.local/share/vite-plus/bin/node -v 2>/dev/null || echo MISSING) shell:$(getent passwd $(whoami) | cut -d: -f7)"'
+# 验证（显式路径探测：非交互 shell 里 bashrc 会提前 return，不能依赖其 PATH；
+# vp 两种官方布局都认：单体 ~/.vite-plus（默认）与 ~/.local/share/vite-plus，工单12）
+$probeCmd = 'echo "go:$(/usr/local/go/bin/go version 2>/dev/null | cut -d" " -f3 || echo MISSING) uv:$(~/.local/bin/uv --version 2>/dev/null | cut -d" " -f2 || echo MISSING) vp:$(if [ -x ~/.vite-plus/bin/vp ] || [ -x ~/.local/share/vite-plus/bin/vp ]; then echo OK; else echo MISSING; fi) node:$(if [ -x ~/.vite-plus/bin/node ]; then ~/.vite-plus/bin/node -v; elif [ -x ~/.local/share/vite-plus/bin/node ]; then ~/.local/share/vite-plus/bin/node -v; else echo MISSING; fi) shell:$(getent passwd $(whoami) | cut -d: -f7)"'
 $probe = (& wsl.exe -d Ubuntu -u $wslUser -e bash -c $probeCmd) 2>&1
 Write-Step '三件套探测' 'INFO' (($probe -replace "`0", '') -join ' ')
 exit 0
