@@ -10,6 +10,7 @@
 - [x] pwsh profile 与 Git Bash bashrc 改薄包装（~/.wdc 解析 + 转发，错误提示保留）
 - [x] 主机实测：help / status / verify / log / triage 入口，sync 全链路端到端（含 UAC）
 - [x] README「常用命令」表补 wdc 子命令
+- [x] status 增「距上次上游检查 N 天」提醒（读 upstream-ledger.md，>30 天提示跑 check-upstream；工单18 定的只提醒不巡检）
 - [ ] ASUS 复验：拉取后新 shell 直接用新 wdc
 
 ## Comments
@@ -17,3 +18,5 @@
 - 2026-10-20（主机会话）：开工即实现。设计取舍：不做 `update`/`doctor` 等花哨命名（sync/status/verify/triage/log 与仓库现有动词一一对应）；verify 独立子命令默认 -Quick（秒级日常），sync 尾部的 verify 维持全量（同步即验收）。
 
 - 2026-10-20（主机会话）：主机实测全过——help/status/verify(-Quick)/log 直跑与 Git Bash 薄包装路径（`bash -ic 'wdc status'`）均正常；`wdc sync` 端到端 1137s 全绿（fetch→一致跳过 pull→bootstrap 全阶段 OK→verify 三域漂移=0→带耗时汇总）。上线当天即立功：`wdc status` 一眼暴露 21:35 那次 UAC 被取消的早退 bootstrap（正常收尾日志显示汇总行、早退日志兜底显示最后一条判定行）。dotfiles 漂移检测对「未提交的模板编辑」与「写穿」同判（verify 断言同义），属预期——先 commit 再 verify。
+
+- 2026-10-20（主机会话）增补：`wdc log` 与 sync 失败尾部接入 elevated-*.log（工单19 落盘机制的消费端）；status 增上游检查提醒（当前显示「距上次 2 天」）。顺带发现用户已在 23:25 实跑新 wdc——真实使用即复验。

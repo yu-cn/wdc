@@ -32,6 +32,12 @@ function Get-LastBootstrapLog {
         Sort-Object LastWriteTime -Descending | Select-Object -First 1
 }
 
+function Get-LastElevatedLog {
+    # 提权子回合并行日志（工单19）：bootstrap 汇总在 bootstrap-*.log，子回合明细在 elevated-*.log
+    Get-ChildItem (Join-Path $repo 'logs') -Filter 'elevated-*.log' -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTime -Descending | Select-Object -First 1
+}
+
 function Get-AheadBehind {
     # 返回 @(领先, 落后)——基于 HEAD 与 origin/main
     $c = (git -C $repo rev-list --left-right --count 'HEAD...origin/main') -join ''
@@ -61,6 +67,17 @@ wdc — WDC 开发环境一键工具（仓库在 ~/.wdc 指向的路径）
         $drift = @(git -C $repo status --porcelain -- dotfiles)
         if ($drift.Count -eq 0) { Write-Step 'dotfiles 漂移' 'OK' '与 HEAD 一致' }
         else { Write-Step 'dotfiles 漂移' 'FAIL' "$($drift.Count) 项写穿——wdc triage 分流" }
+        # 上游 watch 提醒（工单20）：距上次 check-upstream 超过 30 天提示补课（工单18 定了不做定时巡检，只提醒）
+        $ledger = Join-Path $repo 'docs\upstream-ledger.md'
+        if (Test-Path $ledger) {
+            $last = Select-String -Path $ledger -Pattern '\| (\d{4}-\d{2}-\d{2}) \|' |
+                ForEach-Object { $_.Matches[0].Groups[1].Value } | Sort-Object -Descending | Select-Object -First 1
+            if ($last) {
+                $days = [int]((Get-Date) - [datetime]$last).TotalDays
+                if ($days -gt 30) { Write-Step '上游检查' 'INFO' "距上次 $days 天——跑 scripts/check-upstream.ps1 并记账 docs/upstream-ledger.md" }
+                else { Write-Step '上游检查' 'OK' "距上次 $days 天" }
+            }
+        }
         $log = Get-LastBootstrapLog
         if ($log) {
             # 正常收尾的日志有 "[OK|FAIL] bootstrap" 汇总行；UAC 被取消等早退日志没有——兜底显示最后一条判定行
@@ -86,6 +103,12 @@ wdc — WDC 开发环境一键工具（仓库在 ~/.wdc 指向的路径）
         if (-not $log) { Write-Step '日志' 'INFO' 'logs/ 尚无 bootstrap 日志'; exit 0 }
         Write-Step '日志' 'INFO' $log.FullName
         Get-Content $log.FullName -Tail $Lines
+        $elog = Get-LastElevatedLog
+        if ($elog) {
+            Write-Host ''
+            Write-Step '提权子回合日志' 'INFO' $elog.FullName
+            Get-Content $elog.FullName -Tail $Lines
+        }
     }
 
     'sync' {
@@ -112,6 +135,12 @@ wdc — WDC 开发环境一键工具（仓库在 ~/.wdc 指向的路径）
             Write-Step 'bootstrap' 'FAIL' '未全绿——最近日志尾部（完整见 logs/）'
             $log = Get-LastBootstrapLog
             if ($log) { Get-Content $log.FullName -Tail 30 | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray } }
+            $elog = Get-LastElevatedLog
+            if ($elog) {
+                Write-Host ''
+                Write-Step '提权子回合尾部' 'INFO' $elog.FullName
+                Get-Content $elog.FullName -Tail 20 | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray }
+            }
             exit 1
         }
 
