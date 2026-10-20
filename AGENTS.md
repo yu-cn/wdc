@@ -1,17 +1,17 @@
-# Agent skills
+# Agent 技能
 
-## Issue tracker
+## 工单跟踪（issue tracker）
 
-Issues are tracked as local markdown files under `.scratch/<feature>/` in this repo. See `docs/agents/issue-tracker.md`.
+工单以本地 markdown 文件记录在本仓库 `.scratch/<feature>/` 下。见 `docs/agents/issue-tracker.md`。
 
-## Triage labels
+## 分诊标签（triage labels）
 
-Default five-label vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+默认五标签词表：`needs-triage`、`needs-info`、`ready-for-agent`、`ready-for-human`、`wontfix`。见 `docs/agents/triage-labels.md`。
 
-## Domain docs
+## 领域文档（domain docs）
 
-Single-context: one `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+单一上下文：仓库根一个 `GLOSSARY.md` 与 `docs/adr/`。见 `docs/agents/domain.md`。
 
-## Collaboration rules & pitfalls
+## 协作规矩与已知坑
 
-Agent rules of engagement (one question at a time, self-serve facts, owner decides) and known machine pitfalls live in `docs/agents/collaboration.md` — read it before driving WDC work on any machine. Machines are peers (GLOSSARY 机器对等): rules live in this repo, never in per-machine agent memory.
+协作规矩（一次一问、事实自查、决策归环境主人）与已知机器坑都在 `docs/agents/collaboration.md`——在任何机器上驱动 WDC 工作前先读它。机器对等（GLOSSARY「机器对等」词条）：规则属于仓库，绝不存单机 agent 记忆。
