@@ -50,3 +50,15 @@ command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init bash)"
 
 # --- starship 提示符（三 shell 统一主题；二进制缺失时静默跳过）---
 command -v starship >/dev/null 2>&1 && eval "$(starship init bash)"
+
+# --- wdc: 一键同步 (pull -> bootstrap -> verify; 仓库路径在 ~/.wdc, bootstrap 自动写入) ---
+wdc() {
+    local repo
+    repo=$(head -n 1 "$HOME/.wdc" 2>/dev/null)
+    if [ -z "$repo" ] || [ ! -f "$repo/bootstrap.ps1" ]; then
+        echo "wdc: 未配置仓库路径——先在仓库跑一次 bootstrap（会自动写 ~/.wdc）"; return 1
+    fi
+    git -C "$repo" pull || { echo "wdc: git pull 失败，中止"; return 1; }
+    pwsh -NoProfile -File "$repo/bootstrap.ps1" || { echo "wdc: bootstrap 未全绿，跳过 verify（日志在 logs/）"; return 1; }
+    pwsh -NoProfile -File "$repo/scripts/verify-machine.ps1"
+}

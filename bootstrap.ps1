@@ -108,6 +108,8 @@ $null = Invoke-Stage 'Stage 2/5 - Apply 应用声明配置' {
     }
     $domainOrder = 'base-windows', 'cli-tools', 'editors', 'languages'
     $allOk = $true
+    # 注：曾试验「先 configure test 漂移=0 再跳过 apply」（工单18），实测 test 与 apply 的耗时几乎相同
+    # （瓶颈是 winget 每次调用的固定开销），漂移>0 时反而多付一次——已回退，维持直接应用。
     foreach ($domain in $domainOrder) {
         $file = Join-Path $PSScriptRoot "configs/$domain.winget"
         if (-not (Test-Path $file)) { Write-Step $domain 'SKIP' '尚未创建（后续工单）'; continue }

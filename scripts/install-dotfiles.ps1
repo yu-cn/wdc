@@ -92,6 +92,13 @@ foreach ($m in $map) {
     Install-Dotfile -Source (Join-Path $dotfilesRoot $m.Source) -Target $m.Target
 }
 
+# ~/.wdc：机器本地仓库路径指针（wdc 一键同步命令用；路径因机而异不入库，ADR-0004 模式）
+$wdcPtr = Join-Path $HOME '.wdc'
+if (-not (Test-Path $wdcPtr) -or ((Get-Content $wdcPtr -Raw -ErrorAction SilentlyContinue).Trim() -ne $repoRoot)) {
+    Set-Content -Path $wdcPtr -Encoding ascii -Value $repoRoot
+    Write-Step '.wdc' 'CHANGED' "仓库路径指针已写入（wdc 命令用）"
+} else { Write-Step '.wdc' 'OK' '已是本仓库路径' }
+
 # ---------------------------------------------------------------------------
 # 3/4 · WT WSL profiles（机器适配渲染，ADR-0004——发行版名/ID/图标按本机环境派生）
 # ---------------------------------------------------------------------------

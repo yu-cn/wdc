@@ -31,3 +31,17 @@ function gs { git status -sb }
 function gl { git log --oneline --graph --decorate -20 }
 function gd { git diff }
 function gco { param([string]$Branch) git checkout $Branch }
+
+# --- wdc：一键同步（pull → bootstrap → verify；仓库路径由 ~/.wdc 提供，bootstrap 自动写入）---
+function wdc {
+    $repo = (Get-Content "$HOME\.wdc" -ErrorAction SilentlyContinue | Select-Object -First 1)
+    if (-not $repo -or -not (Test-Path (Join-Path $repo 'bootstrap.ps1'))) {
+        Write-Host 'wdc: 未配置仓库路径——先在仓库跑一次 bootstrap（会自动写 ~/.wdc）' -ForegroundColor Yellow
+        return
+    }
+    git -C $repo pull
+    if ($LASTEXITCODE -ne 0) { Write-Host 'wdc: git pull 失败，中止' -ForegroundColor Red; return }
+    pwsh -NoProfile -File (Join-Path $repo 'bootstrap.ps1')
+    if ($LASTEXITCODE -ne 0) { Write-Host 'wdc: bootstrap 未全绿，跳过 verify（先排障，日志在 logs/）' -ForegroundColor Red; return }
+    pwsh -NoProfile -File (Join-Path $repo 'scripts/verify-machine.ps1')
+}

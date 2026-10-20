@@ -77,5 +77,8 @@
     "workbench.secondarySideBar.defaultVisibility": "hidden",
     "[html]": {
         "editor.defaultFormatter": "vscode.html-language-features"
+    },
+    "workbench.editorAssociations": {
+        "file:/**/*.md": "vscode.markdown.editor"
     }
 }

@@ -1,0 +1,16 @@
+name: validate
+# 源头防线：任何 push/PR 上跑无副作用校验——pre-commit 钩子被绕过（WSL 侧提交/钩子未接线）时兜底，
+# 防止坏 commit 进 main（所有机器 pull 即受影响）。只读校验，不改任何状态。
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 无副作用校验（winget schema + 脚本静态检查）
+        shell: pwsh
+        run: ./validate.ps1
