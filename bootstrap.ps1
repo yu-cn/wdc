@@ -175,6 +175,7 @@ $null = Invoke-Stage 'Stage 5/6 - WSL 侧（安装编排 + 发行版环境）' {
 # Stage 6/6 · Dotfiles 安装
 # ---------------------------------------------------------------------------
 $null = Invoke-Stage 'Stage 6/6 - Dotfiles 安装' {
+    if ($ValidateOnly) { Write-Step 'dotfiles' 'SKIP' '-ValidateOnly 模式不执行'; return $true }
     $installer = Join-Path $PSScriptRoot 'scripts/install-dotfiles.ps1'
     if (-not (Test-Path $installer)) {
         Write-Step 'dotfiles' 'SKIP' 'install-dotfiles.ps1 尚未创建（工单 02）'
