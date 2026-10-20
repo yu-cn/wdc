@@ -18,6 +18,15 @@ resources:
     description: Git（.gitconfig 由 dotfiles 层管理）
 
 - type: Microsoft.WinGet/Package
+  name: PowerShell
+  properties:
+    id: Microsoft.PowerShell
+    source: winget
+    useLatest: true
+  metadata:
+    description: PowerShell 7（bootstrap 的运行时；首次接入前作为前置手动安装，此后由本域保持收敛）
+
+- type: Microsoft.WinGet/Package
   name: GitHubCLI
   properties:
     id: GitHub.cli

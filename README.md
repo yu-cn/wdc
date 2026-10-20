@@ -4,7 +4,7 @@
 
 ## 快速开始（新机器）
 
-前置：装好 Git（`winget install Git.Git`），然后：
+前置：装好 Git 与 PowerShell 7（`winget install Git.Git Microsoft.PowerShell`——bootstrap 以 pwsh 7 运行，裸 Windows 只有 5.1），然后：
 
 ```powershell
 git clone https://github.com/yu-cn/WDC.git   # 私有仓库，需登录
