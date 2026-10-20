@@ -110,6 +110,15 @@ resources:
     description: delta（git diff 美化器，.gitconfig 已挂）
 
 - type: Microsoft.WinGet/Package
+  name: Lazygit
+  properties:
+    id: JesseDuffield.lazygit
+    source: winget
+    useLatest: true
+  metadata:
+    description: lazygit（终端 git TUI；ASUS 盘点吸收 2026-10-20，与 delta/fzf 同生态位）
+
+- type: Microsoft.WinGet/Package
   name: Make
   properties:
     id: ezwinports.make
