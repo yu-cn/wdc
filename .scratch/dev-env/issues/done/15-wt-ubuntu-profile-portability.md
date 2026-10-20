@@ -18,3 +18,5 @@
 - 2026-10-20（第二台机会话）：方案升格为 ADR-0004（环境主人原则：「配置不应写死路径/名称，需按机器环境适配」）。模板移除全部 WSL 条目（只存通用内容）；新增 scripts/install-wt-profiles.ps1 在安装期枚举本机发行版、渲染机器本地 fragment（名称/ID/图标全按本机派生，GUID 名字哈希稳定）；install-dotfiles 挂为 3/4 步；verify 增 fragment 断言。同日第二次写穿实录：WT 设置 UI 保存会把全量状态（含 `--distribution-id`、`C:\Users\...` 图标路径）重写进被链接的 settings.json——UI 编辑属违规操作，漂移断言把关。
 
 - 2026-10-20（主机会话）：主机复验通过——bootstrap 后 `Dotfiles 3/4` 报「fragment 已渲染（发行版：Ubuntu）」，verify-machine 全量断言全绿（含「WT WSL fragment 已渲染」）。两机均已走 fragment 供给，工单收口。
+
+- 2026-10-20（主机会话）：环境主人定夺——第二台机的 Ubuntu profile 个人化**不恢复、不吸收**，两机统一用模板默认观感（Catppuccin Mocha + Cascadia Mono NF），保持终端环境一致性。此线索关闭；该机 `settings.json.bak` 留存不动（机器本地文件，不影响任何断言）。
