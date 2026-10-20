@@ -21,3 +21,5 @@
 7. **同 ID 多版本并存的 winget 卸载会匹配歧义**（0x8A150014）——`Remove-WingetPackage` 已按逐版本显式卸载处理。
 8. **dotfiles 与 `.sh` 的行尾已由 `.gitattributes` 钉 LF**——Windows checkout 的 CRLF 会破坏 WSL 侧 include/bash 执行；新增跨侧文件时记得纳入规则。
 9. **机器派生值（发行版 ID/随机 GUID/本机路径）不入仓库文件**——按 ADR-0004 安装期渲染到机器本地（如 WT fragment）。
+
+- **禁 `git add -A`**：符号链接在位后，全量 add 会把写穿漂移无声带进 commit——永远按显式路径 add，提交前 `git status` 核对 dotfiles/ 无漂移。
