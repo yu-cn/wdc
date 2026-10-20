@@ -26,6 +26,8 @@ bootstrap 会依次跑六个阶段（预检 → 无副作用校验 → 应用声
 
 | 命令 | 用途 |
 |---|---|
+| `wdc` | 日常一键同步（fetch → pull → bootstrap → verify 全量；子命令见 `wdc help`） |
+| `wdc status` / `wdc verify` / `wdc triage` / `wdc log` | 只读快照 / 机器断言（默认 -Quick）/ dotfiles 写穿分流 / 最近 bootstrap 日志尾部 |
 | `pwsh bootstrap.ps1` | 完整收敛（日常改了配置后重跑） |
 | `pwsh bootstrap.ps1 -ValidateOnly` | 只做无副作用校验（配置 schema + 脚本静态检查） |
 | `pwsh validate.ps1` | 同上的校验入口，独立可用 |

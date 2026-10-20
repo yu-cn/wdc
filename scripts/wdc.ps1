@@ -1,0 +1,126 @@
+#Requires -Version 7
+# wdc.ps1 — wdc 命令的唯一实现（工单 20：使用体验优化）
+# pwsh profile 与 Git Bash bashrc 只做薄包装转发到这里，逻辑单一来源，防两处漂移。
+# 输出复用 lib/common.ps1 的 Write-Phase/Write-Step，与 bootstrap/verify 同一观感。
+# 用法：
+#   wdc | wdc sync        全量同步：fetch → 落后则 pull（--ff-only）→ bootstrap → verify 全量
+#   wdc status            只读快照（秒级）：与 origin/main 差距 / dotfiles 写穿漂移 / 最近一次 bootstrap 结果
+#   wdc verify [-Full]    机器断言；默认 -Quick 秒级，-Full 含三域漂移（约 3 分钟）
+#   wdc triage            dotfiles 写穿漂移分流（工单 17 工具入口，交互式）
+#   wdc log [-Lines N]    最近一次 bootstrap 日志尾部（默认 40 行）
+[CmdletBinding()]
+param(
+    [Parameter(Position = 0)]
+    [ValidateSet('sync', 'status', 'verify', 'triage', 'log', 'help')]
+    [string]$Command = 'sync',
+    [switch]$Full,
+    [int]$Lines = 40
+)
+$ErrorActionPreference = 'Stop'
+try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { }
+. (Join-Path $PSScriptRoot 'lib/common.ps1')
+
+# --- 仓库定位：~/.wdc 指针（bootstrap 的 dotfiles 阶段写入）---
+$repo = (Get-Content (Join-Path $HOME '.wdc') -ErrorAction SilentlyContinue | Select-Object -First 1)
+if (-not $repo -or -not (Test-Path (Join-Path $repo 'bootstrap.ps1'))) {
+    Write-Host 'wdc: 未配置仓库路径——先在仓库跑一次 bootstrap.ps1（会自动写 ~/.wdc 指针）' -ForegroundColor Yellow
+    exit 1
+}
+
+function Get-LastBootstrapLog {
+    Get-ChildItem (Join-Path $repo 'logs') -Filter 'bootstrap-*.log' -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTime -Descending | Select-Object -First 1
+}
+
+function Get-AheadBehind {
+    # 返回 @(领先, 落后)——基于 HEAD 与 origin/main
+    $c = (git -C $repo rev-list --left-right --count 'HEAD...origin/main') -join ''
+    if ($LASTEXITCODE -ne 0 -or -not $c) { return @(0, 0) }
+    ($c -split '\s+') | ForEach-Object { [int]$_ }
+}
+
+switch ($Command) {
+    'help' {
+        Write-Host @'
+wdc — WDC 开发环境一键工具（仓库在 ~/.wdc 指向的路径）
+
+  wdc | wdc sync        全量同步：fetch → 落后则 pull → bootstrap → verify 全量（会请求一次 UAC）
+  wdc status            只读快照：远端差距 / dotfiles 写穿漂移 / 最近 bootstrap 结果（秒级）
+  wdc verify [-Full]    机器断言（默认 -Quick；-Full 含三域漂移约 3 分钟）
+  wdc triage            dotfiles 写穿漂移分流（逐文件 吸收/还原，交互式）
+  wdc log [-Lines N]    最近一次 bootstrap 日志尾部（默认 40 行）
+'@
+    }
+
+    'status' {
+        Write-Phase 'wdc status · 只读快照'
+        git -C $repo fetch --quiet
+        $ab = Get-AheadBehind
+        if ($ab[0] -eq 0 -and $ab[1] -eq 0) { Write-Step '仓库' 'OK' '与 origin/main 一致' }
+        else { Write-Step '仓库' 'INFO' "领先 $($ab[0]) / 落后 $($ab[1])（wdc 同步之）" }
+        $drift = @(git -C $repo status --porcelain -- dotfiles)
+        if ($drift.Count -eq 0) { Write-Step 'dotfiles 漂移' 'OK' '与 HEAD 一致' }
+        else { Write-Step 'dotfiles 漂移' 'FAIL' "$($drift.Count) 项写穿——wdc triage 分流" }
+        $log = Get-LastBootstrapLog
+        if ($log) {
+            # 正常收尾的日志有 "[OK|FAIL] bootstrap" 汇总行；UAC 被取消等早退日志没有——兜底显示最后一条判定行
+            $m = Select-String -Path $log.FullName -Pattern '^\[(OK|FAIL)\] ' | Select-Object -Last 1
+            $verdict = if ($m) { $m.Line } else { '（无判定行）' }
+            Write-Step '最近 bootstrap' 'INFO' "$($log.Name) → $verdict"
+        } else { Write-Step '最近 bootstrap' 'INFO' 'logs/ 尚无日志' }
+    }
+
+    'verify' {
+        $vArgs = @(); if (-not $Full) { $vArgs += '-Quick' }
+        & pwsh -NoProfile -File (Join-Path $repo 'scripts\verify-machine.ps1') @vArgs
+        exit $LASTEXITCODE
+    }
+
+    'triage' {
+        & pwsh -NoProfile -File (Join-Path $repo 'scripts\triage-dotfiles-drift.ps1')
+        exit $LASTEXITCODE
+    }
+
+    'log' {
+        $log = Get-LastBootstrapLog
+        if (-not $log) { Write-Step '日志' 'INFO' 'logs/ 尚无 bootstrap 日志'; exit 0 }
+        Write-Step '日志' 'INFO' $log.FullName
+        Get-Content $log.FullName -Tail $Lines
+    }
+
+    'sync' {
+        $sw = [System.Diagnostics.Stopwatch]::StartNew()
+        Write-Phase 'wdc sync · 仓库'
+        git -C $repo fetch --quiet
+        $ab = Get-AheadBehind
+        if ($ab[0] -gt 0 -and $ab[1] -gt 0) {
+            Write-Step '仓库' 'FAIL' "本地与远端分叉（领先 $($ab[0]) / 落后 $($ab[1])）——人工处理后再同步"; exit 1
+        }
+        if ($ab[0] -gt 0) {
+            Write-Step '仓库' 'FAIL' "本地领先 $($ab[0]) 个提交未推送——先 push 再 wdc"; exit 1
+        }
+        if ($ab[1] -gt 0) {
+            git -C $repo pull --ff-only
+            if ($LASTEXITCODE -ne 0) { Write-Step '仓库' 'FAIL' 'pull --ff-only 失败，中止'; exit 1 }
+            Write-Step '仓库' 'CHANGED' "已拉取 $($ab[1]) 个提交"
+        } else { Write-Step '仓库' 'OK' '已与 origin/main 一致' }
+
+        Write-Step '提示' 'INFO' 'bootstrap 即将开始，会请求一次 UAC 提权'
+        Write-Phase 'wdc sync · bootstrap'
+        & pwsh -NoProfile -File (Join-Path $repo 'bootstrap.ps1')
+        if ($LASTEXITCODE -ne 0) {
+            Write-Step 'bootstrap' 'FAIL' '未全绿——最近日志尾部（完整见 logs/）'
+            $log = Get-LastBootstrapLog
+            if ($log) { Get-Content $log.FullName -Tail 30 | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray } }
+            exit 1
+        }
+
+        Write-Phase 'wdc sync · verify（全量）'
+        & pwsh -NoProfile -File (Join-Path $repo 'scripts\verify-machine.ps1')
+        $code = $LASTEXITCODE
+        Write-Phase 'wdc sync · 汇总'
+        if ($code -eq 0) { Write-Step 'wdc' 'OK' "同步完成，机器与声明一致（$([int]$sw.Elapsed.TotalSeconds)s）" }
+        else { Write-Step 'wdc' 'FAIL' 'verify 未全绿——排障后 wdc verify 复查' }
+        exit $code
+    }
+}
