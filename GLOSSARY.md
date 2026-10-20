@@ -33,6 +33,10 @@ _Avoid_: 默认配置
 不进仓库、由各台机器自行安装维护的个性化工具（如本机的 JetBrains 套件）；bootstrap 对其一概不碰。
 _Avoid_: 可选模块
 
+**机器对等**:
+所有开发机地位平等、无主从：每台 clone 后 bootstrap 即得完整环境，工单与决策经仓库（`.scratch/` + git）流转，由环境主人定夺、任一机器会话可执行。
+_Avoid_: 主机、主开发机、第二台机
+
 **身份文件**:
 每台机器本地保存 git user.name/email 的文件（`~/.gitidentity`），bootstrap 首次生成占位、永不入仓库；gitconfig 模板通过 include 引用它。
 _Avoid_: git 凭据（指代不同的东西）

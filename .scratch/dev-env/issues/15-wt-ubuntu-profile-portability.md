@@ -7,7 +7,7 @@
 **Status:** ready-for-human
 
 - [x] 修复：条目改为无 source 纯静态（`wsl.exe -d Ubuntu`，两机发行版同名；GUID 保留模板原值以不动主机侧行为），`startingDirectory: ~`
-- [ ] 主机侧复验：主机会话拉取后确认其 WT 的 Ubuntu profile 无回归（其动态生成 GUID 恰为模板 GUID，理论上行为不变）
+- [ ] 其余机器复验：拉取后重跑 bootstrap，确认 Ubuntu profile 由 fragment 正常供给（模板已无 WSL 条目，各机自适应渲染）
 
 ## Comments
 

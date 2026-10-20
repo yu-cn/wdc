@@ -1,6 +1,6 @@
 # 11: bootstrap -ValidateOnly 实际执行了 dotfiles 安装
 
-**What to build:** `bootstrap.ps1 -ValidateOnly` 行为与文档不一致：README 与脚本头注释均称该模式「只做无副作用校验」，但 Stage 6（Dotfiles 安装）没有 `-ValidateOnly` 守卫，实际执行了符号链接替换与身份迁移。修复方向二选一：给 Stage 6 补守卫，或修正文档措辞——决策留给主机会话/环境主人。
+**What to build:** `bootstrap.ps1 -ValidateOnly` 行为与文档不一致：README 与脚本头注释均称该模式「只做无副作用校验」，但 Stage 6（Dotfiles 安装）没有 `-ValidateOnly` 守卫，实际执行了符号链接替换与身份迁移。修复方向二选一：给 Stage 6 补守卫，或修正文档措辞——决策归环境主人（任一机器会话可执行）。
 
 **Blocked by:** None (can start immediately)
 
