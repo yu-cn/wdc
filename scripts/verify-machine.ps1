@@ -12,10 +12,10 @@ try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { }
 $repo = Split-Path $PSScriptRoot -Parent
 $script:Fail = 0
 function Assert {
-    param([string]$Name, [scriptblock]$Body)
+    param([string]$Name, [scriptblock]$Body, [string]$FailHint = '')
     try {
         $ok = & $Body
-        if ($ok) { Write-Step $Name 'OK' } else { Write-Step $Name 'FAIL'; $script:Fail++ }
+        if ($ok) { Write-Step $Name 'OK' } else { Write-Step $Name 'FAIL' $FailHint; $script:Fail++ }
     } catch { Write-Step $Name 'FAIL' $_.Exception.Message; $script:Fail++ }
 }
 
@@ -34,7 +34,7 @@ foreach ($k in $map.Keys) {
     Assert $name { (Get-Item $map[$name] -ErrorAction SilentlyContinue).LinkType -eq 'SymbolicLink' }
 }
 # dotfiles 是符号链接的落点，被机器侧工具写穿会直接污染仓库（gh auth login 实锤，工单14）——验收前必须与 HEAD 一致
-Assert 'dotfiles 模板与 HEAD 一致（防写穿）' { @(git -C $repo status --porcelain -- dotfiles).Count -eq 0 }
+Assert 'dotfiles 模板与 HEAD 一致（防写穿）' { @(git -C $repo status --porcelain -- dotfiles).Count -eq 0 } '写穿漂移——处置：pwsh scripts/triage-dotfiles-drift.ps1（逐文件 吸收/还原）'
 # WT 的 WSL profile 走机器适配 fragment（ADR-0004）：模板不含 WSL 条目，fragment 应已渲染且含本机发行版
 Assert 'WT WSL fragment 已渲染' {
     $frag = Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\fragments\wdc-wsl.json'
