@@ -47,7 +47,7 @@ function Install-Dotfile {
 # ---------------------------------------------------------------------------
 # 1/3 · 身份文件（~/.gitidentity）
 # ---------------------------------------------------------------------------
-Write-Phase 'Dotfiles 1/3 - 身份文件（~/.gitidentity）'
+Write-Phase 'Dotfiles 1/4 - 身份文件（~/.gitidentity）'
 $identityPath = Join-Path $HOME '.gitidentity'
 if (Test-Path $identityPath) {
     Write-Step '.gitidentity' 'OK' '已存在'
@@ -76,7 +76,7 @@ if (Test-Path $identityPath) {
 # ---------------------------------------------------------------------------
 # 2/3 · Windows 侧符号链接
 # ---------------------------------------------------------------------------
-Write-Phase 'Dotfiles 2/3 - Windows 侧符号链接'
+Write-Phase 'Dotfiles 2/4 - Windows 侧符号链接'
 $docs = [Environment]::GetFolderPath('MyDocuments')
 $wtSettings = Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json'
 $map = @(
@@ -93,8 +93,19 @@ foreach ($m in $map) {
 }
 
 # ---------------------------------------------------------------------------
-# 3/3 · WSL 侧（占位说明）
+# 3/4 · WT WSL profiles（机器适配渲染，ADR-0004——发行版名/ID/图标按本机环境派生）
 # ---------------------------------------------------------------------------
-Write-Phase 'Dotfiles 3/3 - WSL 侧'
+Write-Phase 'Dotfiles 3/4 - WT WSL profiles（fragment 渲染）'
+$wtGen = Join-Path $PSScriptRoot 'install-wt-profiles.ps1'
+$out = & pwsh -NoProfile -File $wtGen 2>&1
+$code = $LASTEXITCODE
+$out | ForEach-Object { Write-Host $_ }
+if ($code -eq 0) { Write-Step 'WT WSL profiles' 'OK' }
+else { Write-Step 'WT WSL profiles' 'FAIL' "退出码 $code"; exit 1 }
+
+# ---------------------------------------------------------------------------
+# 4/4 · WSL 侧（占位说明）
+# ---------------------------------------------------------------------------
+Write-Phase 'Dotfiles 4/4 - WSL 侧'
 Write-Step 'WSL dotfiles' 'SKIP' '由 WSL 阶段负责（bashrc / gitconfig / starship 链接进 Ubuntu）'
 exit 0

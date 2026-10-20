@@ -14,3 +14,5 @@
 - 2026-10-20（第二台机会话）：环境主人发现 Ubuntu profile 消失。取证：原配置 `.bak` 里是静态条目 `WSL Ubuntu`（`wsl.exe --distribution-id {a2b0a3e7-…}` + 本机 icon 路径，同样不可移植但可用）；state.json 的 generatedProfiles 含派生 GUID，坐实「GUID 随发行版注册 ID 变化」。
 
 - 2026-10-20（第二台机会话）：附带记录——环境主人原 Ubuntu profile 的个人化（colorScheme "Ubuntu"、Ubuntu Mono 13、发行版 shortcut.ico）被模板默认值（Catppuccin Mocha + Cascadia Mono NF）接管，原样保留在 `LocalState/settings.json.bak`。是否吸收进核心由主人按 ADR-0003 定夺（点名=进核心，沉默=自留地，可用 profile 级 override 恢复个人化）。
+
+- 2026-10-20（第二台机会话）：方案升格为 ADR-0004（环境主人原则：「配置不应写死路径/名称，需按机器环境适配」）。模板移除全部 WSL 条目（只存通用内容）；新增 scripts/install-wt-profiles.ps1 在安装期枚举本机发行版、渲染机器本地 fragment（名称/ID/图标全按本机派生，GUID 名字哈希稳定）；install-dotfiles 挂为 3/4 步；verify 增 fragment 断言。同日第二次写穿实录：WT 设置 UI 保存会把全量状态（含 `--distribution-id`、`C:\Users\...` 图标路径）重写进被链接的 settings.json——UI 编辑属违规操作，漂移断言把关。
