@@ -79,6 +79,7 @@
         "editor.defaultFormatter": "vscode.html-language-features"
     },
     "workbench.editorAssociations": {
-        "file:/**/*.md": "vscode.markdown.editor"
+        "file:/**/*.md": "vscode.markdown.editor",
+        "vscode-remote:/**/*.md": "vscode.markdown.editor"
     }
 }
