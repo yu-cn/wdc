@@ -11,7 +11,7 @@
 - [x] 主机实测：help / status / verify / log / triage 入口，sync 全链路端到端（含 UAC）
 - [x] README「常用命令」表补 wdc 子命令
 - [x] status 增「距上次上游检查 N 天」提醒（读 upstream-ledger.md，>30 天提示跑 check-upstream；工单18 定的只提醒不巡检）
-- [ ] ASUS 复验：拉取后新 shell 直接用新 wdc
+- [x] ASUS 复验：拉取后新 shell 直接用新 wdc
 
 ## Comments
 
@@ -20,3 +20,5 @@
 - 2026-10-20（主机会话）：主机实测全过——help/status/verify(-Quick)/log 直跑与 Git Bash 薄包装路径（`bash -ic 'wdc status'`）均正常；`wdc sync` 端到端 1137s 全绿（fetch→一致跳过 pull→bootstrap 全阶段 OK→verify 三域漂移=0→带耗时汇总）。上线当天即立功：`wdc status` 一眼暴露 21:35 那次 UAC 被取消的早退 bootstrap（正常收尾日志显示汇总行、早退日志兜底显示最后一条判定行）。dotfiles 漂移检测对「未提交的模板编辑」与「写穿」同判（verify 断言同义），属预期——先 commit 再 verify。
 
 - 2026-10-20（主机会话）增补：`wdc log` 与 sync 失败尾部接入 elevated-*.log（工单19 落盘机制的消费端）；status 增上游检查提醒（当前显示「距上次 2 天」）。顺带发现用户已在 23:25 实跑新 wdc——真实使用即复验。
+
+- 2026-10-21（ASUS 会话）：本机复验全过。旧版 wdc 全量收敛：258ae2f→84ef9ad，bootstrap 全阶段 OK（提权子回合 409s / 父回合 422s），lazygit 0.66.1 实装；扩展 32 项全部在位、新装 0——9 个新扩展本机早已自装（自留地幂等）；三域漂移=0。工单19 落盘机制本机首证：elevated-20261021-000646.log 自 Preflight/Validate 至「[OK] bootstrap - 收敛完成」完整无断，且当日仅一份 bootstrap-*.log（无子回合第二 transcript）。新 shell 薄包装：wdc status 四行快照（仓库与 origin/main 一致 / dotfiles 漂移 / 上游检查距上次 2 天 / 最近 bootstrap → [OK] 收敛完成），并当场如实检出台面上一处 editorAssociations vscode-remote 写穿、给出 triage 入口——行为与主机一致；该写穿经环境主人定夺吸收（378cb68），吸收后 wdc verify -Quick 全绿（exit 0）。
