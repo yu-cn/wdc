@@ -29,7 +29,11 @@ Get-ChildItem $logDir -Filter '*.log' -ErrorAction SilentlyContinue |
     Sort-Object LastWriteTime -Descending | Select-Object -Skip 20 |
     Remove-Item -Force -ErrorAction SilentlyContinue
 $logFile = Join-Path $logDir ("bootstrap-{0}.log" -f (Get-Date -Format 'yyyyMMdd-HHmmss'))
-try { Start-Transcript -Path $logFile -ErrorAction SilentlyContinue | Out-Null } catch { }
+# 提权子回合不自建 transcript（工单19）：其输出由父进程的 Tee 包装落盘到 elevated-*.log——
+# transcript 在原生日令交互下会中断（工单19 实录），外层包装进程持有的管道独立存续
+if (-not $ElevatedPass) {
+    try { Start-Transcript -Path $logFile -ErrorAction SilentlyContinue | Out-Null } catch { }
+}
 
 function Invoke-Stage {
     param(
@@ -66,7 +70,10 @@ $null = Invoke-Stage 'Stage 0/5 - Preflight 预检' {
 $script:SkipRepeat = $false
 if (-not $elevated -and -not $ValidateOnly -and -not $NoElevate -and -not $ElevatedPass) {
     Write-Phase '提权收敛（管理员子回合）'
-    $relaunchArgs = @('-NoProfile', '-File', "`"$PSCommandPath`"", '-ElevatedPass')
+    # 子回合经 Tee 落盘（工单19）：包装进程持有管道，子窗口照常实时可见，elevated-*.log 独立于 transcript 存续
+    $childLog = Join-Path $logDir ("elevated-{0}.log" -f (Get-Date -Format 'yyyyMMdd-HHmmss'))
+    $childCmd = "& '$PSCommandPath' -ElevatedPass *>&1 | Tee-Object -FilePath '$childLog'; exit `$LASTEXITCODE"
+    $relaunchArgs = @('-NoProfile', '-Command', $childCmd)
     $childSw = [System.Diagnostics.Stopwatch]::StartNew()
     try {
         $child = Start-Process pwsh -Verb RunAs -ArgumentList $relaunchArgs -PassThru -Wait
@@ -106,7 +113,7 @@ $null = Invoke-Stage 'Stage 2/5 - Apply 应用声明配置' {
         Write-Step '应用配置' 'SKIP' '需要管理员；本阶段已跳过（其余用户级阶段继续）'
         return $true
     }
-    $domainOrder = 'base-windows', 'cli-tools', 'editors', 'languages'
+    $domainOrder = 'base-windows', 'cli-tools', 'editors'   # 语言版本走编排层 install-languages.ps1 钉子，无 .winget 域
     $allOk = $true
     # 注：曾试验「先 configure test 漂移=0 再跳过 apply」（工单18），实测 test 与 apply 的耗时几乎相同
     # （瓶颈是 winget 每次调用的固定开销），漂移>0 时反而多付一次——已回退，维持直接应用。
