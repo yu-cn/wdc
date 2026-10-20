@@ -1,0 +1,23 @@
+# Agent 协作规矩与已知坑
+
+供任何机器上的 agent 会话遵循。规则属于仓库（机器对等，见 GLOSSARY）：不依赖任何单机的私有记忆。
+
+## 协作规矩
+
+- **一次只问一个问题**，不要批量出题；提问前先把事实查尽（脚本/仓库/日志）。
+- **事实自己查，决策交环境主人**：拿不准的不擅自定夺——在 `.scratch/<feature>/issues/` 开工单记录（约定见 issue-tracker.md），由环境主人定夺，任一机器会话可执行。
+- **小修直接 commit main**（pre-commit 钩子会跑无副作用校验把关），push 是常态；大改先开工单。
+- **红线**：机器自留地工具（JetBrains/Typora 等）一概不碰（ADR-0003）；`~/.gitidentity` 内容不得出现在任何产出物（校验用「非空」检查，不打印值）；dotfiles 提交前 `git status` 核对无漂移（写穿污染见下）。
+- **长操作要有心跳**：轮询/后台任务以 30–45 秒级可见进度汇报，勿长时间静默。
+
+## 已知坑（真机实录）
+
+1. **wsl.exe 在提权上下文 + 管道捕获输出会挂死**（可致 WSL 服务楔死，解法=重启电脑）——bootstrap 提权子回合自动跳过 WSL 阶段，由普通权限回合补跑（现已自动串联）。
+2. **Git Bash 里调 wsl.exe 传 `/mnt/...` 参数会被 MSYS 路径转换改写**（报 No such file or directory / 127）——加 `MSYS_NO_PATHCONV=1` 前缀。
+3. **控制台乱码只是显示问题**（GBK 代码页）——脚本已自设 UTF-8，乱码不影响执行与判断。
+4. **winget 退出码语义**：validate 的 1 = 仅警告（良性），负 HRESULT 才是错；`configure test` 漂移判定看「未处于」计数 + 退出码。
+5. **`git config --global/--file/--local` 按设计不展开 include**（需 `--includes`），只有全栈查询默认展开——用带作用域查询探测「include 是否生效」会假阴性。
+6. **Windows Terminal 设置 UI 保存 = 写穿**：会把全量状态（含机器派生路径）重写进被符号链接的 settings.json——改终端设置改仓库模板，别用 UI；verify 的「dotfiles 与 HEAD 一致」断言负责兜底暴露。
+7. **同 ID 多版本并存的 winget 卸载会匹配歧义**（0x8A150014）——`Remove-WingetPackage` 已按逐版本显式卸载处理。
+8. **dotfiles 与 `.sh` 的行尾已由 `.gitattributes` 钉 LF**——Windows checkout 的 CRLF 会破坏 WSL 侧 include/bash 执行；新增跨侧文件时记得纳入规则。
+9. **机器派生值（发行版 ID/随机 GUID/本机路径）不入仓库文件**——按 ADR-0004 安装期渲染到机器本地（如 WT fragment）。
