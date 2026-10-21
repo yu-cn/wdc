@@ -13,3 +13,5 @@
 ## Comments
 
 - 2026-10-21（主机会话）：首跑待录。
+
+- 2026-10-21（主机会话）run1/run2 实录：两跑同形态——clone ✓、**5.1 入口链路（cmd→powershell 5.1 解析/BOM/探测/带参转发）✓**、Stage 0/1 ✓、**base-windows 域 27 单元全量应用 ✓**；cli-tools 应用 ~2 分钟处进程树被外部终止（transcript：pipeline stopped ×4），cmd 结论位两次均假阳性 success。判读纪律确立：**看 transcript 工件，不看结论位**（已加 upload-artifact if:always()）。根因与产品层隐患开工单 27；CI 侧已加 cmd 宿主预对齐 PS7 步骤。5 分钟跑完的原因：runner 预装 git/pwsh/网络极速。

@@ -9,6 +9,13 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 45
     steps:
+      # 预对齐 PS7（工单27 实录）：cli-tools 声明 Microsoft.PowerShell useLatest，runner 预装 pwsh
+      # 落后时 bootstrap 应用该单元会触发 MSI 升级、连带杀掉宿主 bootstrap 的 PowerShell 进程树
+      # （run1/run2 transcript 实证：[OK] base-windows 后 pipeline stopped）。本步以 cmd 宿主提前
+      # 升级，让 bootstrap 看到的 pwsh 已是最新（no-op）。真实机器的同类风险见工单 27。
+      - name: 预对齐 PowerShell 7（防 bootstrap 自更新自杀）
+        shell: cmd
+        run: winget upgrade -e --id Microsoft.PowerShell --source winget --accept-package-agreements --accept-source-agreements --disable-interactivity || exit /b 0
       - name: fresh clone + bootstrap（Windows PowerShell 5.1 入口）
         shell: cmd
         run: |
