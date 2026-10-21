@@ -31,9 +31,11 @@ Assert 'dotfiles 模板与 HEAD 一致（防写穿）' { @(git -C $repo status -
 # 钩子接线断言（工单23）：collaboration 承诺 pre-commit 把关；接线由 bootstrap Stage 6 幂等保证
 Assert 'pre-commit 钩子已接线' { (git -C $repo config core.hooksPath) -eq '.githooks' } 'git config core.hooksPath .githooks（repo-local；下次 bootstrap 会自动接上）'
 # WSL profile 为模板静态声明（ADR-0006），无机器侧产物需要断言；WT settings 链接本身由上面的映射断言覆盖
+Assert 'Ubuntu WSL 图标资产在位' { Test-Path (Join-Path $env:LOCALAPPDATA 'wdc\ubuntu.ico') } '缺失：重跑 bootstrap（install-dotfiles 会装 dotfiles/windows/ubuntu.ico）'
 
 Write-Phase '2/6 · 身份与注册表断言'
-Assert '身份文件有实值' { (git config --file (Join-Path $HOME '.gitidentity') --get user.name) -and (git config --file (Join-Path $HOME '.gitidentity') --get user.email) }
+# 效果级断言：全栈查询才展开 include（--global 按设计不展开会假阴性，坑⑤）——直接证明 git 能经 include 链取到身份
+Assert 'git 身份经 include 生效' { [bool](git -C $repo config user.name) -and [bool](git -C $repo config user.email) } '身份未生效：查 ~/.gitidentity 实值与 gitconfig 的 include.path'
 Assert '远程桌面关闭(=1)' { (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server' -Name fDenyTSConnections -EA SilentlyContinue).fDenyTSConnections -eq 1 }
 Assert '系统通知开启(=1)' { (Get-ItemProperty 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Notifications\Settings' -Name NOC_GLOBAL_SETTING_TOASTS_ENABLED -EA SilentlyContinue).NOC_GLOBAL_SETTING_TOASTS_ENABLED -eq 1 }
 Assert '长路径开启' { (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' -Name LongPathsEnabled -EA SilentlyContinue).LongPathsEnabled -eq 1 }

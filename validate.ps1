@@ -25,10 +25,19 @@ foreach ($f in $configFiles) {
     # 退出码语义一处定义于 common.ps1 的 Test-WingetExitCode（含 1=仅警告的良性判定与出处注释）；
     # --ignore-warnings 抑制警告文本输出，不改变退出码
     & winget configure validate --file $f.FullName --ignore-warnings 2>&1 | Out-Null
-    if (Test-WingetExitCode -ExitCode $LASTEXITCODE -Operation 'validate') {
+    $code = $LASTEXITCODE
+    if (-not (Test-WingetExitCode -ExitCode $code -Operation 'validate')) {
+        # runner 实录：每轮首个 winget 调用可能撞上源索引初始化/更新的瞬时坏态
+        # （0x80070002 / E_FAIL——CI 三红皆在 base-windows，同文件随后即绿）。
+        # 失败静默重试一次吸收抖动；确定性 schema 错误重试仍红，不会掩盖真问题
+        Start-Sleep -Seconds 5
+        & winget configure validate --file $f.FullName --ignore-warnings 2>&1 | Out-Null
+        $code = $LASTEXITCODE
+    }
+    if (Test-WingetExitCode -ExitCode $code -Operation 'validate') {
         Write-Step $f.Name 'OK'
     } else {
-        Write-Step $f.Name 'FAIL' "winget configure validate 退出码 $LASTEXITCODE"
+        Write-Step $f.Name 'FAIL' "winget configure validate 退出码 $code"
         $failCount++
     }
 }
