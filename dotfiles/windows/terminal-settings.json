@@ -68,6 +68,7 @@
                 "commandline": "wsl.exe -d Ubuntu",
                 "guid": "{afc8d704-a9fa-363c-9ece-f2e391137abc}",
                 "hidden": false,
+                "icon": "%LOCALAPPDATA%\\wdc\\ubuntu.ico",
                 "name": "Ubuntu WSL",
                 "startingDirectory": "~"
             },

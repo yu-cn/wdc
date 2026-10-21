@@ -83,6 +83,18 @@ foreach ($m in (Get-DotfilesMap)) {
     Install-Dotfile -Source (Join-Path $dotfilesRoot $m.Source) -Target $m.Target
 }
 
+# Ubuntu 图标资产（ADR-0006）：仓库持有，装到每机相同的固定位置；模板经 %LOCALAPPDATA% 展开引用，
+# 图标路径不含任何机器派生值（发行版 GUID 派生的 wsl 官方路径不可入模板）
+$iconDir = Join-Path $env:LOCALAPPDATA 'wdc'
+$iconDst = Join-Path $iconDir 'ubuntu.ico'
+$iconSrc = Join-Path $dotfilesRoot 'windows\ubuntu.ico'
+if (Test-Path $iconDst) { Write-Step 'ubuntu.ico' 'OK' '已在位' }
+else {
+    New-Item -ItemType Directory -Path $iconDir -Force | Out-Null
+    Copy-Item $iconSrc $iconDst
+    Write-Step 'ubuntu.ico' 'CHANGED' "已安装 -> $iconDst"
+}
+
 # ~/.wdc：机器本地仓库路径指针（wdc 一键同步命令用；路径因机而异不入库，ADR-0004 模式）
 $wdcPtr = Join-Path $HOME '.wdc'
 if (-not (Test-Path $wdcPtr) -or ((Get-Content $wdcPtr -Raw -ErrorAction SilentlyContinue).Trim() -ne $repoRoot)) {
