@@ -17,14 +17,16 @@ resources:
   metadata:
     description: Git（.gitconfig 由 dotfiles 层管理）
 
+# PowerShell 7 不在本域（工单27）：useLatest 升级的 MSI 会强杀 pwsh 宿主内的 bootstrap——
+# 生命周期改由入口引导层全权管理（缺失自装 + 5.1 宿主内安全升级），同语言版本走编排层的先例
 - type: Microsoft.WinGet/Package
-  name: PowerShell
+  name: CascadiaCode
   properties:
-    id: Microsoft.PowerShell
+    id: Microsoft.CascadiaCode
     source: winget
     useLatest: true
   metadata:
-    description: PowerShell 7（bootstrap 的运行时；首次接入前作为前置手动安装，此后由本域保持收敛）
+    description: Cascadia 字体包（含 Mono NF 等 Nerd Font 变体；WT 模板 fontFace=Cascadia Mono NF 依赖之——裸 Windows/WT 只带非 NF 版，工单28）
 
 - type: Microsoft.WinGet/Package
   name: GitHubCLI

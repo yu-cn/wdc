@@ -5,7 +5,7 @@
     "copyFormatting": "none",
     "copyOnSelect": false,
     "defaultInputScope": "alphanumericHalfWidth",
-    "defaultProfile": "{3618cdc9-e773-420b-a5a8-ab9a4de9d3ba}",
+    "defaultProfile": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
     "keybindings": [
         {
             "id": "Terminal.CopyToClipboard",
@@ -58,7 +58,7 @@
             },
             {
                 "commandline": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\"",
-                "guid": "{3618cdc9-e773-420b-a5a8-ab9a4de9d3ba}",
+                "guid": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
                 "hidden": false,
                 "icon": "ms-appx:///ProfileIcons/pwsh.png",
                 "name": "PowerShell",

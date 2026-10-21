@@ -54,9 +54,32 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
             exit 1
         }
     }
+    # pwsh 在位但可能过期：升级 PS7 的 MSI 会强杀 pwsh 宿主（工单27）——本层是 5.1 宿主，升级安全；
+    # cmd /c 包装双保险。-ValidateOnly 跳过（保持无副作用承诺）
+    if (-not $ValidateOnly) {
+        Write-Host '[bootstrap] 检查 PowerShell 7 更新（5.1 宿主内升级安全）…'
+        & cmd /c 'winget upgrade -e --id Microsoft.PowerShell --source winget --accept-package-agreements --accept-source-agreements --disable-interactivity' | Out-Null
+        if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne -1978335189) {
+            Write-Host "[bootstrap] PowerShell 7 升级未完成（winget 退出码 $LASTEXITCODE）——继续用现有版本" -ForegroundColor Yellow
+        }
+        $pwshExe = Get-PwshExe
+        if (-not $pwshExe) {
+            Write-Host '[bootstrap] 升级后仍未定位到 pwsh.exe —— 请重开终端后再跑一次' -ForegroundColor Yellow
+            exit 1
+        }
+    }
     # winget 安装不会刷新本进程 PATH：注入后，main 及其提权/校验子进程都能解析到 pwsh
     $env:Path = (Split-Path $pwshExe) + ';' + $env:Path
     Write-Host "[bootstrap] PowerShell 7 就位（$pwshExe），切换运行时继续"
+} else {
+    # pwsh 宿主（wdc sync 常态）：绝不在本宿主内升级 PS7——MSI 会强杀整条链（工单27 runner 实证）；
+    # 只做列表探测并提示（不安装），一次性升级走 5.1 入口
+    if (-not $ValidateOnly) {
+        & cmd /c 'winget upgrade -e --id Microsoft.PowerShell --source winget --accept-source-agreements --disable-interactivity' | Out-Null
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host '[bootstrap] PowerShell 7 有新版：本入口跑在 pwsh 宿主内、不自动升级（防 MSI 杀宿主）。一次性升级：powershell -ExecutionPolicy Bypass -File bootstrap.ps1' -ForegroundColor Yellow
+        }
+    }
 }
 
 # 参数原样转发（switch 还原为字符串，-File 调用下由 main 重新绑定）
