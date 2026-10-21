@@ -16,6 +16,18 @@ jobs:
       - name: 预对齐 PowerShell 7（防 bootstrap 自更新自杀）
         shell: cmd
         run: winget upgrade -e --id Microsoft.PowerShell --source winget --accept-package-agreements --accept-source-agreements --disable-interactivity || exit /b 0
+      # runner 网络修正（run3/4 实录）：GitHub runner 禁用 Delivery Optimization 服务，winget 对
+      # 部分包（Chrome 等）DO 下载必失败（0x80D02002，DODownloader.cpp）——切 winhttp 下载器。
+      # 这是 runner 环境问题非产品问题：真机有 DO 服务在跑。
+      - name: runner 修正（winget 下载器切 winhttp，绕开被禁的 DO）
+        shell: pwsh
+        run: |
+          $p = Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe\LocalState\settings.json'
+          New-Item -ItemType Directory -Force -Path (Split-Path $p) | Out-Null
+          $s = if (Test-Path $p) { Get-Content $p -Raw | ConvertFrom-Json } else { [pscustomobject]@{} }
+          $s | Add-Member -NotePropertyName network -NotePropertyValue ([pscustomobject]@{ downloader = 'winhttp' }) -Force
+          $s | ConvertTo-Json -Depth 5 | Set-Content $p -Encoding utf8
+          Get-Content $p
       - name: fresh clone + bootstrap（Windows PowerShell 5.1 入口）
         shell: cmd
         run: |
