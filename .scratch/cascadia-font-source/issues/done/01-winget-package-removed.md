@@ -33,3 +33,4 @@ Status: done
 - 2026-10-21 开单（sync 冒烟实录；官方码表、winget-pkgs 404、本机字体清单均已核）。推荐 B。定夺前每次全量 bootstrap 都会在此单元诚实 FAIL——非误报。
 - 2026-10-21 决策实录：B 方案查证后下调推荐（占用不可覆盖 + 注册姿势存疑，见方案栏），改推 A；主人提议折中看 C，查实 winget 在售 NF 包恰为 JetBrainsMono（唯一），C 兼得「全声明式 + 零机制 + 原生升级」，定为 **C**。
 - 2026-10-21 验收实录：`wdc sync` 全绿（573s；七阶段 OK、三域漂移=0、机器断言全过，JetBrainsMono 单元成功装入 96 个字体文件）。核对 HKLM 注册表发现该 MSI 用**短族名**（JetBrainsMono NF=标准 / **NFM=单宽图标（终端用）** / NFP=比例 / NL=无连字系），初版模板写的 "JetBrainsMono Nerd Font (Mono)" 解析不到、终端一度吃回退——同日修正为 NF（编辑器）/ NFM（WT 与 VSCode 终端）。归档。
+- 2026-10-21 补正：前评「本机字体零注册表记录、注册姿势存疑」系**查询路径错误**（HKCU 应查 `Windows NT\CurrentVersion\Fonts`，正确路径下本机 74 条注册齐全）——B 的注册风险不存在，固有糙点仅「文件占用不可覆盖」。主人体验 JetBrainsMono 后复审（含换回 Cascadia 选项）决定维持 C（审美可接受）；决策固化见 ADR-0005。
