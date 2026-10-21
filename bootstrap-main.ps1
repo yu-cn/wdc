@@ -99,7 +99,7 @@ if ($script:SkipRepeat) {
 $null = Invoke-Stage 'Stage 2/7 - Validate 无副作用校验' {
     # 子进程 stdout 不入本阶段返回值（Invoke-Subscript 负责转发到 Host），返回值只留 bool
     $ok = Invoke-Subscript -Label 'validate.ps1' -Path (Join-Path $PSScriptRoot 'validate.ps1')
-    if (-not $ok) { Write-Host '  校验未通过——中止后续阶段' -ForegroundColor Red }
+    if (-not $ok) { Write-Host '  校验未通过——后续阶段仍执行（幂等重跑可收敛），结果见 Summary' -ForegroundColor Red }
     return $ok
 }
 

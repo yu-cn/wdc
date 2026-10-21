@@ -27,12 +27,18 @@ foreach ($f in $configFiles) {
     & winget configure validate --file $f.FullName --ignore-warnings 2>&1 | Out-Null
     $code = $LASTEXITCODE
     if (-not (Test-WingetExitCode -ExitCode $code -Operation 'validate')) {
-        # runner 实录：每轮首个 winget 调用可能撞上源索引初始化/更新的瞬时坏态
-        # （0x80070002 / E_FAIL——CI 三红皆在 base-windows，同文件随后即绿）。
-        # 失败静默重试一次吸收抖动；确定性 schema 错误重试仍红，不会掩盖真问题
+        # 抖动吸收（两段式，皆只在失败路径付成本）：热源抖动 5s 后原样重试；
+        # 冷源（全新机器首个 winget 调用）源索引坏态更久——source update 修复后再试最后一回。
+        # 实录：push-CI 三红皆 base-windows 首调（0x80070002/E_FAIL，随后即绿）；
+        # fresh-machine 冷源曾连败两次（2026-10-21 run 39635213895）。确定性 schema 错误三试仍红，不掩盖真问题
         Start-Sleep -Seconds 5
         & winget configure validate --file $f.FullName --ignore-warnings 2>&1 | Out-Null
         $code = $LASTEXITCODE
+        if (-not (Test-WingetExitCode -ExitCode $code -Operation 'validate')) {
+            & winget source update --disable-interactivity 2>&1 | Out-Null
+            & winget configure validate --file $f.FullName --ignore-warnings 2>&1 | Out-Null
+            $code = $LASTEXITCODE
+        }
     }
     if (Test-WingetExitCode -ExitCode $code -Operation 'validate') {
         Write-Step $f.Name 'OK'

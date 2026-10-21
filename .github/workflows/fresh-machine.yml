@@ -9,9 +9,10 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 45
     steps:
-      # 已知限制（工单26/27 实录）：runner 禁 Delivery Optimization，cli-tools 的 Chrome 单元必败
-      # （run5 试过 winhttp 设置无效且 run6 证实该设置写坏 winget 配置加载，已删）。判读看工件
-      # transcript：除 Chrome 外全部单元/阶段应 OK。真机有 DO 服务，无此问题。
+      # 已知限制（工单26/27 实录 + 2026-10-21 run 39635213895 复盘）：runner 禁 Delivery Optimization，
+      # Chrome 单元曾必败（run3-6）——但该次冒烟 Chrome 实际装成功，DO 可用性随镜像波动，判读以工件为准。
+      # 该次唯一 FAIL 是 validate 首调源索引抖动（冷源连败两次），已加「重试+source update 修复」两段式吸收；
+      # 其余全部单元/阶段全绿（含 JetBrainsMono 字体、静态 profile、ubuntu.ico 装至用户名不同的固定路径）。真机无源抖动问题。
       - name: fresh clone + bootstrap（Windows PowerShell 5.1 入口）
         shell: cmd
         run: |
