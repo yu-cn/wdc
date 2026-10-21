@@ -71,6 +71,10 @@ $frag = [ordered]@{ profiles = @($profiles | ForEach-Object {
     foreach ($k in $_.Keys) { if ($null -ne $_[$k]) { $p[$k] = $_[$k] } }   # 去掉 null（如图标缺失）
     $p
 }) }
-$frag | ConvertTo-Json -Depth 5 | Set-Content -Path $fragPath -Encoding utf8
+# 原子落盘：先写临时文件再改名——Set-Content 直写的截断-写入窗口可能被 WT 的文件监听读到半截，
+# profile 判消失且不自动恢复（2026-10-21 实录）；Move-Item 同卷改名是原子操作
+$fragJson = $frag | ConvertTo-Json -Depth 5
+Set-Content -Path "$fragPath.tmp" -Value $fragJson -Encoding utf8
+Move-Item -Path "$fragPath.tmp" -Destination $fragPath -Force
 Write-Step 'WT WSL profiles' 'OK' ("fragment 已渲染：{0}（发行版：{1}）" -f $fragPath, ($distros.Name -join ', '))
 exit 0
