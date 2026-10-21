@@ -6,8 +6,9 @@
 param()
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'lib/common.ps1')
+. (Join-Path $PSScriptRoot 'lib/dotfiles-map.ps1')
 
-$wtLocal = Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState'
+$wtLocal = Get-WtLocalStateDir
 if (-not (Test-Path (Join-Path $wtLocal 'settings.json'))) {
     Write-Step 'WT WSL profiles' 'SKIP' 'Windows Terminal 未安装（editors 域应用后可用）'
     exit 0

@@ -37,7 +37,7 @@ cd WDC
 powershell -ExecutionPolicy Bypass -File bootstrap.ps1
 ```
 
-bootstrap 先确保 PowerShell 7 就位（裸机自动安装），再依次跑六个阶段（预检 → 无副作用校验 → 应用声明配置 → 用户级安装 → WSL 侧 → dotfiles），全程输出分阶段报告。**一条命令一键收敛**：未提权启动会弹一次 UAC，提权子回合跑完后自动补跑用户级/WSL 阶段，无需手动二次运行。
+bootstrap 先确保 PowerShell 7 就位（裸机自动安装），再依次跑七个阶段（预检 → 无副作用校验 → 应用声明配置 → 用户级安装 → 移除清单 → WSL 侧 → dotfiles），全程输出分阶段报告。**一条命令一键收敛**：未提权启动会弹一次 UAC，提权子回合跑完后自动补跑用户级/WSL 阶段，无需手动二次运行。
 
 <details>
 <summary><strong>首次运行你需要配合的五件事</strong>（UAC 提权 · SmartScreen 放行 · 重启续跑 · 填写身份 · 关 VSCode 设置同步）</summary>

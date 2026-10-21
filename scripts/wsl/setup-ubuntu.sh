@@ -8,7 +8,7 @@ set -euo pipefail
 ROLE="${1:?用法: setup-ubuntu.sh <root|user> <user> <repo_wsl路径> [win身份文件路径]}"
 WDC_USER="${2:?}"
 REPO_WSL="${3:?}"
-VP_VERSION="1.3.0"      # 与 Windows 侧 install-languages.ps1 保持一致
+# vp 钉子唯一来源 configs/vp-version：user 阶段读取（Windows 侧 install-languages.ps1 / verify-machine 同读一份）
 
 log()  { printf '[setup-ubuntu] %s\n' "$*"; }
 have() { command -v "$1" >/dev/null 2>&1; }
@@ -57,7 +57,10 @@ log "uv（管 Python）"
 if [ ! -x "$HOME/.local/bin/uv" ]; then curl -LsSf https://astral.sh/uv/install.sh | sh >/dev/null; fi
 [ -f "$HOME/.local/bin/env" ] && . "$HOME/.local/bin/env"
 
-log "vp ${VP_VERSION}（管 Node，与 Windows 侧同工具同钉子）"
+log "vp（管 Node，与 Windows 侧同工具同钉子）"
+VP_VERSION="$(head -n1 "$REPO_WSL/configs/vp-version" 2>/dev/null | tr -d '[:space:]')"
+[ -n "$VP_VERSION" ] || { log "ERROR: configs/vp-version 缺失或为空"; exit 1; }
+log "钉子 vp ${VP_VERSION}"
 # 显式路径探测：非登录 shell 的 PATH 看不到已装的 vp（工单13）；两种官方布局都认（工单12）
 vp_bin=""
 for d in "$HOME/.vite-plus/bin/vp" "$HOME/.local/share/vite-plus/bin/vp"; do

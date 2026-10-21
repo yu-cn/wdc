@@ -10,6 +10,7 @@ try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { }
 
 function Section { param([string]$T) "`n## $T`n" }
 function KV { param([string]$K, [string]$V) "- ${K}: $V" }
+. (Join-Path $PSScriptRoot 'lib/dotfiles-map.ps1')   # dotfiles 落点单一来源（与 install/verify 同面）
 
 "# 开发机盘点报告 — $env:COMPUTERNAME — $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
 
@@ -42,29 +43,21 @@ Section 'WSL'
 (& wsl.exe -l -v) 2>$null | ForEach-Object { $_ -replace "`0", '' } | Where-Object { $_.Trim() }
 
 Section 'dotfiles 存在性（只报有无与大小，不读内容）'
-$docs = [Environment]::GetFolderPath('MyDocuments')
-foreach ($f in @(
-    @{ n = '~/.gitconfig'; p = Join-Path $HOME '.gitconfig' },
-    @{ n = '~/.bashrc'; p = Join-Path $HOME '.bashrc' },
-    @{ n = 'pwsh profile'; p = Join-Path $docs 'PowerShell\Microsoft.PowerShell_profile.ps1' },
-    @{ n = 'VSCode settings'; p = Join-Path $env:APPDATA 'Code\User\settings.json' },
-    @{ n = 'VSCode keybindings'; p = Join-Path $env:APPDATA 'Code\User\keybindings.json' },
-    @{ n = 'WT settings'; p = Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json' },
-    @{ n = 'starship.toml'; p = Join-Path $HOME '.config\starship.toml' },
-    @{ n = '~/.gitidentity'; p = Join-Path $HOME '.gitidentity' }
-)) {
-    if (Test-Path $f.p) {
-        $item = Get-Item $f.p
+# 落点清单来自 Get-DotfilesMap 单一来源；身份文件另加（非链接，属机器数据，ADR-0003）
+$probes = @(Get-DotfilesMap) + @(@{ Name = '~/.gitidentity'; Target = (Join-Path $HOME '.gitidentity') })
+foreach ($f in $probes) {
+    if (Test-Path $f.Target) {
+        $item = Get-Item $f.Target
         $link = if ($item.LinkType) { " [ $($item.LinkType) -> $($item.Target) ]" } else { '' }
-        KV $f.n "$([math]::Round($item.Length / 1KB, 1))KB$link"
-    } else { KV $f.n '不存在' }
+        KV $f.Name "$([math]::Round($item.Length / 1KB, 1))KB$link"
+    } else { KV $f.Name '不存在' }
 }
 
 Section 'VSCode 扩展'
 if (Get-Command code -ErrorAction SilentlyContinue) { & code --list-extensions 2>$null } else { 'code CLI 不可用' }
 
 Section 'WT profiles（仅名称与默认项）'
-$wt = Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json'
+$wt = Join-Path (Get-WtLocalStateDir) 'settings.json'
 if (Test-Path $wt) {
     try {
         $j = Get-Content $wt -Raw | ConvertFrom-Json

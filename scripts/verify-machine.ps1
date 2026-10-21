@@ -8,6 +8,7 @@ param([switch]$Quick)
 $ErrorActionPreference = 'Stop'
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { }
 . (Join-Path $PSScriptRoot 'lib/common.ps1')
+. (Join-Path $PSScriptRoot 'lib/dotfiles-map.ps1')
 
 $repo = Split-Path $PSScriptRoot -Parent
 $script:Fail = 0
@@ -20,18 +21,10 @@ function Assert {
 }
 
 Write-Phase '1/6 · Windows 侧 dotfiles 符号链接'
-$docs = [Environment]::GetFolderPath('MyDocuments')
-$map = @{
-    'gitconfig'    = Join-Path $HOME '.gitconfig'
-    'bashrc'       = Join-Path $HOME '.bashrc'
-    'pwsh profile' = Join-Path $docs 'PowerShell\Microsoft.PowerShell_profile.ps1'
-    'VSCode 设置'  = Join-Path $env:APPDATA 'Code\User\settings.json'
-    'WT 设置'      = Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json'
-    'starship'     = Join-Path $HOME '.config\starship.toml'
-}
-foreach ($k in $map.Keys) {
-    $name = $k
-    Assert $name { (Get-Item $map[$name] -ErrorAction SilentlyContinue).LinkType -eq 'SymbolicLink' }
+# 断言面 = 安装面：落点清单来自 Get-DotfilesMap 单一来源（含 keybindings——此前 6 项清单已实际漏验它）
+foreach ($m in (Get-DotfilesMap)) {
+    $target = $m.Target
+    Assert $m.Name { (Get-Item $target -ErrorAction SilentlyContinue).LinkType -eq 'SymbolicLink' }
 }
 # dotfiles 是符号链接的落点，被机器侧工具写穿会直接污染仓库（gh auth login 实锤，工单14）——验收前必须与 HEAD 一致
 Assert 'dotfiles 模板与 HEAD 一致（防写穿）' { @(git -C $repo status --porcelain -- dotfiles).Count -eq 0 } '写穿漂移——处置：pwsh scripts/triage-dotfiles-drift.ps1（逐文件 吸收/还原）'
@@ -39,7 +32,7 @@ Assert 'dotfiles 模板与 HEAD 一致（防写穿）' { @(git -C $repo status -
 Assert 'pre-commit 钩子已接线' { (git -C $repo config core.hooksPath) -eq '.githooks' } 'git config core.hooksPath .githooks（repo-local；下次 bootstrap 会自动接上）'
 # WT 的 WSL profile 走机器适配 fragment（ADR-0004）：模板不含 WSL 条目，fragment 应已渲染且含本机发行版
 Assert 'WT WSL fragment 已渲染' {
-    $frag = Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\fragments\wdc-wsl.json'
+    $frag = Join-Path (Get-WtLocalStateDir) 'fragments\wdc-wsl.json'
     (Test-Path $frag) -and ((Get-Content $frag -Raw) -match 'Ubuntu')
 }
 
@@ -63,14 +56,9 @@ Assert '扩展清单全部在位' {
 }
 
 Write-Phase '4/6 · 语言栈'
-# 两种官方布局都认（工单12）：单体 ~/.vite-plus（安装器默认/复用现有安装）与 LOCALAPPDATA\vite-plus（选根模式）
-$vpWinCandidates = @(
-    (Join-Path $env:USERPROFILE '.vite-plus\bin\vp.exe')
-    (Join-Path $env:LOCALAPPDATA 'vite-plus\bin\vp.exe')
-)
 Assert 'vp Windows 侧 = 钉子' {
-    $vp = $vpWinCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
-    $vp -and ((& $vp --version) -match '1\.3\.0')
+    $vp = Get-VpWinExe
+    $vp -and ((& $vp --version) -match [regex]::Escape((Get-VpPin)))
 }
 Assert 'node 走 vp shim' { (Get-Command node -ErrorAction SilentlyContinue).Source -like '*vite-plus*' }
 Assert 'uv 就位' { Get-Command uv -ErrorAction SilentlyContinue }

@@ -5,6 +5,7 @@
 param()
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'lib/common.ps1')
+. (Join-Path $PSScriptRoot 'lib/dotfiles-map.ps1')
 
 $repoRoot = Split-Path $PSScriptRoot -Parent
 $dotfilesRoot = Join-Path $repoRoot 'dotfiles'
@@ -77,18 +78,8 @@ if (Test-Path $identityPath) {
 # 2/3 · Windows 侧符号链接
 # ---------------------------------------------------------------------------
 Write-Phase 'Dotfiles 2/4 - Windows 侧符号链接'
-$docs = [Environment]::GetFolderPath('MyDocuments')
-$wtSettings = Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json'
-$map = @(
-    @{ Source = 'windows/gitconfig';               Target = (Join-Path $HOME '.gitconfig') },
-    @{ Source = 'windows/bashrc';                  Target = (Join-Path $HOME '.bashrc') },
-    @{ Source = 'windows/pwsh-profile.ps1';        Target = (Join-Path $docs 'PowerShell\Microsoft.PowerShell_profile.ps1') },
-    @{ Source = 'windows/vscode-settings.json';    Target = (Join-Path $env:APPDATA 'Code\User\settings.json') },
-    @{ Source = 'windows/vscode-keybindings.json'; Target = (Join-Path $env:APPDATA 'Code\User\keybindings.json') },
-    @{ Source = 'windows/terminal-settings.json';  Target = $wtSettings },
-    @{ Source = 'shared/starship.toml';            Target = (Join-Path $HOME '.config\starship.toml') }
-)
-foreach ($m in $map) {
+# 落点清单来自 Get-DotfilesMap 单一来源（verify 断言与 inventory 盘点同读一份，防三面漂移）
+foreach ($m in (Get-DotfilesMap)) {
     Install-Dotfile -Source (Join-Path $dotfilesRoot $m.Source) -Target $m.Target
 }
 
@@ -104,11 +95,7 @@ if (-not (Test-Path $wdcPtr) -or ((Get-Content $wdcPtr -Raw -ErrorAction Silentl
 # ---------------------------------------------------------------------------
 Write-Phase 'Dotfiles 3/4 - WT WSL profiles（fragment 渲染）'
 $wtGen = Join-Path $PSScriptRoot 'install-wt-profiles.ps1'
-$out = & pwsh -NoProfile -File $wtGen 2>&1
-$code = $LASTEXITCODE
-$out | ForEach-Object { Write-Host $_ }
-if ($code -eq 0) { Write-Step 'WT WSL profiles' 'OK' }
-else { Write-Step 'WT WSL profiles' 'FAIL' "退出码 $code"; exit 1 }
+if (-not (Invoke-Subscript -Label 'WT WSL profiles' -Path $wtGen)) { exit 1 }
 
 # ---------------------------------------------------------------------------
 # 4/4 · WSL 侧（占位说明）
