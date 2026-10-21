@@ -19,14 +19,16 @@ resources:
 
 # PowerShell 7 不在本域（工单27）：useLatest 升级的 MSI 会强杀 pwsh 宿主内的 bootstrap——
 # 生命周期改由入口引导层全权管理（缺失自装 + 5.1 宿主内安全升级），同语言版本走编排层的先例
+# Cascadia 字体包已被 winget 目录除名（工单28 后续；.scratch/cascadia-font-source/）——NF 字体换 JetBrainsMono：
+# winget 在售 MSI（机内注册，升级/漂移走原生）；WT/VSCode 模板 fontFace 已同步换族
 - type: Microsoft.WinGet/Package
-  name: CascadiaCode
+  name: JetBrainsMonoNerdFont
   properties:
-    id: Microsoft.CascadiaCode
+    id: DEVCOM.JetBrainsMonoNerdFont
     source: winget
     useLatest: true
   metadata:
-    description: Cascadia 字体包（含 Mono NF 等 Nerd Font 变体；WT 模板 fontFace=Cascadia Mono NF 依赖之——裸 Windows/WT 只带非 NF 版，工单28）
+    description: JetBrainsMono Nerd Font（提示符图标依赖的 NF 字体；Cascadia 包除名后的替代）
 
 - type: Microsoft.WinGet/Package
   name: GitHubCLI

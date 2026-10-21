@@ -13,7 +13,7 @@
 开发者模式 · 启用 Sudo · 长路径 · 深色主题 · 显示扩展名/隐藏文件 · 资源管理器与任务栏去噪 · 开始菜单关 Web 搜索与推荐 · 关 Recall / Click To Do / 小组件 · Edge 新标签空白 · 关远程桌面
 
 **CLI**（[cli-tools 域](configs/cli-tools.winget)，17 个 winget 包）
-Git · PowerShell 7 · GitHub CLI · Chrome · Everything · PowerToys · lazygit · delta · fzf / fd / ripgrep / zoxide / bat / jq · make
+Git · GitHub CLI · Chrome · Everything · PowerToys · lazygit · delta · fzf / fd / ripgrep / zoxide / bat / jq · make · JetBrainsMono NF 字体（PowerShell 7 由入口引导层负责安装与升级）
 
 **编辑器**（[editors 域](configs/editors.winget)）
 VS Code + 32 个扩展（Python / Jupyter 全家、Remote-WSL / SSH / Containers、Prettier / Vitest / oxc、中文语言包等，[完整清单](configs/vscode-extensions.txt)）
