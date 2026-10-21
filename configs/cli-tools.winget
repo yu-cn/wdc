@@ -28,7 +28,7 @@ resources:
     source: winget
     useLatest: true
   metadata:
-    description: JetBrainsMono Nerd Font（提示符图标依赖的 NF 字体；Cascadia 包除名后的替代）
+    description: JetBrainsMono Nerd Font（提示符图标依赖的 NF 字体；Cascadia 包除名后的替代。注册族名为短名：NF=标准 / NFM=单宽图标（终端用）/ NFP=比例）
 
 - type: Microsoft.WinGet/Package
   name: GitHubCLI

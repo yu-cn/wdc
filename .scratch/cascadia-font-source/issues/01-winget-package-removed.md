@@ -1,4 +1,4 @@
-Status: ready-for-human
+Status: done
 
 # 01 · CascadiaCode 已被 winget 目录除名——新机 NF 字体方案定夺
 
@@ -25,10 +25,11 @@ Status: ready-for-human
 ## 验收清单
 
 - [x] 方案定夺记录于 Comments（C，如上）
-- [ ] 实施后全量 bootstrap 提权跑全绿（cli-tools 不再 FAIL；字体装入后确认注册族名与模板一致）
+- [x] 实施后全量 bootstrap 提权跑全绿（cli-tools 不再 FAIL；字体装入后确认注册族名与模板一致——族名出入已当场修正，见 Comments）
 - [x] validate.ps1 全绿
 
 ## Comments
 
 - 2026-10-21 开单（sync 冒烟实录；官方码表、winget-pkgs 404、本机字体清单均已核）。推荐 B。定夺前每次全量 bootstrap 都会在此单元诚实 FAIL——非误报。
 - 2026-10-21 决策实录：B 方案查证后下调推荐（占用不可覆盖 + 注册姿势存疑，见方案栏），改推 A；主人提议折中看 C，查实 winget 在售 NF 包恰为 JetBrainsMono（唯一），C 兼得「全声明式 + 零机制 + 原生升级」，定为 **C**。
+- 2026-10-21 验收实录：`wdc sync` 全绿（573s；七阶段 OK、三域漂移=0、机器断言全过，JetBrainsMono 单元成功装入 96 个字体文件）。核对 HKLM 注册表发现该 MSI 用**短族名**（JetBrainsMono NF=标准 / **NFM=单宽图标（终端用）** / NFP=比例 / NL=无连字系），初版模板写的 "JetBrainsMono Nerd Font (Mono)" 解析不到、终端一度吃回退——同日修正为 NF（编辑器）/ NFM（WT 与 VSCode 终端）。归档。
