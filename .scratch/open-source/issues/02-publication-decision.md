@@ -17,3 +17,5 @@
 - 2026-10-21（主机会话）：翻可见性的操作入口：网页 Settings → Danger Zone → Change visibility，或 `gh repo edit yu-cn/WDC --visibility public --accept-visibility-change-consequences`。GitHub 会要求确认；翻公开后历史 fork/缓存不可撤回，故此动作留给主人亲手执行。
 
 - 2026-10-21（主机会话）补记：环境主人定夺「按建议执行」（MIT 维持 + 直接翻可见性）后代跑三次均网络层失败（unexpected EOF / TLS handshake timeout / 一次 PATCH 返回 404 而 view 正常，疑似本机代理对 PATCH 不稳），仓库仍 PRIVATE。主人改为晚些自己执行；description/topics 未设置，翻公开后可一并补。
+
+- 2026-10-21（主机会话）再补：主人已翻公开（PUBLIC ✓）。404 根因查明并非网络——本机 gh 登录身份为 tidytorch（协作者，scopes 有 repo/workflow 但无仓库 admin），改仓库设置需 owner（yu-cn），GitHub 对无权限者回 404。**剩余一项归主人**：About 补 description 与 topics（网页 About 齿轮，或以 yu-cn 身份跑 `gh repo edit yu-cn/WDC --description "声明式 Windows 开发环境——clone 后一条命令重建整机（Windows 侧 + WSL 侧 + dotfiles，幂等可重放）" --add-topic windows --add-topic dotfiles --add-topic dev-environment --add-topic wsl --add-topic winget --add-topic powershell`）。收尾抽查已由会话完成：匿名可读、双徽章 200、CI 最近三次全绿；10-20 那次 failure 系 runner 上 winget configure validate 瞬时 E_FAIL（-2147467259），非仓库问题。
