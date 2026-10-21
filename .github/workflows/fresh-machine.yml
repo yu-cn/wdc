@@ -1,0 +1,16 @@
+name: fresh-machine
+# 新机冒烟（工单26）：fresh clone → 5.1 入口 bootstrap。runner 为管理员上下文——提权路径自动满足
+# （不弹 UAC），WSL 阶段按既有守卫自跳过（提权上下文 + runner 无嵌套虚拟化）。
+# 仅手动触发（workflow_dispatch）：spec 曾将「CI 常态化测试」列为 Out-of-Scope，本工作流不定期跑，
+# 需要证明「clone 后一条命令开箱即用」时手动来一发。
+on: workflow_dispatch
+jobs:
+  smoke:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: fresh clone + bootstrap（Windows PowerShell 5.1 入口）
+        shell: cmd
+        run: |
+          git clone https://github.com/yu-cn/WDC.git "%RUNNER_TEMP%\WDC"
+          powershell -NoProfile -ExecutionPolicy Bypass -File "%RUNNER_TEMP%\WDC\bootstrap.ps1"

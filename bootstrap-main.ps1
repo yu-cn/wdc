@@ -192,8 +192,13 @@ $null = Invoke-Stage 'Stage 6/6 - Dotfiles 安装' {
     $out = & pwsh -NoProfile -File $installer 2>&1
     $code = $LASTEXITCODE
     $out | ForEach-Object { Write-Host $_ }
-    if ($code -eq 0) { Write-Step 'dotfiles' 'OK'; return $true }
-    Write-Step 'dotfiles' 'FAIL' "退出码 $code"; return $false
+    if ($code -eq 0) { Write-Step 'dotfiles' 'OK' } else { Write-Step 'dotfiles' 'FAIL' "退出码 $code"; return $false }
+    # pre-commit 钩子接线（工单23）：collaboration 承诺的「钩子把关」此前靠手工接线、实测主机未接——
+    # 每次 bootstrap 幂等确保（repo-local 配置，不动全局）
+    & git -C $PSScriptRoot config core.hooksPath .githooks
+    if ($LASTEXITCODE -eq 0) { Write-Step 'pre-commit 钩子' 'OK' 'core.hooksPath → .githooks（repo-local）' }
+    else { Write-Step 'pre-commit 钩子' 'FAIL' "git config 退出码 $LASTEXITCODE"; return $false }
+    return $true
 }
 
 # ---------------------------------------------------------------------------

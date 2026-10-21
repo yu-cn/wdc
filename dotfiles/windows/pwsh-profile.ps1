@@ -41,3 +41,12 @@ function wdc {
     }
     & pwsh -NoProfile -File (Join-Path $repo 'scripts\wdc.ps1') @args
 }
+
+# --- dotfiles 漂移即时提示（工单24）：写穿/未提交模板开新终端即见——红线「提交前核对无漂移」的自动守卫 ---
+# --no-optional-locks：不与并行运行的 lazygit/starship 抢 index 锁（只读探测的标准姿势）
+$__wdcRepo = Get-Content "$HOME\.wdc" -ErrorAction SilentlyContinue | Select-Object -First 1
+if ($__wdcRepo -and (Test-Path (Join-Path $__wdcRepo 'dotfiles'))) {
+    $__drift = @(git --no-optional-locks -C "$__wdcRepo" status --porcelain -- dotfiles/).Count
+    if ($__drift -gt 0) { Write-Host "wdc: dotfiles 漂移 ${__drift} 处——commit 吸收或 wdc triage 处置" -ForegroundColor Yellow }
+}
+Remove-Variable __wdcRepo, __drift -ErrorAction SilentlyContinue

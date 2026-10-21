@@ -61,7 +61,7 @@ bootstrap 先确保 PowerShell 7 就位（裸机自动安装），再依次跑�
   3. `LICENSE`——版权人换成你自己
   4. `.scratch/`——作者的内部工单流，可删可留（留作方法参考）
 
-  脚本里没有写死的仓库地址，fork 后无需改动即可 bootstrap。
+  脚本里没有写死的仓库地址，fork 后无需改动即可 bootstrap；日后跟随上游演进的 recipe 见 [docs/forking.md](docs/forking.md)。
 
 ## 常用命令
 
@@ -103,6 +103,7 @@ Docker Engine 由 WSL 阶段从官方源安装，默认用户加入 docker 组�
 ## 文档
 
 - 词汇表：[GLOSSARY.md](GLOSSARY.md) · 决策：[docs/adr/](docs/adr/) · 上游调研：[docs/research/](docs/research/) · 吸收账本：[docs/upstream-ledger.md](docs/upstream-ledger.md)
+- Fork 跟随：[docs/forking.md](docs/forking.md)（改造成自己环境后如何跟上游演进）
 - 贡献指南：[CONTRIBUTING.md](CONTRIBUTING.md)（fork 自用为主，通用核心改进欢迎 PR）
 - 工单与规格：`.scratch/`（作者的本地 markdown 工单流；外部贡献请走 GitHub Issues/PR）
 

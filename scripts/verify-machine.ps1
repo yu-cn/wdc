@@ -35,6 +35,8 @@ foreach ($k in $map.Keys) {
 }
 # dotfiles 是符号链接的落点，被机器侧工具写穿会直接污染仓库（gh auth login 实锤，工单14）——验收前必须与 HEAD 一致
 Assert 'dotfiles 模板与 HEAD 一致（防写穿）' { @(git -C $repo status --porcelain -- dotfiles).Count -eq 0 } '写穿漂移——处置：pwsh scripts/triage-dotfiles-drift.ps1（逐文件 吸收/还原）'
+# 钩子接线断言（工单23）：collaboration 承诺 pre-commit 把关；接线由 bootstrap Stage 6 幂等保证
+Assert 'pre-commit 钩子已接线' { (git -C $repo config core.hooksPath) -eq '.githooks' } 'git config core.hooksPath .githooks（repo-local；下次 bootstrap 会自动接上）'
 # WT 的 WSL profile 走机器适配 fragment（ADR-0004）：模板不含 WSL 条目，fragment 应已渲染且含本机发行版
 Assert 'WT WSL fragment 已渲染' {
     $frag = Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\fragments\wdc-wsl.json'

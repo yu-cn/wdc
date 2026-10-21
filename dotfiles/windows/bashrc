@@ -60,3 +60,13 @@ wdc() {
     fi
     pwsh -NoProfile -File "$repo/scripts/wdc.ps1" "$@"
 }
+
+# --- dotfiles 漂移即时提示（工单24）：写穿/未提交模板开新终端即见（与 pwsh profile 同款）---
+if [ -f "$HOME/.wdc" ]; then
+    _wdc_repo=$(head -n 1 "$HOME/.wdc")
+    if [ -d "$_wdc_repo/dotfiles" ]; then
+        _wdc_n=$(git --no-optional-locks -C "$_wdc_repo" status --porcelain -- dotfiles/ 2>/dev/null | wc -l)
+        [ "${_wdc_n:-0}" -gt 0 ] && printf '\033[33mwdc: dotfiles 漂移 %s 处——commit 吸收或 wdc triage 处置\033[0m\n' "$_wdc_n"
+    fi
+    unset _wdc_repo _wdc_n
+fi
