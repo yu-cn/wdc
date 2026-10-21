@@ -1,8 +1,31 @@
-# WDC — 个人 Windows 开发环境（通用核心配置）
+# WDC — 声明式 Windows 开发环境
 
-把「我的 Windows 开发环境」变成可重放、可迁移的声明式仓库：**任何一台开发机 clone 后跑一条命令，即得完整环境（Windows 侧 + WSL 侧）**。基于 microsoft/WindowsDeveloperConfig 的经验自建（不 fork，见 [ADR-0001](docs/adr/0001-own-tree-not-fork-upstream.md)）。
+> clone 之后一条命令，任何一台 Windows 机器收敛到声明状态：软件、系统设置、dotfiles、WSL Ubuntu——幂等、可重放、可迁移。
 
-仓库以 [MIT](LICENSE) 开源：欢迎参考、直接使用或 fork 改造成你自己的环境（见「[使用与改造](#使用与改造)」）。
+[![validate](https://github.com/yu-cn/WDC/actions/workflows/validate.yml/badge.svg)](https://github.com/yu-cn/WDC/actions/workflows/validate.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+这是作者的日常开发环境，以仓库形式维护：配置只描述「一台机器应当处于什么状态」，由 bootstrap 负责把机器收敛到这个状态。基于 microsoft/WindowsDeveloperConfig 的经验自建（不 fork，见 [ADR-0001](docs/adr/0001-own-tree-not-fork-upstream.md)）。仓库以 [MIT](LICENSE) 开源，欢迎直接使用或 fork 改造成你自己的环境（见「[使用与改造](#使用与改造)」）。
+
+## 一条命令得到什么
+
+**系统**（[base-windows 域](configs/base-windows.winget)，27 项注册表 opinion）
+开发者模式 · 启用 Sudo · 长路径 · 深色主题 · 显示扩展名/隐藏文件 · 资源管理器与任务栏去噪 · 开始菜单关 Web 搜索与推荐 · 关 Recall / Click To Do / 小组件 · Edge 新标签空白 · 关远程桌面
+
+**CLI**（[cli-tools 域](configs/cli-tools.winget)，17 个 winget 包）
+Git · PowerShell 7 · GitHub CLI · Chrome · Everything · PowerToys · lazygit · delta · fzf / fd / ripgrep / zoxide / bat / jq · make
+
+**编辑器**（[editors 域](configs/editors.winget)）
+VS Code + 32 个扩展（Python / Jupyter 全家、Remote-WSL / SSH / Containers、Prettier / Vitest / oxc、中文语言包等，[完整清单](configs/vscode-extensions.txt)）
+
+**语言运行时**
+Node 归 **vp**（默认跟随 LTS）、Python 归 **uv**——Windows / WSL 两侧同工具同习惯；WSL 侧另有 Go（钉 1.27.2）
+
+**WSL 侧**（Ubuntu，[setup-ubuntu.sh](scripts/wsl/setup-ubuntu.sh)）
+build-essential 等基础包 · gh（官方源）· uv / vp / Starship · 默认 shell 统一 bash
+
+**dotfiles**（[dotfiles/](dotfiles/)，符号链接安装，旧文件备份 `*.bak`）
+gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL bash 三 shell 统一提示符）· Windows Terminal · VS Code settings / keybindings · bashrc 两侧
 
 ## 快速开始（新机器）
 
@@ -14,7 +37,10 @@ cd WDC
 pwsh bootstrap.ps1
 ```
 
-bootstrap 会依次跑六个阶段（预检 → 无副作用校验 → 应用声明配置 → 用户级安装 → WSL 侧 → dotfiles），全程输出分阶段报告。**一条命令一键收敛**：未提权启动会弹一次 UAC，提权子回合跑完后自动补跑用户级/WSL 阶段，无需手动二次运行。**首次运行你需要配合的五件事**：
+bootstrap 会依次跑六个阶段（预检 → 无副作用校验 → 应用声明配置 → 用户级安装 → WSL 侧 → dotfiles），全程输出分阶段报告。**一条命令一键收敛**：未提权启动会弹一次 UAC，提权子回合跑完后自动补跑用户级/WSL 阶段，无需手动二次运行。
+
+<details>
+<summary><strong>首次运行你需要配合的五件事</strong>（UAC 提权 · SmartScreen 放行 · 重启续跑 · 填写身份 · 关 VSCode 设置同步）</summary>
 
 1. **UAC 提权**——未提权启动会自动请求，点一次确认
 2. **SmartScreen 放行**——vp 安装器未代码签名，全新机器首次可能弹窗，选「仍要运行」
@@ -22,11 +48,13 @@ bootstrap 会依次跑六个阶段（预检 → 无副作用校验 → 应用声
 4. **填写身份**——bootstrap 生成 `~/.gitidentity` 占位后，填上**本机**的 git name/email（各机身份不同；不填则 git 拒绝提交，这是防错护栏）
 5. **关闭 VSCode 设置同步**——首次启动 VSCode 若已登录账号（齿轮/账户图标 → 设置同步 → 关闭）。设置同步是账号级开关、配置文件管不到它；不关的话云端会与仓库 dotfiles 打架（仓库是唯一主人）
 
+</details>
+
 重跑 bootstrap 幂等：已就位的全部跳过，只有漂移会被收敛。`-NoElevate` 仍可用于只跑用户级/WSL 阶段（无需提权时）。
 
 ## 使用与改造
 
-- **直接用**：照上文「快速开始」clone 本仓库跑 bootstrap。仓库不含作者的身份与机器派生值——`~/.gitidentity` 填你自己的 git name/email，WSL 终端配置按你本机发行版渲染（ADR-0004）——之后 `wdc sync` 一键跟进上游演进。
+- **直接用**：照上文「快速开始」clone 本仓库跑 bootstrap。仓库不含作者的身份与机器派生值——`~/.gitidentity` 填你自己的 git name/email，WSL 终端配置按你本机发行版渲染（[ADR-0004](docs/adr/0004-machine-adaptive-rendering.md)）——之后 `wdc sync` 一键跟进上游演进。
 - **fork 改造（推荐）**：fork 成你自己的仓库再 bootstrap，偏好由你定。改造清单：
   1. `configs/*.winget` 与 `configs/vscode-extensions.txt`——软件与扩展清单，删你不用的
   2. `dotfiles/`——shell / git / 终端 / 编辑器偏好

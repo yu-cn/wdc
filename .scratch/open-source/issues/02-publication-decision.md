@@ -15,3 +15,5 @@
 ## Comments
 
 - 2026-10-21（主机会话）：翻可见性的操作入口：网页 Settings → Danger Zone → Change visibility，或 `gh repo edit yu-cn/WDC --visibility public --accept-visibility-change-consequences`。GitHub 会要求确认；翻公开后历史 fork/缓存不可撤回，故此动作留给主人亲手执行。
+
+- 2026-10-21（主机会话）补记：环境主人定夺「按建议执行」（MIT 维持 + 直接翻可见性）后代跑三次均网络层失败（unexpected EOF / TLS handshake timeout / 一次 PATCH 返回 404 而 view 正常，疑似本机代理对 PATCH 不稳），仓库仍 PRIVATE。主人改为晚些自己执行；description/topics 未设置，翻公开后可一并补。
