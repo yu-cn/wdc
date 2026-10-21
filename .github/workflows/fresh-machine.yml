@@ -14,3 +14,11 @@ jobs:
         run: |
           git clone https://github.com/yu-cn/WDC.git "%RUNNER_TEMP%\WDC"
           powershell -NoProfile -ExecutionPolicy Bypass -File "%RUNNER_TEMP%\WDC\bootstrap.ps1"
+      # run1 实录：cmd 步骤被 Ctrl+C 掐断仍报 success（假阳性），transcript 随 runner 销毁——
+      # 成败都带日志工件回来，判读以日志为准、不看结论位
+      - name: 上传 bootstrap 日志（成败都传）
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bootstrap-logs
+          path: ${{ runner.temp }}\WDC\logs\
