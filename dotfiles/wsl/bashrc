@@ -28,11 +28,6 @@ case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) PATH="$HOME/.local/bin:$PATH";; 
 [ -f "$HOME/.local/bin/env" ] && . "$HOME/.local/bin/env"
 command -v uv >/dev/null 2>&1 && eval "$(uv generate-shell-completion bash)"
 command -v uvx >/dev/null 2>&1 && eval "$(uvx --generate-shell-completion bash)"
-# Go（官方 tarball 装于 /usr/local/go，由 setup-ubuntu.sh root 阶段维护）
-if [ -d /usr/local/go/bin ]; then
-    case ":$PATH:" in *":/usr/local/go/bin:"*) ;; *) PATH="/usr/local/go/bin:$PATH";; esac
-fi
-case ":$PATH:" in *":$HOME/go/bin:"*) ;; *) PATH="$HOME/go/bin:$PATH";; esac
 # vp（Vite+，Node 托管；安装器生成的 env 脚本存在则启用——不同版本路径不同，逐个尝试）
 for _vp_env in "$HOME/.config/vite-plus/env" "$HOME/.local/share/vite-plus/env.sh" "$HOME/.local/share/vite-plus/env"; do
     [ -f "$_vp_env" ] && . "$_vp_env" && break

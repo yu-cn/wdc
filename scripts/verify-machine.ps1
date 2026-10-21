@@ -76,11 +76,11 @@ Assert 'uv 就位' { Get-Command uv -ErrorAction SilentlyContinue }
 # WSL 默认用户自动探测（与 install-wsl-env.ps1 同法；硬编码 ubuntu 会误伤默认用户名不同的机器，工单12族）
 $wslUser = (((& wsl.exe -d Ubuntu -e bash -c 'whoami') 2>$null) -replace "`0", '').Trim()
 Write-Phase '5/6 · WSL 侧'
-$wslProbe = (& wsl.exe -d Ubuntu -u $wslUser -e bash -c 'echo "bash:$(getent passwd $(whoami) | cut -d: -f7) go:$(/usr/local/go/bin/go version 2>/dev/null | cut -d" " -f3) uv:$(~/.local/bin/uv --version 2>/dev/null | cut -d" " -f2) node:$(if [ -x ~/.vite-plus/bin/node ]; then ~/.vite-plus/bin/node -v; elif [ -x ~/.local/share/vite-plus/bin/node ]; then ~/.local/share/vite-plus/bin/node -v; else echo MISSING; fi) links:$(readlink ~/.bashrc 2>/dev/null | grep -ci wdc) id:$(git config user.name 2>/dev/null)"') 2>&1
+$wslProbe = (& wsl.exe -d Ubuntu -u $wslUser -e bash -c 'echo "bash:$(getent passwd $(whoami) | cut -d: -f7) docker:$(/usr/bin/docker --version 2>/dev/null | cut -d" " -f3) uv:$(~/.local/bin/uv --version 2>/dev/null | cut -d" " -f2) node:$(if [ -x ~/.vite-plus/bin/node ]; then ~/.vite-plus/bin/node -v; elif [ -x ~/.local/share/vite-plus/bin/node ]; then ~/.local/share/vite-plus/bin/node -v; else echo MISSING; fi) links:$(readlink ~/.bashrc 2>/dev/null | grep -ci wdc) id:$(git config user.name 2>/dev/null)"') 2>&1
 $p = ($wslProbe -replace "`0", '') -join ' '
 Write-Step 'WSL 探测' 'INFO' $p
 Assert 'WSL bash 默认' { $p -match 'bash:/bin/bash' }
-Assert 'WSL Go 1.27.2' { $p -match 'go:go1\.27\.2' }
+Assert 'WSL docker' { $p -match 'docker:[0-9]' }
 Assert 'WSL uv' { $p -match 'uv:0\.' }
 Assert 'WSL node(vp)' { $p -match 'node:v' }
 Assert 'WSL dotfiles 链接' { $p -match 'links:[1-9]' }

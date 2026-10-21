@@ -10,7 +10,6 @@ $git_branch\
 $git_status\
 $nodejs\
 $python\
-$golang\
 $cmd_duration\
 $line_break\
 $character"""
@@ -32,10 +31,6 @@ symbol = " "
 format = "[$symbol($version )]($style)"
 
 [python]
-symbol = " "
-format = "[$symbol($version )]($style)"
-
-[golang]
 symbol = " "
 format = "[$symbol($version )]($style)"
 

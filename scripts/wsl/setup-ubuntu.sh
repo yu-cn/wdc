@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
 # setup-ubuntu.sh — Ubuntu 发行版内环境（WDC WSL 侧，工单 07）
 # 由 install-wsl-env.ps1 调用，两种角色各跑一次：
-#   root: apt 工具集 + gh 官方源 + Go 官方 tarball（钉版本）+ 默认 shell 改 bash
+#   root: apt 工具集 + gh 官方源 + Docker Engine + 移除 Go（工单21/22）+ 默认 shell 改 bash
 #   user: uv + vp + starship + Homebrew 残留清理 + dotfiles 链接 + 身份带过
 set -euo pipefail
 
 ROLE="${1:?用法: setup-ubuntu.sh <root|user> <user> <repo_wsl路径> [win身份文件路径]}"
 WDC_USER="${2:?}"
 REPO_WSL="${3:?}"
-GO_VERSION="1.27.2"     # 钉版本：升级时改这里并在吸收账本记一笔
 VP_VERSION="1.3.0"      # 与 Windows 侧 install-languages.ps1 保持一致
 
 log()  { printf '[setup-ubuntu] %s\n' "$*"; }
@@ -29,12 +28,20 @@ if [ "$ROLE" = "root" ]; then
         apt-get update -qq && apt-get install -y -qq gh >/dev/null
     fi
 
-    log "Go ${GO_VERSION}（官方 tarball，钉版本）"
-    if [ ! -x /usr/local/go/bin/go ] || ! /usr/local/go/bin/go version | grep -q "go${GO_VERSION}"; then
-        arch=$(dpkg --print-architecture)
-        curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${arch}.tar.gz" -o /tmp/go.tgz
-        rm -rf /usr/local/go && tar -C /usr/local -xzf /tmp/go.tgz && rm -f /tmp/go.tgz
+    log "Docker Engine（官方源 get.docker.com；已装则跳过）"
+    if ! have docker; then
+        curl -fsSL https://get.docker.com | sh >/dev/null
     fi
+    usermod -aG docker "$WDC_USER"   # 幂等；免 sudo 需重新登录 WSL 生效（工单22）
+
+    log "systemd 自启确保（Docker 守护进程依赖）"
+    if ! grep -q '^systemd=true' /etc/wsl.conf 2>/dev/null; then
+        printf '\n[boot]\nsystemd=true\n' >> /etc/wsl.conf
+        log "已写入 [boot] systemd=true——wsl --shutdown 后下次进入生效"
+    fi
+
+    log "移除 Go（工单21：退出通用核心；~/go 用户数据不碰）"
+    [ -d /usr/local/go ] && rm -rf /usr/local/go || true
 
     log "默认 shell = bash（反转 wsl-comfort 的 zsh）"
     current_shell=$(getent passwd "$WDC_USER" | cut -d: -f7)

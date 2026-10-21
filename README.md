@@ -19,10 +19,10 @@ Git · PowerShell 7 · GitHub CLI · Chrome · Everything · PowerToys · lazygi
 VS Code + 32 个扩展（Python / Jupyter 全家、Remote-WSL / SSH / Containers、Prettier / Vitest / oxc、中文语言包等，[完整清单](configs/vscode-extensions.txt)）
 
 **语言运行时**
-Node 归 **vp**（默认跟随 LTS）、Python 归 **uv**——Windows / WSL 两侧同工具同习惯；WSL 侧另有 Go（钉 1.27.2）
+Node 归 **vp**（默认跟随 LTS）、Python 归 **uv**——Windows / WSL 两侧同工具同习惯
 
 **WSL 侧**（Ubuntu，[setup-ubuntu.sh](scripts/wsl/setup-ubuntu.sh)）
-build-essential 等基础包 · gh（官方源）· uv / vp / Starship · 默认 shell 统一 bash
+build-essential 等基础包 · gh（官方源）· Docker Engine（官方源 + docker 组免 sudo）· uv / vp / Starship · 默认 shell 统一 bash
 
 **dotfiles**（[dotfiles/](dotfiles/)，符号链接安装，旧文件备份 `*.bak`）
 gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL bash 三 shell 统一提示符）· Windows Terminal · VS Code settings / keybindings · bashrc 两侧
@@ -89,13 +89,9 @@ dotfiles/   dotfiles 层：windows / wsl / shared 三处，符号链接安装（
 - 提示符三 shell（pwsh / Git Bash / WSL bash）统一 **Starship**，一份 `starship.toml`
 - 移除清单显式执行，**清单外不碰**：JetBrains 套件、Typora、GitHub Desktop 等机器自留地安全
 
-## Docker（默认不装，要用即装）
+## Docker（WSL 侧默认装）
 
-```powershell
-# 在 WSL Ubuntu 内安装 Docker Engine（官方脚本），并把当前用户加入 docker 组
-wsl -d Ubuntu -u root -e bash -c "curl -fsSL https://get.docker.com | sh && usermod -aG docker ubuntu"
-# 之后 wsl 内重新登录即可免 sudo 用 docker
-```
+Docker Engine 由 WSL 阶段从官方源安装，默认用户加入 docker 组（免 sudo 需重新登录 WSL 一次生效）。守护进程依赖 systemd 自启——bootstrap 会确保 `/etc/wsl.conf` 的 `[boot] systemd=true`，若为本次新写入需 `wsl --shutdown` 后下次进入生效。Windows 侧的 Docker Desktop 不在声明内（机器自留地）。
 
 ## 新开发机接入（机器对等，任意台可重复）
 
