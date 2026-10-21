@@ -13,3 +13,5 @@
 ## Comments
 
 - 2026-10-21（主机会话）：证据链：run1/run2 transcript（artifact bootstrap-*.log）中断时间均在 cli-tools 应用 ~2 分钟处；runner 镜像 pwsh 版本落后于 winget stable 是触发条件；两跑结论位均 success（cmd 假阳性形态），判读必须看 transcript——这也是工单 26 加工件上传的原因。
+
+- 2026-10-21（主机会话）补：run5 尝试过 winget 设置层切 winhttp 下载器（无效，但那是针对 Chrome/DO 问题的试验）；本工单的 pwsh-MSI-杀宿主问题独立成立——预对齐步骤（cmd 宿主提前升级 PS7）在 CI 侧已证明有效，真机侧仍待主人从 a/b/c 三案定夺。

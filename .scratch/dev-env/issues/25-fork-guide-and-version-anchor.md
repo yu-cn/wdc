@@ -9,8 +9,9 @@
 - [x] docs/forking.md：一次性设置 / 日常跟随 / 分层冲突预期 / 版本锚点说明
 - [x] README「使用与改造」链接 forking.md
 - [x] 文档节收录 forking.md
-- [ ] v0.1.0 tag + Release（在本批 CI 绿之后打，锚定全绿提交）
+- [x] v0.1.0 tag + Release（锚定本批收口提交，validate CI 绿）
 
 ## Comments
 
 - 2026-10-21（主机会话）：tag 语义定为「验证全绿的公开锚点」，不承诺兼容性——与上游调研里「官方也不打 tag 但示例用 -Ref」的观察呼应。
+- 2026-10-21（主机会话）补：Release 备注同时声明 fresh-machine 的 runner 已知限制（工单26）与工单27 待决项，锚点如实。
