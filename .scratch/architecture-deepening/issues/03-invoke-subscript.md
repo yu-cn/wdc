@@ -23,3 +23,4 @@ Status: ready-for-human
 
 - 2026-10-21 实施（ZCode 会话，refactor commit 0097606）；同会话真机收口：validate 全绿；`bootstrap -NoElevate` 全绿 113s——阶段 1/7…7/7 顺次、Summary 各步 `[OK] validate.ps1`/`install-languages.ps1` 等 Invoke-Subscript 口径输出正常、幂等收敛。
 - 剩余一项：`wdc sync` 冒烟会弹 UAC，本会话无法点击，留给环境主人任一次日常 sync 顺手核验（wdc.ps1 未改动，直调路径行为无变化——此项属回归确认，不阻塞归档判断）。
+- 2026-10-21 补：这次 sync 冒烟同时是工单 04（提权 Stage 3 首次走 Get-WdcDomains）与工单 06（apply 判码路径，行为未变）的提权侧回归确认——一次动作覆盖三单。

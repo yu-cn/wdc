@@ -63,23 +63,27 @@ Assert 'vp Windows 侧 = 钉子' {
 Assert 'node 走 vp shim' { (Get-Command node -ErrorAction SilentlyContinue).Source -like '*vite-plus*' }
 Assert 'uv 就位' { Get-Command uv -ErrorAction SilentlyContinue }
 
-# WSL 默认用户自动探测（与 install-wsl-env.ps1 同法；硬编码 ubuntu 会误伤默认用户名不同的机器，工单12族）
-$wslUser = (((& wsl.exe -d Ubuntu -e bash -c 'whoami') 2>$null) -replace "`0", '').Trim()
+# WSL 默认用户自动探测（Get-WslDefaultUser；硬编码用户名会误伤默认用户名不同的机器，工单12族）
+$wslUser = Get-WslDefaultUser
 Write-Phase '5/6 · WSL 侧'
-$wslProbe = (& wsl.exe -d Ubuntu -u $wslUser -e bash -c 'echo "bash:$(getent passwd $(whoami) | cut -d: -f7) docker:$(/usr/bin/docker --version 2>/dev/null | cut -d" " -f3) uv:$(~/.local/bin/uv --version 2>/dev/null | cut -d" " -f2) node:$(if [ -x ~/.vite-plus/bin/node ]; then ~/.vite-plus/bin/node -v; elif [ -x ~/.local/share/vite-plus/bin/node ]; then ~/.local/share/vite-plus/bin/node -v; else echo MISSING; fi) links:$(readlink ~/.bashrc 2>/dev/null | grep -ci wdc) id:$(git config user.name 2>/dev/null)"') 2>&1
-$p = ($wslProbe -replace "`0", '') -join ' '
-Write-Step 'WSL 探测' 'INFO' $p
-Assert 'WSL bash 默认' { $p -match 'bash:/bin/bash' }
-Assert 'WSL docker' { $p -match 'docker:[0-9]' }
-Assert 'WSL uv' { $p -match 'uv:0\.' }
-Assert 'WSL node(vp)' { $p -match 'node:v' }
-Assert 'WSL dotfiles 链接' { $p -match 'links:[1-9]' }
-Assert 'WSL 身份带过' { $p -match 'id:\S+' }
+# 探测走 scripts/wsl/probe.sh（与安装期 install-wsl-env.ps1 同源，工单05；key:value 单行输出）
+$probeSh = ConvertTo-WslPath (Join-Path $repo 'scripts\wsl\probe.sh')
+$probe = Invoke-WslScript -Distro 'Ubuntu' -User $wslUser -Script $probeSh
+$probeMap = @{}
+foreach ($line in ($probe.Lines | Where-Object { $_ })) { $k, $v = $line -split ':', 2; $probeMap[$k] = $v }
+Write-Step 'WSL 探测' 'INFO' (($probe.Lines | Where-Object { $_ }) -join ' ')
+Assert 'WSL bash 默认' { $probeMap['shell'] -eq '/bin/bash' }
+Assert 'WSL docker' { $probeMap['docker'] -match '^[0-9]' }
+Assert 'WSL uv' { $probeMap['uv'] -ne 'MISSING' }
+Assert 'WSL node(vp)' { $probeMap['node'] -match '^v' }
+Assert 'WSL dotfiles 链接' { [int]$probeMap['links'] -ge 1 }
+Assert 'WSL 身份带过' { $probeMap['id'] -ne 'MISSING' }
 
 Write-Phase '6/6 · 三域漂移'
 if ($Quick) { Write-Step '漂移检查' 'SKIP' '-Quick 模式跳过' }
 else {
-    foreach ($d in 'base-windows', 'cli-tools', 'editors') {
+    try { $domains = Get-WdcDomains } catch { Write-Step '域清单' 'FAIL' $_.Exception.Message; exit 1 }
+    foreach ($d in $domains) {
         $domain = $d
         Assert "$domain 漂移=0" {
             $out = (winget configure test --file (Join-Path $repo "configs\$domain.winget") --accept-configuration-agreements 2>&1 | ForEach-Object { $_ -replace "`0", '' }) -join "`n"

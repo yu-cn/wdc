@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: ready-for-human
 
 # 07 · check-upstream 的 keys 维度：补完或删除
 
@@ -20,3 +20,4 @@ Status: ready-for-agent
 ## Comments
 
 - 2026-10-21 开单（架构评估候选 7，Speculative——低频脚本）。
+- 2026-10-21 转入定夺：倾向 **B（删除维度）**——脚本本职是包维度的「值得考虑」提示，keys 从未承重、基线已污染，与 ADR-0001 的人工挑选/YAGNI 立场一致。等环境主人拍板。

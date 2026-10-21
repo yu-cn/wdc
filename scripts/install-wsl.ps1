@@ -23,7 +23,7 @@ if (-not $wslWorks) {
 Write-Step 'WSL 功能' 'OK' '已启用'
 
 # --- 2) Ubuntu 发行版 ---
-$distros = @((& wsl.exe -l -q) 2>$null | ForEach-Object { ($_ -replace "`0", '').Trim() } | Where-Object { $_ })
+$distros = Get-WslDistros
 if ($distros -contains 'Ubuntu') {
     Write-Step 'Ubuntu' 'OK' '已就位'
     exit 0

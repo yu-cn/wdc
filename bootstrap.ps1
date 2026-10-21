@@ -59,7 +59,9 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
     if (-not $ValidateOnly) {
         Write-Host '[bootstrap] 检查 PowerShell 7 更新（5.1 宿主内升级安全）…'
         & cmd /c 'winget upgrade -e --id Microsoft.PowerShell --source winget --accept-package-agreements --accept-source-agreements --disable-interactivity' | Out-Null
-        if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne -1978335189) {
+        # 0x8A15002B = APPINSTALLER_CLI_ERROR_UPDATE_NOT_APPLICABLE（无适用升级）——已是最新时的正常退出码，非错误
+        $noUpgrade = -1978335189
+        if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne $noUpgrade) {
             Write-Host "[bootstrap] PowerShell 7 升级未完成（winget 退出码 $LASTEXITCODE）——继续用现有版本" -ForegroundColor Yellow
         }
         $pwshExe = Get-PwshExe

@@ -22,11 +22,10 @@ if ($configFiles.Count -eq 0) {
     $failCount++
 }
 foreach ($f in $configFiles) {
-    # 退出码语义（实测 winget 1.29）：0=干净通过；1=仅警告（私有配置单元/未指定模块，两类均为本仓库
-    # 设计固有，良性）；负 HRESULT=解析或结构错误。故仅 0 与 1 视为通过。
-    # --ignore-warnings 抑制警告文本输出，不改变退出码。
+    # 退出码语义一处定义于 common.ps1 的 Test-WingetExitCode（含 1=仅警告的良性判定与出处注释）；
+    # --ignore-warnings 抑制警告文本输出，不改变退出码
     & winget configure validate --file $f.FullName --ignore-warnings 2>&1 | Out-Null
-    if ($LASTEXITCODE -eq 0 -or $LASTEXITCODE -eq 1) {
+    if (Test-WingetExitCode -ExitCode $LASTEXITCODE -Operation 'validate') {
         Write-Step $f.Name 'OK'
     } else {
         Write-Step $f.Name 'FAIL' "winget configure validate 退出码 $LASTEXITCODE"

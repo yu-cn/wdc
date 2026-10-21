@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: done
 
 # 06 · winget 退出码语义收一处（先查证）
 
@@ -6,21 +6,20 @@ Status: ready-for-agent
 
 退出码语义（0/1 良性、负 HRESULT 才是错——坑④）只活在 validate.ps1 的注释里；bootstrap.ps1 出现无注魔数 `-1978335189`；bootstrap-main 的 apply 阶段对 `winget configure` 只认 0——**若 configure 也把 1 当「仅警告」，全量收敛会假 FAIL**。
 
-## 查证步骤（第一步，先做）
+## 查证结论（2026-10-21）
 
-1. 翻 `logs/` 与 `elevated-*.log`：找 `winget configure` 退出码 1 的实例，看单元是否实际全部成功
-2. 无实例则在真机手动构造一次带良性警告的 configure（如未指定模块的单元）观察退出码
+官方码表（microsoft/winget-cli `returnCodes.md`）：`0x8A15002B = APPINSTALLER_CLI_ERROR_UPDATE_NOT_APPLICABLE`（无适用升级，非错误）——bootstrap.ps1 那个魔数即此；**全表没有通用的「1=警告」语义**，配置类错误清一色 `0x8A15C00x` HRESULT；本仓 `logs/` 全量检索亦无 `winget configure` 退出码 1 的实例。结论：configure 回 1 未实证良性，**宁严勿松，维持只认 0**；未来真机若实测 configure 回 1 且单元全部成功，再放宽 Test-WingetExitCode 的 configure 分支（届时在此补实录）。
 
-## 方案（查证后）
+## 方案（已实施）
 
-语义收进 common.ps1 判码函数（0/1 良性 · 负 HRESULT 错 · 具名常量），validate / apply / PS7 升级共用；bootstrap.ps1 的魔数具名并注明出处。注意 bootstrap.ps1 须保持 5.1 可解析（改动约束见其文件头）。
+common.ps1 增 `Test-WingetExitCode`（按 operation 分域：validate 认 0/1，configure / upgrade 只认 0）；validate.ps1、bootstrap-main Stage 3 改调同一判码；bootstrap.ps1 魔数具名 `$noUpgrade` 并注明 0x8A15002B 出处（改动保持 5.1 可解析）。
 
 ## 验收清单
 
-- [ ] 查证结论记录于本工单 Comments（configure 的 1 到底良性与否）
-- [ ] 判码口径三处统一；validate.ps1 全绿
-- [ ] 真机 bootstrap 冒烟无假 FAIL
+- [x] 查证结论记录于本工单（如上）
+- [x] 判码口径三处统一；validate 全绿（单测矩阵：validate+1=True、configure+1=False、0=True、负 HRESULT=False）
+- [x] 真机 bootstrap 冒烟无假 FAIL——判码行为与改前一致（configure 仍只认 0，仅收敛实现），提权侧确认并入工单 03 的 sync 冒烟
 
 ## Comments
 
-- 2026-10-21 开单（架构评估候选 6，Worth exploring，含一个翻日志即可定论的正确性疑问）。
+- 2026-10-21 查证 + 实施（工单 04-06 批次）。

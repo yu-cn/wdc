@@ -112,7 +112,8 @@ $null = Invoke-Stage 'Stage 3/7 - Apply 应用声明配置' {
         Write-Step '应用配置' 'SKIP' '需要管理员；本阶段已跳过（其余用户级阶段继续）'
         return $true
     }
-    $domainOrder = 'base-windows', 'cli-tools', 'editors'   # 语言版本走编排层 install-languages.ps1 钉子，无 .winget 域
+    # 域清单与顺序走 Get-WdcDomains 单一来源（内置与 configs/ 目录的一致性校验）；语言版本走编排层 install-languages.ps1 钉子，无 .winget 域
+    $domainOrder = Get-WdcDomains
     $allOk = $true
     # 注：曾试验「先 configure test 漂移=0 再跳过 apply」（工单18），实测 test 与 apply 的耗时几乎相同
     # （瓶颈是 winget 每次调用的固定开销），漂移>0 时反而多付一次——已回退，维持直接应用。
@@ -122,7 +123,7 @@ $null = Invoke-Stage 'Stage 3/7 - Apply 应用声明配置' {
         $out = & winget configure --file $file --accept-configuration-agreements --disable-interactivity 2>&1
         $code = $LASTEXITCODE
         $out | ForEach-Object { Write-Host $_ }
-        if ($code -eq 0) { Write-Step $domain 'OK' }
+        if (Test-WingetExitCode -ExitCode $code -Operation 'configure') { Write-Step $domain 'OK' }
         else { Write-Step $domain 'FAIL' "winget configure 退出码 $code"; $allOk = $false }
     }
     return $allOk
