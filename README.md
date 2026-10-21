@@ -2,7 +2,7 @@
 
 把「我的 Windows 开发环境」变成可重放、可迁移的声明式仓库：**任何一台开发机 clone 后跑一条命令，即得完整环境（Windows 侧 + WSL 侧）**。基于 microsoft/WindowsDeveloperConfig 的经验自建（不 fork，见 [ADR-0001](docs/adr/0001-own-tree-not-fork-upstream.md)）。
 
-仓库以 [MIT](LICENSE) 开源：欢迎参考、直接使用或 fork 改造成你自己的环境（见「[朋友怎么用](#朋友怎么用开源仓库的两种用法)」）。
+仓库以 [MIT](LICENSE) 开源：欢迎参考、直接使用或 fork 改造成你自己的环境（见「[使用与改造](#使用与改造)」）。
 
 ## 快速开始（新机器）
 
@@ -24,7 +24,7 @@ bootstrap 会依次跑六个阶段（预检 → 无副作用校验 → 应用声
 
 重跑 bootstrap 幂等：已就位的全部跳过，只有漂移会被收敛。`-NoElevate` 仍可用于只跑用户级/WSL 阶段（无需提权时）。
 
-## 朋友怎么用（开源仓库的两种用法）
+## 使用与改造
 
 - **直接用**：照上文「快速开始」clone 本仓库跑 bootstrap。仓库不含作者的身份与机器派生值——`~/.gitidentity` 填你自己的 git name/email，WSL 终端配置按你本机发行版渲染（ADR-0004）——之后 `wdc sync` 一键跟进上游演进。
 - **fork 改造（推荐）**：fork 成你自己的仓库再 bootstrap，偏好由你定。改造清单：
@@ -80,7 +80,7 @@ wsl -d Ubuntu -u root -e bash -c "curl -fsSL https://get.docker.com | sh && user
 
 - 词汇表：[GLOSSARY.md](GLOSSARY.md) · 决策：[docs/adr/](docs/adr/) · 上游调研：[docs/research/](docs/research/) · 吸收账本：[docs/upstream-ledger.md](docs/upstream-ledger.md)
 - 贡献指南：[CONTRIBUTING.md](CONTRIBUTING.md)（fork 自用为主，通用核心改进欢迎 PR）
-- 工单与规格：`.scratch/`（作者的本地 markdown 工单流；外部朋友请走 GitHub Issues/PR）
+- 工单与规格：`.scratch/`（作者的本地 markdown 工单流；外部贡献请走 GitHub Issues/PR）
 
 ## 许可证
 

@@ -15,3 +15,5 @@
 ## Comments
 
 - 2026-10-21（主机会话）：审计与改动一气呵成。`gh repo view` 确认远端当前 PRIVATE（github.com/yu-cn/WDC）；logs/ 未被跟踪（`*.log` 已 ignore）。审计结论：内容本身已达公开安全水准——身份文件、noreply 邮箱、ADR-0004 机器自适应渲染这些既有设计把卫生提前做完了。
+
+- 2026-10-21（主机会话）补记：环境主人反馈——「朋友」是对话语境（描述谁会用），不应进公开文档；README 节名改为「使用与改造」，README/CONTRIBUTING 相关措辞同步中性化。
