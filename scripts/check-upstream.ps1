@@ -2,6 +2,7 @@
 # check-upstream.ps1 — 上游吸收机制的事实收集器（ADR-0001 补充：人工挑选，不做自动同步）
 # 做什么：拉取 microsoft/WindowsDeveloperConfig 当前状态，与「吸收账本基线」及我们的声明对比，
 #         输出「上游新增了什么 / 我们是否已有等价物」的差异报告。只陈述事实，不改任何配置。
+# 注册表键维度已删（工单07：keys 从未参与差异输出、还把我们的键灌进上游集合污染基线；包维度即「值得考虑」提示的全部，YAGNI）
 # 移植决策永远由环境主人做；吸收后在 docs/upstream-ledger.md 记一笔。
 # 用法：
 #   pwsh scripts/check-upstream.ps1                 # 对比基线出报告
@@ -21,7 +22,7 @@ $headSha = $head.sha
 $headDate = $head.commit.committer.date
 Write-Step '上游 HEAD' 'INFO' "$($headSha.Substring(0,10)) @ $headDate"
 
-# --- 2) 拉取 src/ 下相关文件并提取 winget 包 ID 与注册表键 ---
+# --- 2) 拉取 src/ 下相关文件并提取 winget 包 ID ---
 $tree = Invoke-RestMethod -Headers $apiHeaders "https://api.github.com/repos/$upstreamRepo/git/trees/main?recursive=1"
 $interesting = @($tree.tree | Where-Object {
     $_.type -eq 'blob' -and $_.path -like 'src/*' -and (
@@ -33,25 +34,22 @@ Write-Step '上游扫描范围' 'INFO' "$($interesting.Count) 个文件（src/ �
 
 $idPattern = "[A-Za-z0-9][A-Za-z0-9_.-]*\.[A-Za-z0-9][A-Za-z0-9_.-]*/[A-Za-z0-9][A-Za-z0-9_.-]*"
 $upstreamIds = [System.Collections.Generic.SortedSet[string]]::new()
-$upstreamKeys = [System.Collections.Generic.SortedSet[string]]::new()
 foreach ($f in $interesting) {
     $raw = Invoke-RestMethod -Headers $apiHeaders "https://raw.githubusercontent.com/$upstreamRepo/main/$($f.path)"
     foreach ($m in [regex]::Matches($raw, $idPattern)) { $null = $upstreamIds.Add($m.Value) }
-    foreach ($m in [regex]::Matches($raw, '(?i)keypath\s*=\s*[''"]([^''"]+)')) { $null = $upstreamKeys.Add($m.Groups[1].Value) }
 }
 
 # --- 3) 我们的声明（configs/*.winget）---
 $ours = [System.Collections.Generic.SortedSet[string]]::new()
 foreach ($f in Get-ChildItem (Join-Path $PSScriptRoot '..\configs') -Filter '*.winget') {
     foreach ($m in [regex]::Matches((Get-Content $f.FullName -Raw), '(?m)^\s*id:\s*(\S+)')) { $null = $ours.Add($m.Groups[1].Value) }
-    foreach ($m in [regex]::Matches((Get-Content $f.FullName -Raw), '(?i)keyPath:\s*(\S+)')) { $null = $upstreamKeys.Add($m.Groups[1].Value) | Out-Null; $null = $ours.Add("key:$($m.Groups[1].Value)") }
 }
 
 # --- 4) 与基线对比 / 或写基线 ---
 if ($UpdateBaseline -or -not (Test-Path $baselineFile)) {
-    @{ head = $headSha; date = $headDate; packages = @($upstreamIds); keys = @($upstreamKeys) } |
+    @{ head = $headSha; date = $headDate; packages = @($upstreamIds) } |
         ConvertTo-Json -Depth 3 | Set-Content $baselineFile -Encoding utf8
-    Write-Step '基线' 'CHANGED' "已固化 $($upstreamIds.Count) 个包 / $($upstreamKeys.Count) 个键 到 docs/upstream-baseline.json"
+    Write-Step '基线' 'CHANGED' "已固化 $($upstreamIds.Count) 个包 到 docs/upstream-baseline.json"
     if ($UpdateBaseline) { exit 0 }
 }
 

@@ -1,31 +1,4 @@
 {
-  "keys": [
-    "$advanced\\TaskbarDeveloperSettings",
-    "$explorer\\Modules\\GlobalSettings\\DetailsContainer",
-    "HKCU\\Control",
-    "HKCU\\Control Panel\\Bluetooth",
-    "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\ClickToDoAndScreenCapture",
-    "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer",
-    "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
-    "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Lxss",
-    "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Notifications\\Settings",
-    "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Notifications\\Settings\\Microsoft.PowerToysWin32",
-    "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Recall",
-    "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\SearchSettings",
-    "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\SystemSettings\\AccountNotifications",
-    "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
-    "HKCU\\SOFTWARE\\Policies\\Microsoft\\Windows\\Explorer",
-    "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\AppInstaller",
-    "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\AppModelUnlock",
-    "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Notifications\\QuietHours\\Profiles",
-    "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Sudo",
-    "HKLM\\SOFTWARE\\Policies\\Microsoft\\Dsh",
-    "HKLM\\SOFTWARE\\Policies\\Microsoft\\Edge",
-    "HKLM\\SYSTEM\\CurrentControlSet\\Control\\FileSystem",
-    "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Terminal",
-    "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Terminal Server"
-  ],
-  "head": "b39c86809c09bca5c0cb319712a96a8e14e1f923",
   "date": "2026-10-13T04:10:01Z",
   "packages": [
     "aka.ms/devconfig",
@@ -59,5 +32,6 @@
     "starship.rs/install.sh",
     "torch.compile/Triton",
     "v0.40.0/OllamaSetup.exe"
-  ]
+  ],
+  "head": "b39c86809c09bca5c0cb319712a96a8e14e1f923"
 }

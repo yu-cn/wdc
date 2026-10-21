@@ -4,7 +4,7 @@
 
 ## 决策（环境主人，2026-10-21）
 
-七条全有意义，按推荐序落地：01-06 已全部实施并真机收口（01/02/04/05/06 归档 done/；03 余一次 `wdc sync` 冒烟——该次提权运行同时覆盖 04/06 的提权侧回归）；07 转入 ready-for-human 待主人 A/B 定夺（倾向 B）。
+七条全有意义，按推荐序落地：**01-07 已全部实施并收口归档**。唯一残余是工单 03 的一次 `wdc sync` 冒烟（弹 UAC 需人工点击）——该次提权运行同时覆盖 03/04/06 的提权侧回归确认，做完即可归档 03。
 
 ## 工单
 
@@ -16,4 +16,4 @@
 | 04 | winget 域发现：一套机制替代两套 | Worth exploring | done（已归档） |
 | 05 | WSL 调用与探测适配层 | Worth exploring | done（已归档） |
 | 06 | winget 退出码语义收一处（先查证） | Worth exploring | done（已归档） |
-| 07 | check-upstream keys 维度：补完或删除 | Speculative | ready-for-human（A/B 定夺，倾向 B） |
+| 07 | check-upstream keys 维度：补完或删除 | Speculative | done（已归档；主人定夺 B 删除） |
