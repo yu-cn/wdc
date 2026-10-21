@@ -29,15 +29,15 @@ gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL b
 
 ## 快速开始（新机器）
 
-前置：装好 Git 与 PowerShell 7（`winget install Git.Git Microsoft.PowerShell`——bootstrap 以 pwsh 7 运行，裸 Windows 只有 5.1），然后：
+前置：装好 Git（`winget install Git.Git` 或官网安装包）。其余无需准备——Windows 10/11 自带的 Windows PowerShell 5.1 与 winget 足以启动，缺 PowerShell 7 时 bootstrap 会自动经 winget 用户级安装（无需管理员）。然后（cmd / PowerShell / Git Bash 均可粘贴）：
 
 ```powershell
 git clone https://github.com/yu-cn/WDC.git
 cd WDC
-pwsh bootstrap.ps1
+powershell -ExecutionPolicy Bypass -File bootstrap.ps1
 ```
 
-bootstrap 会依次跑六个阶段（预检 → 无副作用校验 → 应用声明配置 → 用户级安装 → WSL 侧 → dotfiles），全程输出分阶段报告。**一条命令一键收敛**：未提权启动会弹一次 UAC，提权子回合跑完后自动补跑用户级/WSL 阶段，无需手动二次运行。
+bootstrap 先确保 PowerShell 7 就位（裸机自动安装），再依次跑六个阶段（预检 → 无副作用校验 → 应用声明配置 → 用户级安装 → WSL 侧 → dotfiles），全程输出分阶段报告。**一条命令一键收敛**：未提权启动会弹一次 UAC，提权子回合跑完后自动补跑用户级/WSL 阶段，无需手动二次运行。
 
 <details>
 <summary><strong>首次运行你需要配合的五件事</strong>（UAC 提权 · SmartScreen 放行 · 重启续跑 · 填写身份 · 关 VSCode 设置同步）</summary>

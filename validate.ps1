@@ -38,8 +38,10 @@ foreach ($f in $configFiles) {
 Write-Phase 'Validate 2/2 - 脚本静态检查'
 $scriptFiles = @()
 $scriptFiles += (Get-ChildItem (Join-Path $PSScriptRoot 'scripts') -Filter '*.ps1' -Recurse -ErrorAction SilentlyContinue)
-$bootstrap = Join-Path $PSScriptRoot 'bootstrap.ps1'
-if (Test-Path $bootstrap) { $scriptFiles += Get-Item $bootstrap }
+foreach ($rootScript in 'bootstrap.ps1', 'bootstrap-main.ps1') {
+    $p = Join-Path $PSScriptRoot $rootScript
+    if (Test-Path $p) { $scriptFiles += Get-Item $p }
+}
 $self = Get-Item $PSCommandPath
 $scriptFiles = @($scriptFiles | Where-Object { $_.FullName -ne $self.FullName })
 
