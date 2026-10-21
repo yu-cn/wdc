@@ -2,12 +2,14 @@
 
 把「我的 Windows 开发环境」变成可重放、可迁移的声明式仓库：**任何一台开发机 clone 后跑一条命令，即得完整环境（Windows 侧 + WSL 侧）**。基于 microsoft/WindowsDeveloperConfig 的经验自建（不 fork，见 [ADR-0001](docs/adr/0001-own-tree-not-fork-upstream.md)）。
 
+仓库以 [MIT](LICENSE) 开源：欢迎参考、直接使用或 fork 改造成你自己的环境（见「[朋友怎么用](#朋友怎么用开源仓库的两种用法)」）。
+
 ## 快速开始（新机器）
 
 前置：装好 Git 与 PowerShell 7（`winget install Git.Git Microsoft.PowerShell`——bootstrap 以 pwsh 7 运行，裸 Windows 只有 5.1），然后：
 
 ```powershell
-git clone https://github.com/yu-cn/WDC.git   # 私有仓库，需登录
+git clone https://github.com/yu-cn/WDC.git
 cd WDC
 pwsh bootstrap.ps1
 ```
@@ -21,6 +23,17 @@ bootstrap 会依次跑六个阶段（预检 → 无副作用校验 → 应用声
 5. **关闭 VSCode 设置同步**——首次启动 VSCode 若已登录账号（齿轮/账户图标 → 设置同步 → 关闭）。设置同步是账号级开关、配置文件管不到它；不关的话云端会与仓库 dotfiles 打架（仓库是唯一主人）
 
 重跑 bootstrap 幂等：已就位的全部跳过，只有漂移会被收敛。`-NoElevate` 仍可用于只跑用户级/WSL 阶段（无需提权时）。
+
+## 朋友怎么用（开源仓库的两种用法）
+
+- **直接用**：照上文「快速开始」clone 本仓库跑 bootstrap。仓库不含作者的身份与机器派生值——`~/.gitidentity` 填你自己的 git name/email，WSL 终端配置按你本机发行版渲染（ADR-0004）——之后 `wdc sync` 一键跟进上游演进。
+- **fork 改造（推荐）**：fork 成你自己的仓库再 bootstrap，偏好由你定。改造清单：
+  1. `configs/*.winget` 与 `configs/vscode-extensions.txt`——软件与扩展清单，删你不用的
+  2. `dotfiles/`——shell / git / 终端 / 编辑器偏好
+  3. `LICENSE`——版权人换成你自己
+  4. `.scratch/`——作者的内部工单流，可删可留（留作方法参考）
+
+  脚本里没有写死的仓库地址，fork 后无需改动即可 bootstrap。
 
 ## 常用命令
 
@@ -66,4 +79,9 @@ wsl -d Ubuntu -u root -e bash -c "curl -fsSL https://get.docker.com | sh && user
 ## 文档
 
 - 词汇表：[GLOSSARY.md](GLOSSARY.md) · 决策：[docs/adr/](docs/adr/) · 上游调研：[docs/research/](docs/research/) · 吸收账本：[docs/upstream-ledger.md](docs/upstream-ledger.md)
-- 工单与规格：`.scratch/dev-env/`（本地 markdown issue，不使用 GitHub Issues）
+- 贡献指南：[CONTRIBUTING.md](CONTRIBUTING.md)（fork 自用为主，通用核心改进欢迎 PR）
+- 工单与规格：`.scratch/`（作者的本地 markdown 工单流；外部朋友请走 GitHub Issues/PR）
+
+## 许可证
+
+[MIT](LICENSE) © [yu-cn](https://github.com/yu-cn)
