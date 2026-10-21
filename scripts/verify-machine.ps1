@@ -32,7 +32,7 @@ Assert 'dotfiles 模板与 HEAD 一致（防写穿）' { @(git -C $repo status -
 Assert 'pre-commit 钩子已接线' { (git -C $repo config core.hooksPath) -eq '.githooks' } 'git config core.hooksPath .githooks（repo-local；下次 bootstrap 会自动接上）'
 # WT 的 WSL profile 走机器适配 fragment（ADR-0004）：模板不含 WSL 条目，fragment 应已渲染且含本机发行版
 Assert 'WT WSL fragment 已渲染' {
-    $frag = Join-Path (Get-WtLocalStateDir) 'fragments\wdc-wsl.json'
+    $frag = Join-Path (Get-WtFragmentDir) 'wdc-wsl.json'
     (Test-Path $frag) -and ((Get-Content $frag -Raw) -match 'Ubuntu')
 }
 

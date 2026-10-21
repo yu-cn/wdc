@@ -4,8 +4,15 @@
 # 纯数据与纯函数，不依赖 common.ps1，可被任何脚本单独 dot-source。
 
 function Get-WtLocalStateDir {
-    # Windows Terminal 机器本地状态目录（settings.json / fragments 所在；包 SID 路径唯一来源）
+    # Windows Terminal 机器本地状态目录（settings.json 所在；包 SID 路径唯一来源）
     Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState'
+}
+
+function Get-WtFragmentDir {
+    # WT fragment 的官方读取位置（per-user 文档路径；源名子目录 = 贡献者标识）。
+    # 坑⑫：包内 LocalState\fragments 不被 WT 读取——渲染错位置 verify 还会全绿（断言只查文件在不在），
+    # 2026-10-21 实录该错误位置三年不生效，改写本路径后即刻出现
+    Join-Path $env:LOCALAPPDATA 'Microsoft\Windows Terminal\Fragments\WDC'
 }
 
 function Get-DotfilesMap {

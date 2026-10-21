@@ -46,7 +46,7 @@ $profiles = foreach ($d in $distros) {
         (Join-Path $d.BasePath 'shortcut.ico')
     ) | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
     [ordered]@{
-        name              = $d.Name
+        name              = "$($d.Name) WSL"   # 环境主人命名偏好（2026-10-21）：与发行版名区分，兼与 WSL 自带 fragment 的同名 profile 区分
         guid              = "{0}{1}{2}" -f '{', (Get-StableGuid "wdc-wsl:$($d.Name)"), '}'
         commandline       = "wsl.exe -d $($d.Name)"
         startingDirectory = '~'
@@ -55,9 +55,17 @@ $profiles = foreach ($d in $distros) {
     }
 }
 
-$fragDir = Join-Path $wtLocal 'fragments'
+# fragment 官方读取位置（坑⑫）：包内 LocalState\fragments 不被 WT 读取（2026-10-21 实录：渲染三年
+# 不生效，改写文档路径后即刻出现）；源名子目录 WDC 为贡献者标识
+$fragDir = Get-WtFragmentDir
 if (-not (Test-Path $fragDir)) { New-Item -ItemType Directory -Path $fragDir -Force | Out-Null }
 $fragPath = Join-Path $fragDir 'wdc-wsl.json'
+# 旧渲染位置残留清除（幂等）
+$legacyFrag = Join-Path $wtLocal 'fragments\wdc-wsl.json'
+if (Test-Path $legacyFrag) {
+    Remove-Item $legacyFrag -Force
+    Write-Step '旧位置残留' 'CHANGED' '已清除包内 LocalState\fragments\wdc-wsl.json（WT 不读取该位置，坑⑫）'
+}
 $frag = [ordered]@{ profiles = @($profiles | ForEach-Object {
     $p = [ordered]@{}
     foreach ($k in $_.Keys) { if ($null -ne $_[$k]) { $p[$k] = $_[$k] } }   # 去掉 null（如图标缺失）
