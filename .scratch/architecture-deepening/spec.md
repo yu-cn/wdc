@@ -4,15 +4,15 @@
 
 ## 决策（环境主人，2026-10-21）
 
-七条全有意义，按推荐序落地：01/02/03 本轮实施（编辑已写盘，待 commit + validate + 真机收口）；06 先查证再定改法；04/05/07 排队 ready-for-agent，任一机器会话可领。
+七条全有意义，按推荐序落地：01/02/03 同日实施并真机收口（01/02 验收全过归档 done/；03 余一项 `wdc sync` 冒烟，ready-for-human）；06 先查证再定改法；04/05/07 排队 ready-for-agent，任一机器会话可领。
 
 ## 工单
 
 | # | 工单 | 强度 | 状态 |
 |---|---|---|---|
-| 01 | vp 语言栈事实单一来源 | Strong | ready-for-human |
-| 02 | dotfiles 落点映射单一事实源 | Strong | ready-for-human |
-| 03 | Invoke-Subscript 子脚本深模块 + 阶段编号收敛 | Strong | ready-for-human |
+| 01 | vp 语言栈事实单一来源 | Strong | done（已归档） |
+| 02 | dotfiles 落点映射单一事实源 | Strong | done（已归档） |
+| 03 | Invoke-Subscript 子脚本深模块 + 阶段编号收敛 | Strong | ready-for-human（余 sync 冒烟） |
 | 04 | winget 域发现：一套机制替代两套 | Worth exploring | ready-for-agent |
 | 05 | WSL 调用与探测适配层 | Worth exploring | ready-for-agent |
 | 06 | winget 退出码语义收一处（先查证） | Worth exploring | ready-for-agent |

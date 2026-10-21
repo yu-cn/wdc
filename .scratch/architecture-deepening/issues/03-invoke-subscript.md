@@ -15,10 +15,11 @@ Status: ready-for-human
 
 ## 验收清单
 
-- [ ] validate.ps1 全绿
-- [ ] 真机 bootstrap 重跑：七阶段编号顺次输出、行为与此前一致（幂等零变更）
+- [x] validate.ps1 全绿
+- [x] 真机 bootstrap 重跑：七阶段编号顺次输出、行为与此前一致（幂等零变更）
 - [ ] `wdc sync` 冒烟：bootstrap 输出仍实时逐行可见
 
 ## Comments
 
-- 2026-10-21 实施（同工单 01 会话）：编辑已写盘未提交。
+- 2026-10-21 实施（ZCode 会话，refactor commit 0097606）；同会话真机收口：validate 全绿；`bootstrap -NoElevate` 全绿 113s——阶段 1/7…7/7 顺次、Summary 各步 `[OK] validate.ps1`/`install-languages.ps1` 等 Invoke-Subscript 口径输出正常、幂等收敛。
+- 剩余一项：`wdc sync` 冒烟会弹 UAC，本会话无法点击，留给环境主人任一次日常 sync 顺手核验（wdc.ps1 未改动，直调路径行为无变化——此项属回归确认，不阻塞归档判断）。

@@ -1,4 +1,4 @@
-Status: ready-for-human
+Status: done
 
 # 01 · vp 语言栈事实的单一来源
 
@@ -14,11 +14,11 @@ Status: ready-for-human
 
 ## 验收清单
 
-- [ ] validate.ps1 全绿（commit 时 pre-commit 自动跑）
-- [ ] 真机 bootstrap：languages 阶段 OK、日志显示钉子 1.3.0
-- [ ] WSL 侧重跑（bootstrap -NoElevate）：setup-ubuntu.sh user 阶段 vp 段 OK
-- [ ] `pwsh scripts/verify-machine.ps1`：「vp Windows 侧 = 钉子」OK
+- [x] validate.ps1 全绿（commit 时 pre-commit 自动跑）
+- [x] 真机 bootstrap：languages 阶段 OK、日志显示钉子 1.3.0
+- [x] WSL 侧重跑（bootstrap -NoElevate）：setup-ubuntu.sh user 阶段 vp 段 OK
+- [x] `pwsh scripts/verify-machine.ps1`：「vp Windows 侧 = 钉子」OK
 
 ## Comments
 
-- 2026-10-21 实施（ZCode 会话，该环境无 shell）：编辑已写盘未提交，提交命令见当次会话收尾；validate 由 pre-commit 钩子把关，真机项待环境主人执行。
+- 2026-10-21 实施（ZCode 会话，refactor commit 0097606）；同会话真机收口：validate 全绿；`bootstrap -NoElevate` 实测 languages 阶段「已安装 vp v1.3.0（与钉子一致）」、WSL user 阶段新日志行「钉子 vp 1.3.0」（即读 configs/vp-version 之证）；`verify-machine -Quick`「vp Windows 侧 = 钉子」OK。验收四项全过，归档。

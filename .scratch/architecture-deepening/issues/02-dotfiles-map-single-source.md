@@ -1,4 +1,4 @@
-Status: ready-for-human
+Status: done
 
 # 02 · dotfiles 落点映射的单一事实源
 
@@ -15,10 +15,10 @@ Status: ready-for-human
 
 ## 验收清单
 
-- [ ] validate.ps1 全绿
-- [ ] 真机 `wdc verify -Quick`：dotfiles 链接断言 7 项全 OK（含 VSCode keybindings——本工单修的漏验）
-- [ ] 真机跑 `pwsh scripts/inventory-machine.ps1`：dotfiles 存在性一节输出正常
+- [x] validate.ps1 全绿
+- [x] 真机 `wdc verify -Quick`：dotfiles 链接断言 7 项全 OK（含 VSCode keybindings——本工单修的漏验）
+- [x] 真机跑 `pwsh scripts/inventory-machine.ps1`：dotfiles 存在性一节输出正常
 
 ## Comments
 
-- 2026-10-21 实施（同工单 01 会话）：编辑已写盘未提交。
+- 2026-10-21 实施（ZCode 会话，refactor commit 0097606）；同会话真机收口：`bootstrap -NoElevate` 的 Dotfiles 2/4 按映射枚举 7 项链接全 OK；`verify-machine -Quick` 链接断言 7 项全过、**VSCode keybindings 首次入列**；inventory dotfiles 一节 8 项（7 链接 + 身份文件）输出正常、WT 一节走 Get-WtLocalStateDir。验收三项全过，归档。
