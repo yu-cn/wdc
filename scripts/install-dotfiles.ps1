@@ -48,7 +48,7 @@ function Install-Dotfile {
 # ---------------------------------------------------------------------------
 # 1/3 · 身份文件（~/.gitidentity）
 # ---------------------------------------------------------------------------
-Write-Phase 'Dotfiles 1/4 - 身份文件（~/.gitidentity）'
+Write-Phase 'Dotfiles 1/3 - 身份文件（~/.gitidentity）'
 $identityPath = Join-Path $HOME '.gitidentity'
 if (Test-Path $identityPath) {
     Write-Step '.gitidentity' 'OK' '已存在'
@@ -77,7 +77,7 @@ if (Test-Path $identityPath) {
 # ---------------------------------------------------------------------------
 # 2/3 · Windows 侧符号链接
 # ---------------------------------------------------------------------------
-Write-Phase 'Dotfiles 2/4 - Windows 侧符号链接'
+Write-Phase 'Dotfiles 2/3 - Windows 侧符号链接'
 # 落点清单来自 Get-DotfilesMap 单一来源（verify 断言与 inventory 盘点同读一份，防三面漂移）
 foreach ($m in (Get-DotfilesMap)) {
     Install-Dotfile -Source (Join-Path $dotfilesRoot $m.Source) -Target $m.Target
@@ -91,15 +91,8 @@ if (-not (Test-Path $wdcPtr) -or ((Get-Content $wdcPtr -Raw -ErrorAction Silentl
 } else { Write-Step '.wdc' 'OK' '已是本仓库路径' }
 
 # ---------------------------------------------------------------------------
-# 3/4 · WT WSL profiles（机器适配渲染，ADR-0004——发行版名/ID/图标按本机环境派生）
+# 3/3 · WSL 侧（占位说明）
 # ---------------------------------------------------------------------------
-Write-Phase 'Dotfiles 3/4 - WT WSL profiles（fragment 渲染）'
-$wtGen = Join-Path $PSScriptRoot 'install-wt-profiles.ps1'
-if (-not (Invoke-Subscript -Label 'WT WSL profiles' -Path $wtGen)) { exit 1 }
-
-# ---------------------------------------------------------------------------
-# 4/4 · WSL 侧（占位说明）
-# ---------------------------------------------------------------------------
-Write-Phase 'Dotfiles 4/4 - WSL 侧'
+Write-Phase 'Dotfiles 3/3 - WSL 侧'
 Write-Step 'WSL dotfiles' 'SKIP' '由 WSL 阶段负责（bashrc / gitconfig / starship 链接进 Ubuntu）'
 exit 0

@@ -8,16 +8,9 @@ function Get-WtLocalStateDir {
     Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState'
 }
 
-function Get-WtFragmentDir {
-    # WT fragment 的官方读取位置（per-user 文档路径；源名子目录 = 贡献者标识）。
-    # 坑⑫：包内 LocalState\fragments 不被 WT 读取——渲染错位置 verify 还会全绿（断言只查文件在不在），
-    # 2026-10-21 实录该错误位置三年不生效，改写本路径后即刻出现
-    Join-Path $env:LOCALAPPDATA 'Microsoft\Windows Terminal\Fragments\WDC'
-}
-
 function Get-DotfilesMap {
     # 每项：Name（展示名）/ Source（仓库内相对 dotfiles/ 的路径）/ Target（机器侧绝对落点）
-    # WT 的 WSL profile 不在此列——那是机器派生值，由 install-wt-profiles.ps1 渲染（ADR-0004）
+    # WT 的 WSL profile 不在此列——它是模板里的静态声明（ADR-0006），随 settings.json 链接一起落地，无机器侧动作
     $docs = [Environment]::GetFolderPath('MyDocuments')
     @(
         @{ Name = 'gitconfig';          Source = 'windows/gitconfig';               Target = (Join-Path $HOME '.gitconfig') }

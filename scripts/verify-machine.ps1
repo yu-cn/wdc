@@ -30,11 +30,7 @@ foreach ($m in (Get-DotfilesMap)) {
 Assert 'dotfiles 模板与 HEAD 一致（防写穿）' { @(git -C $repo status --porcelain -- dotfiles).Count -eq 0 } '写穿漂移——处置：pwsh scripts/triage-dotfiles-drift.ps1（逐文件 吸收/还原）'
 # 钩子接线断言（工单23）：collaboration 承诺 pre-commit 把关；接线由 bootstrap Stage 6 幂等保证
 Assert 'pre-commit 钩子已接线' { (git -C $repo config core.hooksPath) -eq '.githooks' } 'git config core.hooksPath .githooks（repo-local；下次 bootstrap 会自动接上）'
-# WT 的 WSL profile 走机器适配 fragment（ADR-0004）：模板不含 WSL 条目，fragment 应已渲染且含本机发行版
-Assert 'WT WSL fragment 已渲染' {
-    $frag = Join-Path (Get-WtFragmentDir) 'wdc-wsl.json'
-    (Test-Path $frag) -and ((Get-Content $frag -Raw) -match 'Ubuntu')
-}
+# WSL profile 为模板静态声明（ADR-0006），无机器侧产物需要断言；WT settings 链接本身由上面的映射断言覆盖
 
 Write-Phase '2/6 · 身份与注册表断言'
 Assert '身份文件有实值' { (git config --file (Join-Path $HOME '.gitidentity') --get user.name) -and (git config --file (Join-Path $HOME '.gitidentity') --get user.email) }

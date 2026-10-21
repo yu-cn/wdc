@@ -65,6 +65,13 @@
                 "startingDirectory": "%USERPROFILE%"
             },
             {
+                "commandline": "wsl.exe -d Ubuntu",
+                "guid": "{afc8d704-a9fa-363c-9ece-f2e391137abc}",
+                "hidden": false,
+                "name": "Ubuntu WSL",
+                "startingDirectory": "~"
+            },
+            {
                 "guid": "{b453ae62-4e3d-5e58-b989-0a998ec441b8}",
                 "hidden": true,
                 "name": "Azure Cloud Shell",

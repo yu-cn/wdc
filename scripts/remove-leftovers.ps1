@@ -62,6 +62,17 @@ foreach ($frag in 'ComfortShell', 'DevConfig') {
         Write-Step "fragment $frag" 'OK' '不存在'
     }
 }
+# 本仓已退役的 WSL profile 片段渲染机制残留（ADR-0006）：官方路径与旧包内路径两处，幂等清理
+$wtLocal = Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState'
+foreach ($p in @(
+    (Join-Path $fragRoot 'WDC'),
+    (Join-Path $wtLocal 'fragments\wdc-wsl.json')
+)) {
+    if (Test-Path $p) {
+        Remove-Item -Path $p -Recurse -Force
+        Write-Step "退役片段 $p" 'CHANGED' '已删除（ADR-0006：WSL profile 改模板静态声明）'
+    }
+}
 
 # ---------------------------------------------------------------------------
 # 2/5 · VSCode 商店 MSIX 版（收敛为 winget 用户版单份；当前用户卸载，无需提权）
