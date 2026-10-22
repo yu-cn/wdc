@@ -19,7 +19,7 @@
 - [x] 文档四处同步 + upstream-ledger 记账
 - [x] validate 全绿；wdc verify -Quick 过新姿势（发行版内 probe.sh 实测）
 - [x] 主机提权重跑 bootstrap（幂等；UAC 一次）——提权下 WSL 查询+发行版内执行真机验证
-- [ ] 两机复验：下次 wdc sync 后 WSL 阶段全绿（日常路径的持续验证）
+- [x] 两机复验：下次 wdc sync 后 WSL 阶段全绿（日常路径的持续验证）
 - [ ] 新机首跑（启用→重启→Ubuntu→收尾）——等下一台真机，fresh-machine CI 部分覆盖
 
 ## Comments
@@ -28,3 +28,4 @@
 - 2026-10-22（ASUS）：真机验收实录——本机提权重跑 bootstrap 全绿（294s，七阶段单回合）；elevated-20261022-202710.log 里 Stage 6 于提权上下文完整执行：有界查询（WSL/Ubuntu 探测）+ 发行版内 setup-ubuntu.sh（文件捕获输出可读、心跳触发一次、root/user 双阶段 + probe 全过、零挂死）。对比旧双回合结构同内容 403s——省去父回合补跑。
 - 2026-10-22（ASUS）：fresh-machine 冒烟 run 39779367377 全绿收官，且远超「部分覆盖」预期——runner 新镜像有嵌套虚拟化，全新链路真实执行：WSL 探测 → **Ubuntu 全新安装**（新控制台姿势 6.5 分钟、心跳 6 次、效果确认轮询通过）→ 发行版内环境（无 OOBE 的全新发行版，默认用户探测回落 root，setup-ubuntu root/user 双阶段照常完成，docker 29.9.2 装成）→ probe 全绿（id:MISSING 属预期——runner 无真实身份，红线不外泄）→ 工单29 的身份占位提醒也在 CI 首秀。**唯一仍未验证面收窄为：WSL 功能全新启用分支（含重启续跑）——runner 镜像预启用、ASUS 已启用，等另一台真机或未来新机。** 真机注意：OOBE 建用户后重跑 bootstrap，发行版内环境会以真实用户重铺（幂等）。
 - 2026-10-22（ASUS 本机会话）：机器名勘误——本机 hostname=ASUS（盘点报告同证），上方两条注释「（主机）」已就地勘正；旧工单里「主机会话」均指另一台机器。「两机复验」之 ASUS 侧已由今日提权真跑覆盖（WSL 阶段全绿），另一机待其下次 sync。
+- 2026-10-22（LETH会话）：LETH 侧复验——本机 sync 拉取 45 提交（全程提权重构首上本机），bootstrap 七阶段单回合全绿（980s；Stage 3 winget configure 774.5s 属本机 winget 源当日偏慢，仍绿）。elevated-20261022-230552.log 里 Stage 6（152.8s）于提权上下文真实执行：有界查询（WSL 功能/Ubuntu）+ setup-ubuntu.sh root/user 双阶段输出可读（心跳触发一次）+ probe 七项全过，零挂死；Stage 7 dotfiles 同轮完成（ubuntu.ico 新装，渲染至机器本地）。verify 六组断言全绿、三域漂移=0。两机复验收口；工单保持开放——「新机首跑」待下一台真机。
