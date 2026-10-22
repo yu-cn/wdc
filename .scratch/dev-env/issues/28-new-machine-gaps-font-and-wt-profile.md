@@ -17,3 +17,4 @@
 ## Comments
 
 - 2026-10-21（主机会话）：双 profile 成因的判据——WT 的 settings.json profile 与动态生成 profile 同 GUID 则覆盖、异 GUID 则并存；owner 机器从未见双只因 {3618cdc9-…} 那只本就是该机 WT 首跑时生成后写穿进模板的（工单14 同族现象的良性版）。
+- 2026-10-22（LETH会话）：「老机器同步后同样恰好一只」半边复验（LETH 侧）——今日 sync 后 WT settings.json 符号链接在位（直指仓库模板）；profile 全景恰一只 PowerShell（规范 GUID {574e775e-…}，defaultProfile 同指），旧随机 GUID {3618cdc9-…} 无残留；CMD/Windows PowerShell 保持规范 GUID，Azure 隐藏如常——「动态被模板覆盖」按判据成立。ASUS 侧同核待其下次会话；勾选框（新机复验，含字体半边）仍开放。
