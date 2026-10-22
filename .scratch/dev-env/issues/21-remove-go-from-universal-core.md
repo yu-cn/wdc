@@ -11,9 +11,10 @@
 - [x] starship.toml：format 去 `$golang`、删 `[golang]` 模块
 - [x] install-wsl-env.ps1 探测 / verify-machine.ps1 断言：Go 项移除
 - [x] README 装箱清单与语言运行时说明同步
-- [ ] 两机复验：下次 `wdc sync` 后 `/usr/local/go` 消失、verify 全绿（Go 断言已除）
+- [x] 两机复验：下次 `wdc sync` 后 `/usr/local/go` 消失、verify 全绿（Go 断言已除）
 
 ## Comments
 
 - 2026-10-21（主机会话）：主机事实自查——go1.27.2 在位（将随下次 sync 收敛移除）；上游吸收账本无 Go 条目，无需回账。
 - 2026-10-22（ASUS 本机会话）：ASUS 侧复验——`/usr/local/go` 已消失（今日实测 GO_GONE）、verify 全绿。主机侧（10-21 记录 go 在位）待其下次 sync 收敛后同验，暂不勾选。（勘误：本机 hostname=ASUS，此前「主机会话」指另一台机器。）
+- 2026-10-22（LETH会话）：LETH 侧复验（即 10-21 注释所指主机，hostname=LETH）——今日 sync 的 setup-ubuntu.sh root 阶段执行「移除 Go」步骤，sync 后实测 `test -e /usr/local/go` 输出 GONE；wdc sync 末尾 verify 全绿、三域漂移=0（Go 断言已除）。两机均已验，收口归档。
