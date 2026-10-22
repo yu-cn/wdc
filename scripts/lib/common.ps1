@@ -91,6 +91,22 @@ function Test-WingetExitCode {
     return $false
 }
 
+function Test-GitIdentityEffective {
+    # git 身份是否经 include 链生效（效果级，与 verify 断言同口径）：bootstrap Summary 与 wdc status 共用。
+    # --global + --includes：全栈 include 展开（坑⑤）且不受 cwd 所在仓库 local config 污染；
+    # 只判非空、不取值——红线：身份内容不得出现在任何产出物/日志
+    [bool](git config --global --includes --get user.name) -and
+    [bool](git config --global --includes --get user.email)
+}
+
+function Test-WslEnabled {
+    # WSL 功能是否可用（wsl --status 退出码；未装 wsl.exe 一并 $false）。
+    # 勿在提权上下文调用——坑①：提权 + 管道捕获 wsl.exe 输出可挂死，调用方自行守卫
+    if (-not (Get-Command wsl.exe -ErrorAction SilentlyContinue)) { return $false }
+    $null = (& wsl.exe --status) 2>&1
+    return ($LASTEXITCODE -eq 0)
+}
+
 function Get-WslDistros {
     # wsl -l -q 的干净输出（剥 UTF-16 NUL；wsl.exe 未就位/无发行版时为空数组）
     @((& wsl.exe -l -q) 2>$null | ForEach-Object { ($_ -replace "`0", '').Trim() } | Where-Object { $_ })

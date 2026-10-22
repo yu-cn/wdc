@@ -9,8 +9,7 @@ $ErrorActionPreference = 'Stop'
 $elevated = Test-IsElevated
 
 # --- 1) WSL 功能 ---
-$wslStatus = (& wsl.exe --status) 2>&1
-$wslWorks = ($LASTEXITCODE -eq 0)
+$wslWorks = Test-WslEnabled
 if (-not $wslWorks) {
     if (-not $elevated) {
         Write-Step 'WSL 功能' 'SKIP' '本机未启用 WSL 且需要管理员+重启——提权运行 bootstrap 并重启后续跑'

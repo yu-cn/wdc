@@ -196,6 +196,11 @@ foreach ($s in $script:Stages) {
     $secs = if ($null -ne $s.Secs) { "（{0:n1}s）" -f $s.Secs } else { '' }
     Write-Step $s.Name ($s.Ok ? 'OK' : 'FAIL') $secs.Trim()
 }
+# 首跑手工步骤提醒（工单29）：身份占位未填不算收敛失败——不入 Stages、不改退出码；
+# 但 Summary 必须可见，否则要到第一次 git commit 被「防错护栏」拒了才发现
+if (-not $ValidateOnly -and -not (Test-GitIdentityEffective)) {
+    Write-Step '身份文件' 'CHANGED' '占位未填写——编辑 ~/.gitidentity，否则 git 拒绝提交'
+}
 Write-Step '耗时' 'INFO' "$([int]$sw.Elapsed.TotalSeconds)s"
 if ($failed.Count -eq 0) {
     Write-Step 'bootstrap' 'OK' '收敛完成（幂等：重跑应零变更）'

@@ -4,14 +4,13 @@
 # 输出复用 lib/common.ps1 的 Write-Phase/Write-Step，与 bootstrap/verify 同一观感。
 # 用法：
 #   wdc | wdc sync        全量同步：fetch → 落后则 pull（--ff-only）→ bootstrap → verify 全量
-#   wdc status            只读快照（秒级）：与 origin/main 差距 / dotfiles 写穿漂移 / 最近一次 bootstrap 结果
+#   wdc status            只读快照（秒级）：与 origin/main 差距 / dotfiles 写穿漂移 / 身份与 WSL 首跑状态 / 最近一次 bootstrap 结果
 #   wdc verify [-Full]    机器断言；默认 -Quick 秒级，-Full 含三域漂移（约 3 分钟）
 #   wdc triage            dotfiles 写穿漂移分流（工单 17 工具入口，交互式）
 #   wdc log [-Lines N]    最近一次 bootstrap 日志尾部（默认 40 行）
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('sync', 'status', 'verify', 'triage', 'log', 'help')]
     [string]$Command = 'sync',
     [switch]$Full,
     [int]$Lines = 40
@@ -19,6 +18,22 @@ param(
 $ErrorActionPreference = 'Stop'
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { }
 . (Join-Path $PSScriptRoot 'lib/common.ps1')
+
+# --- 子命令校验在仓库定位之前（工单29）：help 与友好报错不依赖 ~/.wdc 指针 ---
+$helpText = @'
+wdc — WDC 开发环境一键工具（仓库在 ~/.wdc 指向的路径）
+
+  wdc | wdc sync        全量同步：fetch → 落后则 pull → bootstrap → verify 全量（会请求一次 UAC）
+  wdc status            只读快照：远端差距 / dotfiles 写穿漂移 / 身份与 WSL 首跑状态 / 最近 bootstrap 结果（秒级）
+  wdc verify [-Full]    机器断言（默认 -Quick；-Full 含三域漂移约 3 分钟）
+  wdc triage            dotfiles 写穿漂移分流（逐文件 吸收/还原，交互式）
+  wdc log [-Lines N]    最近一次 bootstrap 日志尾部（默认 40 行）
+'@
+if ($Command -notin 'sync', 'status', 'verify', 'triage', 'log', 'help') {
+    Write-Host "wdc: 未知子命令「$Command」（可用：sync / status / verify / triage / log / help）" -ForegroundColor Yellow
+    Write-Host $helpText
+    exit 1
+}
 
 # --- 仓库定位：~/.wdc 指针（bootstrap 的 dotfiles 阶段写入）---
 $repo = (Get-Content (Join-Path $HOME '.wdc') -ErrorAction SilentlyContinue | Select-Object -First 1)
@@ -47,15 +62,7 @@ function Get-AheadBehind {
 
 switch ($Command) {
     'help' {
-        Write-Host @'
-wdc — WDC 开发环境一键工具（仓库在 ~/.wdc 指向的路径）
-
-  wdc | wdc sync        全量同步：fetch → 落后则 pull → bootstrap → verify 全量（会请求一次 UAC）
-  wdc status            只读快照：远端差距 / dotfiles 写穿漂移 / 最近 bootstrap 结果（秒级）
-  wdc verify [-Full]    机器断言（默认 -Quick；-Full 含三域漂移约 3 分钟）
-  wdc triage            dotfiles 写穿漂移分流（逐文件 吸收/还原，交互式）
-  wdc log [-Lines N]    最近一次 bootstrap 日志尾部（默认 40 行）
-'@
+        Write-Host $helpText
     }
 
     'status' {
@@ -67,6 +74,13 @@ wdc — WDC 开发环境一键工具（仓库在 ~/.wdc 指向的路径）
         $drift = @(git -C $repo status --porcelain -- dotfiles)
         if ($drift.Count -eq 0) { Write-Step 'dotfiles 漂移' 'OK' '与 HEAD 一致' }
         else { Write-Step 'dotfiles 漂移' 'FAIL' "$($drift.Count) 项写穿——wdc triage 分流" }
+        # 首跑两件手工事的状态可见（工单29）：身份占位未填则「拒提交」护栏仍在；WSL 未启用/Ubuntu 未装则收敛未完成
+        if (Test-GitIdentityEffective) { Write-Step '身份文件' 'OK' 'name/email 经 include 生效' }
+        else { Write-Step '身份文件' 'FAIL' '未填写——编辑 ~/.gitidentity（占位已生成）；不填则 git 拒绝提交' }
+        if (Test-IsElevated) { Write-Step 'WSL' 'SKIP' '提权上下文跳过探测（坑①）——普通终端再跑 wdc status' }
+        elseif (-not (Test-WslEnabled)) { Write-Step 'WSL' 'FAIL' '未启用——管理员终端 wsl --install 并重启，然后重跑 bootstrap' }
+        elseif ((Get-WslDistros) -notcontains 'Ubuntu') { Write-Step 'WSL' 'FAIL' 'Ubuntu 未装——管理员终端 wsl --install -d Ubuntu，然后重跑 bootstrap' }
+        else { Write-Step 'WSL' 'OK' 'Ubuntu 已就位' }
         # 上游 watch 提醒（工单20）：距上次 check-upstream 超过 30 天提示补课（工单18 定了不做定时巡检，只提醒）
         $ledger = Join-Path $repo 'docs\upstream-ledger.md'
         if (Test-Path $ledger) {
