@@ -1,6 +1,7 @@
 name: fresh-machine
 # 新机冒烟（工单26）：fresh clone → 5.1 入口 bootstrap。runner 为管理员上下文——提权路径自动满足
-# （不弹 UAC），WSL 阶段按既有守卫自跳过（提权上下文 + runner 无嵌套虚拟化）。
+# （不弹 UAC）；WSL 阶段在提权回合真实执行（工单30 全程提权）：runner 无嵌套虚拟化、发行版装不上
+# 属预期 BestEffort 降级（黄字手工指引），不打红，判读以日志为准。
 # 仅手动触发（workflow_dispatch）：spec 曾将「CI 常态化测试」列为 Out-of-Scope，本工作流不定期跑，
 # 需要证明「clone 后一条命令开箱即用」时手动来一发。
 on: workflow_dispatch

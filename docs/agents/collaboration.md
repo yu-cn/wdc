@@ -13,7 +13,7 @@
 
 ## 已知坑（真机实录）
 
-1. **wsl.exe 在提权上下文 + 管道捕获输出会挂死**（可致 WSL 服务楔死，解法=重启电脑）——bootstrap 提权子回合自动跳过 WSL 阶段，由普通权限回合补跑（现已自动串联）。
+1. **wsl.exe 在提权上下文 + PS 管道捕获输出会挂死**（可致 WSL 服务楔死，解法=重启电脑）——根除姿势（工单30，吸收自上游 WindowsDeveloperConfig：其两条流程全程提权运行，含提权下发行版内执行）：安装类命令 `Start-Process` 新控制台、绝不捕获；查询/发行版内执行走临时文件重定向 + 关 stdin + 硬超时杀；只看退出码（输出文本随系统语言变）。仓库内一律经 `scripts/lib/common.ps1` 的 `Wait-WdcProcess`/`Invoke-WslBounded` 调用，勿再写 `& wsl.exe ... 2>&1`。`bootstrap.ps1 -NoElevate` 保留为显式逃生通道。
 2. **Git Bash 里调 wsl.exe 传 `/mnt/...` 参数会被 MSYS 路径转换改写**（报 No such file or directory / 127）——加 `MSYS_NO_PATHCONV=1` 前缀。
 3. **控制台乱码只是显示问题**（GBK 代码页）——脚本已自设 UTF-8，乱码不影响执行与判断。
 4. **winget 退出码语义**：validate 的 1 = 仅警告（良性），负 HRESULT 才是错；`configure test` 漂移判定看「未处于」计数 + 退出码。

@@ -37,20 +37,20 @@ cd WDC
 powershell -ExecutionPolicy Bypass -File bootstrap.ps1
 ```
 
-bootstrap 先确保 PowerShell 7 就位（裸机自动安装），再依次跑七个阶段（预检 → 无副作用校验 → 应用声明配置 → 用户级安装 → 移除清单 → WSL 侧 → dotfiles），全程输出分阶段报告。**一条命令一键收敛**：未提权启动会弹一次 UAC，提权子回合跑完后自动补跑用户级/WSL 阶段，无需手动二次运行。
+bootstrap 先确保 PowerShell 7 就位（裸机自动安装），再依次跑七个阶段（预检 → 无副作用校验 → 应用声明配置 → 用户级安装 → 移除清单 → WSL 侧 → dotfiles），全程输出分阶段报告。**一条命令一键收敛**：未提权启动会弹一次 UAC，提权子回合一回合跑完全部七阶段（含 WSL），无需手动二次运行。
 
 <details>
 <summary><strong>首次运行你需要配合的五件事</strong>（UAC 提权 · SmartScreen 放行 · 重启续跑 · 填写身份 · 关 VSCode 设置同步）</summary>
 
 1. **UAC 提权**——未提权启动会自动请求，点一次确认
 2. **SmartScreen 放行**——vp 安装器未代码签名，全新机器首次可能弹窗，选「仍要运行」
-3. **重启续跑**——全新机器启用 WSL 功能后需重启一次，重启后重跑 `bootstrap.ps1` 继续
+3. **重启续跑**——全新机器 bootstrap 会在提权回合内自动启用 WSL 并提示重启；重启后重跑 `bootstrap.ps1` 安装 Ubuntu 并收尾（自动启用未成时手工路径：管理员终端 `wsl --install`，流程相同）
 4. **填写身份**——bootstrap 生成 `~/.gitidentity` 占位后，填上**本机**的 git name/email（各机身份不同；不填则 git 拒绝提交，这是防错护栏）
 5. **关闭 VSCode 设置同步**——首次启动 VSCode 若已登录账号（齿轮/账户图标 → 设置同步 → 关闭）。设置同步是账号级开关、配置文件管不到它；不关的话云端会与仓库 dotfiles 打架（仓库是唯一主人）
 
 </details>
 
-重跑 bootstrap 幂等：已就位的全部跳过，只有漂移会被收敛。`-NoElevate` 仍可用于只跑用户级/WSL 阶段（无需提权时）。
+重跑 bootstrap 幂等：已就位的全部跳过，只有漂移会被收敛。`-NoElevate` 保留为非提权单回合入口（排障逃生通道：apply 与 WSL 启用受限跳过）。
 
 ## 使用与改造
 

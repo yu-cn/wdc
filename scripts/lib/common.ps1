@@ -99,29 +99,87 @@ function Test-GitIdentityEffective {
     [bool](git config --global --includes --get user.email)
 }
 
+function Wait-WdcProcess {
+    # 有界等待外部进程：500ms 轮询、每 60s 心跳、超时杀进程并抛 TimeoutException。
+    # 吸收自上游 Invoke-DevConfigProcess 配方（工单30）：可能挂住的原生命令必须过这道护栏，挂死变有界失败
+    param(
+        [Parameter(Mandatory)][System.Diagnostics.Process]$Process,
+        [Parameter(Mandatory)][ValidateRange(1, 86400)][int]$TimeoutSeconds,
+        [string]$Label = '进程'
+    )
+    $start = Get-Date
+    $deadline = $start.AddSeconds($TimeoutSeconds)
+    $nextBeat = $start.AddSeconds(60)
+    while (-not $Process.HasExited) {
+        $now = Get-Date
+        if ($now -ge $deadline) {
+            try { $Process.Kill() } catch { }
+            throw [System.TimeoutException]::new("$Label 超过 $([int]($TimeoutSeconds / 60)) 分钟未结束，已终止")
+        }
+        if ($now -ge $nextBeat) {
+            Write-Step $Label 'INFO' ("仍在运行（{0:n0} 分钟）" -f ($now - $start).TotalMinutes)
+            $nextBeat = $now.AddSeconds(60)
+        }
+        Start-Sleep -Milliseconds 500
+    }
+    return $Process.ExitCode
+}
+
+function Invoke-WslBounded {
+    # 有界、临时文件捕获的 wsl.exe 调用（坑①纪律，工单30；上游 Get-DevConfigWslExitCode 同配方）：
+    # - 输出重定向到文件句柄而非 PS 管道——提权上下文安全的前提（坑①实录是 PS 管道捕获姿势）
+    # - stdin 指到空临时文件 = 关闭：防未装运行时的 wsl 停在安装提示等输入（上游注释实录）
+    # - WSL_UTF8=1 请求 UTF-8 输出；旧版不认时 NUL 剥除兜底（ASCII 段 UTF-16 可经 NUL 剥还原）
+    # - 只看退出码，输出文本随系统语言变（上游注释实录）
+    # 未装 wsl.exe / 超时：返回 Exit=$null（或 $null 本体）——调用方按失败处理
+    param(
+        [Parameter(Mandatory)][string[]]$ArgumentList,
+        [int]$TimeoutSeconds = 120
+    )
+    if (-not (Get-Command wsl.exe -ErrorAction SilentlyContinue)) { return $null }
+    $stdout = [System.IO.Path]::GetTempFileName()
+    $stderr = [System.IO.Path]::GetTempFileName()
+    $stdin = [System.IO.Path]::GetTempFileName()
+    $prevUtf8 = $env:WSL_UTF8
+    try {
+        $env:WSL_UTF8 = '1'
+        $p = Start-Process wsl.exe -ArgumentList $ArgumentList -PassThru -NoNewWindow `
+            -RedirectStandardOutput $stdout -RedirectStandardError $stderr -RedirectStandardInput $stdin
+        try { $code = Wait-WdcProcess -Process $p -TimeoutSeconds $TimeoutSeconds -Label ("wsl " + ($ArgumentList -join ' ')) }
+        catch [System.TimeoutException] { return [pscustomobject]@{ Lines = @(); Exit = $null } }
+        $lines = @(Get-Content -LiteralPath $stdout, $stderr -ErrorAction SilentlyContinue |
+            ForEach-Object { ($_ -replace "`0", '').Trim() } | Where-Object { $_ })
+        return [pscustomobject]@{ Lines = $lines; Exit = $code }
+    } finally {
+        $env:WSL_UTF8 = $prevUtf8
+        Remove-Item -LiteralPath $stdout, $stderr, $stdin -Force -ErrorAction SilentlyContinue
+    }
+}
+
 function Test-WslEnabled {
-    # WSL 功能是否可用（wsl --status 退出码；未装 wsl.exe 一并 $false）。
-    # 勿在提权上下文调用——坑①：提权 + 管道捕获 wsl.exe 输出可挂死，调用方自行守卫
-    if (-not (Get-Command wsl.exe -ErrorAction SilentlyContinue)) { return $false }
-    $null = (& wsl.exe --status) 2>&1
-    return ($LASTEXITCODE -eq 0)
+    # WSL 功能是否可用（wsl --status 退出码；未装 wsl.exe/超时一并 $false）——有界姿势下提权上下文同样安全
+    $r = Invoke-WslBounded -ArgumentList @('--status') -TimeoutSeconds 60
+    return ($null -ne $r -and $r.Exit -eq 0)
 }
 
 function Get-WslDistros {
-    # wsl -l -q 的干净输出（剥 UTF-16 NUL；wsl.exe 未就位/无发行版时为空数组）
-    @((& wsl.exe -l -q) 2>$null | ForEach-Object { ($_ -replace "`0", '').Trim() } | Where-Object { $_ })
+    # wsl -l -q 的干净输出（有界文件捕获，坑①纪律；wsl.exe 未就位/超时/无发行版时空数组）
+    $r = Invoke-WslBounded -ArgumentList @('-l', '-q') -TimeoutSeconds 60
+    if ($null -eq $r -or $r.Exit -ne 0) { return @() }
+    return @($r.Lines)
 }
 
 function Get-WslDefaultUser {
     # 发行版默认用户探测（whoami；硬编码用户名会误伤默认用户不同的机器，工单12族）；探不到返回 $null
     param([string]$Distro = 'Ubuntu')
-    $u = ((& wsl.exe -d $Distro -e bash -c 'whoami') 2>$null) -replace "`0", ''
-    @($u | ForEach-Object { $_.Trim() } | Where-Object { $_ }) | Select-Object -First 1
+    $r = Invoke-WslBounded -ArgumentList @('-d', $Distro, '-e', 'bash', '-c', 'whoami') -TimeoutSeconds 60
+    if ($null -eq $r -or $r.Exit -ne 0) { return $null }
+    return @($r.Lines) | Select-Object -First 1
 }
 
 function Invoke-WslScript {
-    # 在发行版内以 bash 跑一个脚本（可带参数）：返回 Lines（剥 NUL 的干净输出）/ Exit / Ok。
-    # 已知坑①：提权上下文经管道捕获 wsl.exe 输出会挂死——提权回合勿调（bootstrap Stage 6 已守卫跳过 WSL）
+    # 在发行版内以 bash 跑一个脚本（可带参数）：返回 Lines / Exit / Ok（契约不变：install-wsl-env 与 verify 共用）。
+    # 有界文件捕获（坑①纪律）：默认 15 分钟上限——发行版内 apt/Docker 安装可达分钟级；超时杀进程按失败处理
     param(
         [Parameter(Mandatory)][string]$Distro,
         [string]$User,
@@ -131,8 +189,9 @@ function Invoke-WslScript {
     $a = @('-d', $Distro)
     if ($User) { $a += @('-u', $User) }
     $a += @('-e', 'bash', $Script) + $ScriptArgs
-    $lines = ((& wsl.exe @a) 2>&1) | ForEach-Object { $_ -replace "`0", '' }
-    [pscustomobject]@{ Lines = @($lines); Exit = $LASTEXITCODE; Ok = ($LASTEXITCODE -eq 0) }
+    $r = Invoke-WslBounded -ArgumentList $a -TimeoutSeconds 900
+    if ($null -eq $r) { return [pscustomobject]@{ Lines = @(); Exit = $null; Ok = $false } }
+    return [pscustomobject]@{ Lines = @($r.Lines); Exit = $r.Exit; Ok = ($r.Exit -eq 0) }
 }
 
 function ConvertTo-WslPath {

@@ -77,7 +77,7 @@ switch ($Command) {
         # 首跑两件手工事的状态可见（工单29）：身份占位未填则「拒提交」护栏仍在；WSL 未启用/Ubuntu 未装则收敛未完成
         if (Test-GitIdentityEffective) { Write-Step '身份文件' 'OK' 'name/email 经 include 生效' }
         else { Write-Step '身份文件' 'FAIL' '未填写——编辑 ~/.gitidentity（占位已生成）；不填则 git 拒绝提交' }
-        if (Test-IsElevated) { Write-Step 'WSL' 'SKIP' '提权上下文跳过探测（坑①）——普通终端再跑 wdc status' }
+        if (Test-IsElevated) { Write-Step 'WSL' 'SKIP' '提权上下文保守跳过探测（坑①）——普通终端再跑 wdc status' }
         elseif (-not (Test-WslEnabled)) { Write-Step 'WSL' 'FAIL' '未启用——管理员终端 wsl --install 并重启，然后重跑 bootstrap' }
         elseif ((Get-WslDistros) -notcontains 'Ubuntu') { Write-Step 'WSL' 'FAIL' 'Ubuntu 未装——管理员终端 wsl --install -d Ubuntu，然后重跑 bootstrap' }
         else { Write-Step 'WSL' 'OK' 'Ubuntu 已就位' }

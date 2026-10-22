@@ -2,9 +2,9 @@
 # bootstrap-main.ps1 - WDC 收敛逻辑本体（PowerShell 7）
 # 由根 bootstrap.ps1 引导层定位/自举 PowerShell 7 后带参转发；已有 PS7 的机器也可直调。
 # 用法:
-#   pwsh bootstrap-main.ps1                # 完整收敛（需要管理员，未提权时自动请求）
+#   pwsh bootstrap-main.ps1                # 完整收敛（需要管理员，未提权时自动请求；提权子回合跑完全部七阶段）
 #   pwsh bootstrap-main.ps1 -ValidateOnly  # 只做无副作用校验
-#   pwsh bootstrap-main.ps1 -NoElevate     # 不请求提权，只跑用户级阶段
+#   pwsh bootstrap-main.ps1 -NoElevate     # 非提权单回合（排障逃生通道：apply 与 WSL 启用受限跳过）
 [CmdletBinding()]
 param(
     [switch]$ValidateOnly,
@@ -65,13 +65,11 @@ $null = Invoke-Stage 'Stage 1/7 - Preflight 预检' {
     return $true
 }
 
-# 单命令一键收敛（工单16）：未提权完整模式下，先弹一次 UAC 让提权子回合跑完全部提权阶段
-# （其上下文按已知坑①自动跳过 WSL），本窗口等待其结束后，就地补跑用户级阶段（WSL + dotfiles）。
-# 一次命令、一次 UAC，全程串联；提权子回合日志同样落在 logs/ 下。
-$script:SkipRepeat = $false
+# 单命令一键收敛（工单16 → 工单30 全程提权重构）：未提权完整模式下弹一次 UAC，
+# 提权子回合一回合跑完全部七阶段（含 WSL——坑①已由调用纪律根除，见 scripts/lib/common.ps1）；
+# 父回合只等待并转发退出码，不再补跑任何阶段。子回合日志经 Tee 落盘（工单19）。
 if (-not $elevated -and -not $ValidateOnly -and -not $NoElevate -and -not $ElevatedPass) {
-    Write-Phase '提权收敛（管理员子回合）'
-    # 子回合经 Tee 落盘（工单19）：包装进程持有管道，子窗口照常实时可见，elevated-*.log 独立于 transcript 存续
+    Write-Phase '提权收敛（管理员子回合·全程七阶段）'
     $childLog = Join-Path $logDir ("elevated-{0}.log" -f (Get-Date -Format 'yyyyMMdd-HHmmss'))
     $childCmd = "& '$PSCommandPath' -ElevatedPass *>&1 | Tee-Object -FilePath '$childLog'; exit `$LASTEXITCODE"
     $relaunchArgs = @('-NoProfile', '-Command', $childCmd)
@@ -80,22 +78,21 @@ if (-not $elevated -and -not $ValidateOnly -and -not $NoElevate -and -not $Eleva
         $child = Start-Process pwsh -Verb RunAs -ArgumentList $relaunchArgs -PassThru -Wait
         $childSw.Stop()
         $childOk = ($child.ExitCode -eq 0)
-        Write-Step '提权子回合' ($childOk ? 'OK' : 'FAIL') "管理员阶段退出码 $($child.ExitCode)；随后自动补跑用户级阶段"
-        $script:Stages.Add([pscustomobject]@{ Name = '提权子回合 - Apply/用户级/移除/dotfiles（管理员）'; Ok = $childOk; Secs = $childSw.Elapsed.TotalSeconds })
+        Write-Step '提权子回合' ($childOk ? 'OK' : 'FAIL') "全程收敛退出码 $($child.ExitCode)（$([int]$childSw.Elapsed.TotalSeconds)s）"
+        Write-Step '日志' 'INFO' $childLog
+        Write-Step 'bootstrap' ($childOk ? 'OK' : 'FAIL') ($childOk ? '收敛完成（幂等：重跑应零变更）' : '未全绿——完整日志见上；尾部：wdc log')
+        try { Stop-Transcript | Out-Null } catch { }
+        exit $child.ExitCode
     } catch {
-        Write-Step '提权' 'FAIL' 'UAC 被取消或不可用。重试，或用 -NoElevate 只跑用户级阶段'
+        Write-Step '提权' 'FAIL' 'UAC 被取消或不可用。重试，或用 -NoElevate 走非提权单回合（apply 与 WSL 启用受限）'
         try { Stop-Transcript | Out-Null } catch { }
         exit 1
     }
-    $script:SkipRepeat = $true   # 提权回合已完成校验/应用/用户级安装/移除，下面只补 WSL + dotfiles
 }
 
 # ---------------------------------------------------------------------------
 # Stage 2/7 · Validate 无副作用校验
 # ---------------------------------------------------------------------------
-if ($script:SkipRepeat) {
-    Write-Step '校验/应用/用户级/移除' 'SKIP' '提权子回合已完成（本回合只补 WSL + dotfiles）'
-} else {
 $null = Invoke-Stage 'Stage 2/7 - Validate 无副作用校验' {
     # 子进程 stdout 不入本阶段返回值（Invoke-Subscript 负责转发到 Host），返回值只留 bool
     $ok = Invoke-Subscript -Label 'validate.ps1' -Path (Join-Path $PSScriptRoot 'validate.ps1')
@@ -148,23 +145,19 @@ $null = Invoke-Stage 'Stage 5/7 - 移除清单（先装后拆）' {
     if ($ValidateOnly) { Write-Step '移除清单' 'SKIP' '-ValidateOnly 模式不执行'; return $true }
     return (Invoke-Subscript -Label 'remove-leftovers.ps1' -Path (Join-Path $PSScriptRoot 'scripts/remove-leftovers.ps1'))
 }
-}
 
 # ---------------------------------------------------------------------------
 # Stage 6/7 · WSL 侧（安装编排 + 发行版内环境）
 # ---------------------------------------------------------------------------
 $null = Invoke-Stage 'Stage 6/7 - WSL 侧（安装编排 + 发行版环境）' {
     if ($ValidateOnly) { Write-Step 'WSL' 'SKIP' '-ValidateOnly 模式不执行'; return $true }
-    # wsl.exe 在提权上下文里经管道捕获输出会挂起（已知问题），而 WSL 阶段本身无需提权：
-    # 提权跑时跳过，收尾后用 `pwsh bootstrap.ps1 -NoElevate` 补齐
-    if ($elevated) {
-        Write-Step 'WSL' 'SKIP' '提权上下文跳过（wsl.exe 已知挂起问题；此阶段无需提权）——请稍后运行 pwsh bootstrap.ps1 -NoElevate 补齐'
-        return $true
-    }
+    # 工单30：全程提权下 WSL 阶段在提权回合真实执行——坑①由调用纪律根除（安装类新控制台不捕获、
+    # 查询/发行版内走有界文件捕获，见 scripts/lib/common.ps1）；未全绿时提示 -NoElevate 逃生通道
     $allOk = $true
     foreach ($s in 'install-wsl.ps1', 'install-wsl-env.ps1') {
         if (-not (Invoke-Subscript -Label $s -Path (Join-Path $PSScriptRoot "scripts/$s"))) { $allOk = $false }
     }
+    if (-not $allOk) { Write-Step 'WSL' 'INFO' '可试 pwsh bootstrap.ps1 -NoElevate 在非提权上下文补跑（坑①逃生通道）' }
     return $allOk
 }
 
