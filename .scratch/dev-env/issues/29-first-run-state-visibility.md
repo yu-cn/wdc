@@ -12,8 +12,9 @@
 - [x] `bootstrap-main.ps1` Summary：非 `-ValidateOnly` 且身份未生效时 `CHANGED` 提醒一行（不计失败、不改退出码）
 - [x] `scripts/install-wsl.ps1`：`wsl --status` 探测改用 `Test-WslEnabled`（单一来源去重）
 - [x] 本机实测：`validate` 全绿；`wdc status` 两新步输出；`wdc staus`（打错）友好报错；`wdc help` 正常
-- [ ] 两机复验：ASUS 下次 sync 后 `wdc status` 输出观感（探测延迟、无误导报）
+- [x] 两机复验：ASUS 下次 sync 后 `wdc status` 输出观感（探测延迟、无误导报）
 
 ## Comments
 
-- 2026-10-22（主机）：WSL 两步的处置文案刻意指向管理员终端 `wsl --install` 手工路径——bootstrap 自身走不通 WSL 启用（见工单 30），文案不能承诺 bootstrap 能做它做不到的事。
+- 2026-10-22（ASUS）：WSL 两步的处置文案刻意指向管理员终端 `wsl --install` 手工路径——bootstrap 自身走不通 WSL 启用（见工单 30），文案不能承诺 bootstrap 能做它做不到的事。〔注：当日会话误标「主机」，本机 hostname=ASUS，已就地勘正。〕
+- 2026-10-22（ASUS 本机会话）：ASUS 侧复验——今日多次 `wdc status` 干净：身份/WSL 两步判定正确（本机均 OK）、探测秒级无感、零误报。另注：本工单收口时工单 30 已落地，上文「bootstrap 走不通 WSL 启用」的文案顾虑已被全程提权重构解决。收口归档。
