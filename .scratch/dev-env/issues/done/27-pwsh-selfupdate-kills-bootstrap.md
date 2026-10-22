@@ -27,3 +27,4 @@
 
 - 2026-10-21（主机会话）run6 实录：方案 a 生效——runner（落后 pwsh 的真实场）上步骤日志见「检查 PowerShell 7 更新（5.1 宿主内升级安全）…」→ 39 秒后「就位」，进程树全程无恙（transcript 无 pipeline stopped），bootstrap 跑完六阶段至 Summary、退出码诚实。唯一 FAIL 仍是 Chrome（工单26 已知 runner 限制，与本案无关）。顺带：run5 的 winhttp 设置被 run6 证实写坏 winget 配置加载（"Unexpected error while loading settings"），该步骤已删。
 - 2026-10-22（ASUS 本机会话）：ASUS 侧复验——pwsh 7.6.6 已最新，今日 bootstrap（pwsh 宿主入口）全程静默、无升级提示，符合「已最新应静默」预期。主机侧下次 sync 顺带观察（行为代码同源、机器无关）。收口归档。
+- 2026-10-22（LETH会话）：LETH 侧观察（上条所指主机，hostname=LETH）——pwsh 7.6.7 在位，今日 wdc sync（pwsh 宿主入口）引导层全程静默、无「PowerShell 7 有新版」黄字提示，符合「已最新应静默」预期。两机观察齐。
