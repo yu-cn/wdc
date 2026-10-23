@@ -62,6 +62,18 @@ $null = Invoke-Stage 'Stage 1/7 - Preflight 预检' {
     if ($elevated) { Write-Step '提权状态' 'OK' '管理员 - 全部阶段可执行' }
     else { Write-Step '提权状态' 'SKIP' '普通用户 - HKLM 注册表与全机安装将受限' }
     Write-Step '工作目录' 'INFO' $PSScriptRoot
+    # 全新机器的 winget configure 默认未启用（工单31）：validate/apply 全线退 -1978335127——
+    # Stage 2/3 前幂等启用一次（需 store access；首次可能 E_ABORT，重试即成）。-ValidateOnly 跳过（无副作用承诺）
+    if ($elevated -and -not $ValidateOnly) {
+        $enabled = $false
+        foreach ($i in 1..3) {
+            & winget configure --enable 2>&1 | Out-Null
+            if ($LASTEXITCODE -eq 0) { $enabled = $true; break }
+            Start-Sleep -Seconds 8
+        }
+        if ($enabled) { Write-Step 'configure 组件' 'OK' 'winget configure 已启用（幂等）' }
+        else { Write-Step 'configure 组件' 'INFO' 'winget configure --enable 未成——Stage 2/3 将受限；手工：管理员终端 winget configure --enable' }
+    }
     return $true
 }
 
