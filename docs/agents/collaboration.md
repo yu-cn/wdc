@@ -24,5 +24,6 @@
 9. **机器派生值（发行版 ID/随机 GUID/本机路径）不入仓库文件**——按 ADR-0004 安装期渲染到机器本地（如 WT fragment）。
 10. **先改内容后 `git mv` 会丢内容**——mv 只暂存「改名」，mv 前的工作区编辑留在原地不随提交走（porcelain 显示 `RM`，第二列 M 即此意）；工单 15 归档实录踩中。规矩：要移动的文件先 commit 内容，再 mv 提交改名；或 mv 后核对 porcelain 无第二列残留。
 11. **WT 的 fragment 官方读取位置是 `%LOCALAPPDATA%\Microsoft\Windows Terminal\Fragments\<源名>\`**——包内 `Packages\...\LocalState\fragments` 不被读取（2026-10-21 实录：渲染在包内位置长期不生效，环境主人发现 WT 无 Ubuntu profile 才揭出；改写官方路径后即刻出现）。教训有二：路径照官方文档，别猜「同类就近」；断言尽量断言「效果」而非「中间产物在位」——旧断言只查文件存在，全绿掩盖了不生效。**后续收尾（2026-10-22）**：官方路径上片段机制亦不可靠（短命消失、WSL 自带片段不物化），WDC 的 WSL profile 渲染机制整体退役、改模板静态声明——见 ADR-0006；本坑的路径与断言教训仍然成立。
+12. **换镜像同时写两套 apt 源文件会全量重复声明**（2026-10-23 实录：`/etc/apt/sources.list`（legacy 一行式）与 `/etc/apt/sources.list.d/ubuntu.sources`（deb822）并存、指向同一 CERNET 镜像，每次 `apt-get update` 透出一屏 "Target Packages ... is configured multiple times"，`-qq` 压不住 stderr；同内容重复 apt 仅告警不报错，功能无损）——与 WDC 脚本无关（setup-ubuntu.sh 只写 `sources.list.d/github-cli.list` 独立源）。处置：备份后注释老 `sources.list` 活跃行（原文件存 `/root/sources.list.bak-<日期>`），以 deb822 为唯一事实源，`apt-get update` 告警归零收口。规矩：换镜像只写一套、优先 deb822；诊断第一步 `cat` 两文件比对 URL——同一则留 deb822，不同则留实际要用的那个，总之只留一份。
 
 - **禁 `git add -A`**：符号链接在位后，全量 add 会把写穿漂移无声带进 commit——永远按显式路径 add，提交前 `git status` 核对 dotfiles/ 无漂移。
