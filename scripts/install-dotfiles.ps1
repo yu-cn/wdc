@@ -31,15 +31,22 @@ function Install-Dotfile {
         New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
         Write-Step $leaf 'CHANGED' "创建目录 $targetDir"
     }
-    if (Test-Path $Target) {
-        $item = Get-Item $Target
-        if ($item.LinkType -eq 'SymbolicLink' -and $item.Target -eq $Source) {
+    $item = Get-Item $Target -Force -ErrorAction SilentlyContinue
+    if ($item) {
+        if ($item.LinkType -eq 'SymbolicLink' -and ($item.Target -join '') -eq $Source) {
             Write-Step $leaf 'OK' '已是本仓库符号链接'
             return
         }
-        $bak = Get-BackupPath $Target
-        Move-Item -Path $Target -Destination $bak
-        Write-Step $leaf 'CHANGED' "旧文件备份为 $(Split-Path $bak -Leaf)"
+        if ($item.LinkType -eq 'SymbolicLink' -and -not (Test-Path ($item.Target -join ''))) {
+            # 死链（仓库目录改名/搬移后遗留）：Test-Path 视为不存在但落点已被占，不清除则 New-Item 撞 already exists；直接清不留 bak
+            Remove-Item $item.FullName -Force
+            Write-Step $leaf 'CHANGED' "已清除死链（指向 $($item.Target -join '')）"
+        }
+        else {
+            $bak = Get-BackupPath $Target
+            Move-Item -Path $Target -Destination $bak
+            Write-Step $leaf 'CHANGED' "旧文件备份为 $(Split-Path $bak -Leaf)"
+        }
     }
     New-Item -ItemType SymbolicLink -Path $Target -Value $Source | Out-Null
     Write-Step $leaf 'CHANGED' "已链接 -> $Source"
