@@ -1,17 +1,27 @@
 #Requires -Version 7
-# wdc.ps1 — wdc 命令的唯一实现（工单 20：使用体验优化）
+# wdc.ps1 — wdc 命令的唯一实现（工单 20：使用体验优化；2026-10-23 体验修订见工单20 补记）
 # pwsh profile 与 Git Bash bashrc 只做薄包装转发到这里，逻辑单一来源，防两处漂移。
 # 输出复用 lib/common.ps1 的 Write-Phase/Write-Step，与 bootstrap/verify 同一观感。
+# 体验约定（业界对齐：jj 裸命令=只读状态、git/gh 裸命令不跑长操作）：
+#   裸命令不触发同步——长操作/改状态一律显式子命令；裸 wdc 给只读快照并提示下一步。
 # 用法：
-#   wdc | wdc sync        全量同步：fetch → 落后则 pull（--ff-only）→ bootstrap → verify 全量
-#   wdc status            只读快照（秒级）：与 origin/main 差距 / dotfiles 写穿漂移 / 身份与 WSL 首跑状态 / 最近一次 bootstrap 结果
-#   wdc verify [-Full]    机器断言；默认 -Quick 秒级，-Full 含三域漂移（约 3 分钟）
-#   wdc triage            dotfiles 写穿漂移分流（工单 17 工具入口，交互式）
-#   wdc log [-Lines N]    最近一次 bootstrap 日志尾部（默认 40 行）
+#   wdc | wdc status    只读快照（秒级）：与 origin/main 差距 / dotfiles 写穿漂移 / 身份与 WSL 首跑状态 / 最近 bootstrap 结果
+#   wdc sync            全量同步：fetch → 落后则 pull（--ff-only）→ bootstrap → verify 全量（会请求一次 UAC）
+#   wdc verify [-Full]  机器断言；默认 -Quick 秒级，-Full 含三域漂移（约 3 分钟）
+#   wdc triage          dotfiles 写穿漂移分流（工单 17 工具入口，交互式）
+#   wdc log [-Lines N]  最近一次 bootstrap 日志尾部（默认 40 行，连带提权子回合日志）
+#   wdc help [命令]     总览或单命令详解；-h/--help 同义
+#   wdc version         版本（git describe）；-v/--version 同义
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [string]$Command = 'sync',
+    [string]$Command = 'status',
+    [Parameter(Position = 1)]
+    [string]$Topic,
+    [Alias('h')]
+    [switch]$Help,
+    [Alias('v')]
+    [switch]$Version,
     [switch]$Full,
     [int]$Lines = 40
 )
@@ -19,19 +29,111 @@ $ErrorActionPreference = 'Stop'
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { }
 . (Join-Path $PSScriptRoot 'lib/common.ps1')
 
-# --- 子命令校验在仓库定位之前（工单29）：help 与友好报错不依赖 ~/.wdc 指针 ---
-$helpText = @'
-wdc — WDC 开发环境一键工具（仓库在 ~/.wdc 指向的路径）
+$wdcCommands = 'sync', 'status', 'verify', 'triage', 'log', 'help', 'version'
 
-  wdc | wdc sync        全量同步：fetch → 落后则 pull → bootstrap → verify 全量（会请求一次 UAC）
-  wdc status            只读快照：远端差距 / dotfiles 写穿漂移 / 身份与 WSL 首跑状态 / 最近 bootstrap 结果（秒级）
-  wdc verify [-Full]    机器断言（默认 -Quick；-Full 含三域漂移约 3 分钟）
-  wdc triage            dotfiles 写穿漂移分流（逐文件 吸收/还原，交互式）
-  wdc log [-Lines N]    最近一次 bootstrap 日志尾部（默认 40 行）
+# --- 子命令校验在仓库定位之前（工单29）：help/version 与友好报错不依赖 ~/.wdc 指针 ---
+$script:SelfRepo = Split-Path $PSScriptRoot -Parent
+
+function Get-WdcVersion {
+    $v = & git -C $script:SelfRepo describe --tags --always --dirty 2>$null
+    if ($LASTEXITCODE -ne 0 -or -not $v) { return 'v0.0.0-unknown' }
+    return ($v -join '')
+}
+
+function Get-WdcCommandSuggestion {
+    # 打错子命令时的「你是不是想输…」：先看唯一前缀命中，再看编辑距离 ≤2
+    param([string]$Input_)
+    $hit = @($wdcCommands | Where-Object { $_.StartsWith($Input_, [StringComparison]::OrdinalIgnoreCase) })
+    if ($hit.Count -eq 1) { return $hit[0] }
+    $best = $null; $bestD = 99
+    foreach ($k in $wdcCommands) {
+        $a = $Input_.ToLowerInvariant(); $b = $k
+        if ([Math]::Abs($a.Length - $b.Length) -gt 2) { continue }
+        $d = [int[,]]::new($a.Length + 1, $b.Length + 1)
+        for ($i = 0; $i -le $a.Length; $i++) { $d[$i, 0] = $i }
+        for ($j = 0; $j -le $b.Length; $j++) { $d[0, $j] = $j }
+        for ($i = 1; $i -le $a.Length; $i++) {
+            $pi = $i - 1
+            for ($j = 1; $j -le $b.Length; $j++) {
+                $pj = $j - 1
+                $cost = if ($a[$pi] -eq $b[$pj]) { 0 } else { 1 }
+                # 索引括号内的算术必须预计算：$d[$i - 1, $j] 会被解析成 $i - (1, $j)——PowerShell 逗号优先级坑
+                $m1 = [Math]::Min(($d[$pi, $j]) + 1, ($d[$i, $pj]) + 1)
+                $d[$i, $j] = [Math]::Min($m1, ($d[$pi, $pj]) + $cost)
+            }
+        }
+        $dist = $d[$a.Length, $b.Length]
+        if ($dist -le 2 -and $dist -lt $bestD) { $best = $k; $bestD = $dist }
+    }
+    return $best
+}
+
+$helpOverview = @'
+wdc — WDC 开发环境一键工具（裸命令只读快照；仓库在 ~/.wdc 指向的路径）
+
+  wdc | wdc status     只读快照（秒级）：远端差距 / dotfiles 漂移 / 身份与 WSL / 最近 bootstrap
+  wdc sync             全量同步：fetch → pull → bootstrap → verify 全量（会请求一次 UAC）
+  wdc verify [-Full]   机器断言（默认 -Quick；-Full 含三域漂移约 3 分钟）
+  wdc triage           dotfiles 写穿漂移分流（逐文件 吸收/还原，交互式）
+  wdc log [-Lines N]   最近一次 bootstrap 日志尾部（默认 40 行）
+  wdc help [命令]      本总览或单命令详解（-h/--help 同义）
+  wdc version          版本（-v/--version 同义）
 '@
-if ($Command -notin 'sync', 'status', 'verify', 'triage', 'log', 'help') {
-    Write-Host "wdc: 未知子命令「$Command」（可用：sync / status / verify / triage / log / help）" -ForegroundColor Yellow
-    Write-Host $helpText
+
+$helpDetail = @{
+    'status' = @'
+wdc status — 只读快照（秒级，不改任何状态）
+  远端差距（fetch 后与 origin/main 的领先/落后）、dotfiles 写穿漂移（>0 提示 wdc triage）、
+  身份文件是否生效（占位未填则 git 拒绝提交护栏仍在）、WSL/Ubuntu 首跑状态、
+  距上次上游检查天数（>30 天提示补课）、最近一次 bootstrap 判定行。
+  裸 wdc 等价于 wdc status。
+'@
+    'sync' = @'
+wdc sync — 全量同步（日常一键收敛；会请求一次 UAC）
+  顺序：fetch → 落后则 pull --ff-only（本地领先/分叉一律中止交人工）→
+  bootstrap 七阶段（提权子回合一回合跑完，日志落 logs/elevated-*.log）→ verify 全量。
+  任一段失败即非零退出，并自动贴出 bootstrap 与提权日志尾部。
+'@
+    'verify' = @'
+wdc verify [-Full] — 机器断言
+  六组断言：dotfiles 符号链接 / 身份与注册表 / 移除清单核销 / 语言栈 / WSL 侧 / 三域漂移。
+  默认 -Quick（秒级）；-Full 加三域 winget configure test 漂移（约 3 分钟）。
+'@
+    'triage' = @'
+wdc triage — dotfiles 写穿漂移分流（交互式）
+  WT/VSCode 等 UI 会把设置写穿符号链接进仓库文件；本命令逐文件给出「吸收进模板 / 还原为机器噪声」
+  的处置入口（ADR-0003 判据）。verify 的「dotfiles 与 HEAD 一致」断言 FAIL 时也会指向这里。
+'@
+    'log' = @'
+wdc log [-Lines N] — 最近一次 bootstrap 日志尾部（默认 40 行）
+  正常汇总在 logs/bootstrap-*.log，提权子回合七阶段明细在 logs/elevated-*.log——两条一起展示。
+'@
+}
+
+function Show-WdcHelp([string]$topic) {
+    if ($topic -and $helpDetail.ContainsKey($topic)) {
+        Write-Host $helpDetail[$topic]
+    } elseif ($topic) {
+        Write-Host "wdc: 「$topic」没有单独的帮助（可用：sync / status / verify / triage / log）" -ForegroundColor Yellow
+        Write-Host $helpOverview
+    } else {
+        Write-Host $helpOverview
+    }
+}
+
+if ($Version -or $Command -in 'version', '-v', '--version') {
+    Write-Host ("wdc " + (Get-WdcVersion))
+    exit 0
+}
+if ($Help -or $Command -in 'help', '-h', '--help') {
+    Show-WdcHelp $Topic
+    exit 0
+}
+if ($Command -notin $wdcCommands) {
+    $sug = Get-WdcCommandSuggestion $Command
+    Write-Host "wdc: 未知子命令「$Command」（可用：sync / status / verify / triage / log / help / version）" -ForegroundColor Yellow
+    if ($sug) { Write-Host "wdc: 你是想输「$sug」吗？" -ForegroundColor Yellow }
+    Write-Host $helpOverview
     exit 1
 }
 
@@ -41,6 +143,7 @@ if (-not $repo -or -not (Test-Path (Join-Path $repo 'bootstrap.ps1'))) {
     Write-Host 'wdc: 未配置仓库路径——先在仓库跑一次 bootstrap.ps1（会自动写 ~/.wdc 指针）' -ForegroundColor Yellow
     exit 1
 }
+$bare = -not $PSBoundParameters.ContainsKey('Command')
 
 function Get-LastBootstrapLog {
     Get-ChildItem (Join-Path $repo 'logs') -Filter 'bootstrap-*.log' -ErrorAction SilentlyContinue |
@@ -61,16 +164,12 @@ function Get-AheadBehind {
 }
 
 switch ($Command) {
-    'help' {
-        Write-Host $helpText
-    }
-
     'status' {
         Write-Phase 'wdc status · 只读快照'
         git -C $repo fetch --quiet
         $ab = Get-AheadBehind
         if ($ab[0] -eq 0 -and $ab[1] -eq 0) { Write-Step '仓库' 'OK' '与 origin/main 一致' }
-        else { Write-Step '仓库' 'INFO' "领先 $($ab[0]) / 落后 $($ab[1])（wdc 同步之）" }
+        else { Write-Step '仓库' 'INFO' "领先 $($ab[0]) / 落后 $($ab[1])——wdc sync 同步之" }
         $drift = @(git -C $repo status --porcelain -- dotfiles)
         if ($drift.Count -eq 0) { Write-Step 'dotfiles 漂移' 'OK' '与 HEAD 一致' }
         else { Write-Step 'dotfiles 漂移' 'FAIL' "$($drift.Count) 项写穿——wdc triage 分流" }
@@ -99,6 +198,9 @@ switch ($Command) {
             $verdict = if ($m) { $m.Line } else { '（无判定行）' }
             Write-Step '最近 bootstrap' 'INFO' "$($log.Name) → $verdict"
         } else { Write-Step '最近 bootstrap' 'INFO' 'logs/ 尚无日志' }
+        if ($bare) {
+            Write-Step '提示' 'INFO' '裸 wdc 即本快照（只读）。同步收敛：wdc sync；全部命令：wdc help'
+        }
     }
 
     'verify' {

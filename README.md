@@ -67,8 +67,9 @@ bootstrap 先确保 PowerShell 7 就位（裸机自动安装），再依次跑�
 
 | 命令 | 用途 |
 |---|---|
-| `wdc` | 日常一键同步（fetch → pull → bootstrap → verify 全量；子命令见 `wdc help`） |
-| `wdc status` / `wdc verify` / `wdc triage` / `wdc log` | 只读快照 / 机器断言（默认 -Quick）/ dotfiles 写穿分流 / 最近 bootstrap 日志尾部 |
+| `wdc` | 只读快照（裸命令默认，秒级）：远端差距 / dotfiles 漂移 / 身份与 WSL / 最近 bootstrap |
+| `wdc sync` | 日常一键同步（fetch → pull → bootstrap → verify 全量；会请求一次 UAC） |
+| `wdc verify [-Full]` / `wdc triage` / `wdc log` / `wdc help` | 机器断言（默认 -Quick）/ dotfiles 写穿分流 / 最近日志尾部 / 帮助与版本 |
 | `pwsh bootstrap.ps1` | 完整收敛（日常改了配置后重跑） |
 | `pwsh bootstrap.ps1 -ValidateOnly` | 只做无副作用校验（配置 schema + 脚本静态检查） |
 | `pwsh validate.ps1` | 同上的校验入口，独立可用 |
