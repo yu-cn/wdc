@@ -18,3 +18,4 @@
 
 - 2026-10-21（主机会话）：双 profile 成因的判据——WT 的 settings.json profile 与动态生成 profile 同 GUID 则覆盖、异 GUID 则并存；owner 机器从未见双只因 {3618cdc9-…} 那只本就是该机 WT 首跑时生成后写穿进模板的（工单14 同族现象的良性版）。
 - 2026-10-22（LETH会话）：「老机器同步后同样恰好一只」半边复验（LETH 侧）——今日 sync 后 WT settings.json 符号链接在位（直指仓库模板）；profile 全景恰一只 PowerShell（规范 GUID {574e775e-…}，defaultProfile 同指），旧随机 GUID {3618cdc9-…} 无残留；CMD/Windows PowerShell 保持规范 GUID，Azure 隐藏如常——「动态被模板覆盖」按判据成立。ASUS 侧同核待其下次会话；勾选框（新机复验，含字体半边）仍开放。
+- 2026-10-23（LETH会话）：VM 新机侧复验（虚拟真跑 WDC-VM01，全记录见工单30 注释）——**字体半边成立**：cli-tools 域应用后 JetBrainsMono NerdFont 全家 96 文件入 C:\Windows\Fonts 并注册（NF/NFM/NFP/NL 四族 × 全字重），WT 模板 `font.face=JetBrainsMono NFM` 无豆腐块之忧；**profile 半边成立**：WT settings.json 符号链接直指仓库模板，defaultProfile={574e775e-…}（规范 GUID），profile 全景恰一只 PowerShell + CMD/Git Bash/Ubuntu WSL（静态声明）+ Azure/Windows PowerShell hidden——新机「双 profile 并存」未复现，「动态被模板同 GUID 覆盖」在全新 WT 上如判据成立。至此字体半边有新机证据、老机半边 LETH 有据（ASUS 待核），勾选与否归主人。
