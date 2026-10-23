@@ -1,6 +1,6 @@
 # WDC — 个人 Windows 开发环境
 
-把「我的 Windows 开发环境」变成可重放、可迁移的声明式仓库：新机器 clone 后跑一条命令即得完整环境。基于 microsoft/WindowsDeveloperConfig 的做法自建，不 fork（ADR-0001）。
+把「我的 Windows 开发环境」变成可重放、可迁移的声明式仓库：新机器 clone 后跑一条命令即得完整环境。WDC 即 Windows Developer Config，名字沿自上游 microsoft/WindowsDeveloperConfig（做法自建、不 fork，ADR-0001）。
 
 ## Language
 

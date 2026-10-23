@@ -1,8 +1,8 @@
-# WDC — 声明式 Windows 开发环境
+# WDC（Windows Developer Config）— 声明式 Windows 开发环境
 
 > clone 之后一条命令，任何一台 Windows 机器收敛到声明状态：软件、系统设置、dotfiles、WSL Ubuntu——幂等、可重放、可迁移。
 
-[![validate](https://github.com/yu-cn/WDC/actions/workflows/validate.yml/badge.svg)](https://github.com/yu-cn/WDC/actions/workflows/validate.yml)
+[![validate](https://github.com/yu-cn/wdc/actions/workflows/validate.yml/badge.svg)](https://github.com/yu-cn/wdc/actions/workflows/validate.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 这是作者的日常开发环境，以仓库形式维护：配置只描述「一台机器应当处于什么状态」，由 bootstrap 负责把机器收敛到这个状态。基于 microsoft/WindowsDeveloperConfig 的经验自建（不 fork，见 [ADR-0001](docs/adr/0001-own-tree-not-fork-upstream.md)）。仓库以 [MIT](LICENSE) 开源，欢迎直接使用或 fork 改造成你自己的环境（见「[使用与改造](#使用与改造)」）。
@@ -32,8 +32,8 @@ gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL b
 前置：装好 Git（`winget install Git.Git` 或官网安装包）。其余无需准备——Windows 10/11 自带的 Windows PowerShell 5.1 与 winget 足以启动，缺 PowerShell 7 时 bootstrap 会自动经 winget 用户级安装（无需管理员）。然后（cmd / PowerShell / Git Bash 均可粘贴）：
 
 ```powershell
-git clone https://github.com/yu-cn/WDC.git
-cd WDC
+git clone https://github.com/yu-cn/wdc.git
+cd wdc
 powershell -ExecutionPolicy Bypass -File bootstrap.ps1
 ```
 
@@ -96,7 +96,7 @@ Docker Engine 由 WSL 阶段从官方源安装，默认用户加入 docker 组�
 
 ## 新开发机接入（机器对等，任意台可重复）
 
-1. **协作者授权**：仓库 owner 在 GitHub → Settings → Collaborators 添加该机的 GitHub 账号（或 `gh api repos/<owner>/WDC/collaborators/<用户名> -X PUT`）
+1. **协作者授权**：仓库 owner 在 GitHub → Settings → Collaborators 添加该机的 GitHub 账号（或 `gh api repos/<owner>/wdc/collaborators/<用户名> -X PUT`）
 2. **该机上**：`gh auth login` → 按上文「快速开始」走 bootstrap（五步）→ **验收**：`pwsh scripts/verify-machine.ps1`（全绿即与声明一致）
 3. **反向吸收**：该机上跑 `pwsh scripts/inventory-machine.ps1 > .scratch/inventory-<机器名>-<日期>.md`，commit + push 回仓库——环境主人按 ADR-0003 通用核心判据逐项定夺是否吸收进 configs/dotfiles，吸收后在 [docs/upstream-ledger.md](docs/upstream-ledger.md) 记一笔
 4. 任何机器的改进直接 push `main`（pre-commit 钩子把关）；工单与决策经 `.scratch/` 在仓库内流转，**机器之间无主从**；个性需求走机器自留地，不进仓库

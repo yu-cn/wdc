@@ -1,6 +1,6 @@
 # Fork 指南：改造成自己的环境后，如何跟随上游
 
-README「使用与改造」讲了 fork 初次改造；本文讲之后的日子：你的 fork 与 [yu-cn/WDC](https://github.com/yu-cn/WDC)（上游）都会演进，怎么跟。
+README「使用与改造」讲了 fork 初次改造；本文讲之后的日子：你的 fork 与 [yu-cn/wdc](https://github.com/yu-cn/wdc)（上游）都会演进，怎么跟。
 
 ## 一次性设置
 
@@ -11,7 +11,7 @@ README「使用与改造」讲了 fork 初次改造；本文讲之后的日子�
 ## 日常跟随上游
 
 ```bash
-git remote add wdc https://github.com/yu-cn/WDC.git   # 一次性
+git remote add wdc https://github.com/yu-cn/wdc.git   # 一次性
 git fetch wdc
 git merge wdc/main          # 或收敛到已知好点：git merge wdc/v0.1.0
 ```
