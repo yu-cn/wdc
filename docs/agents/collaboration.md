@@ -7,6 +7,7 @@
 - **一次只问一个问题**，不要批量出题；提问前先把事实查尽（脚本/仓库/日志）。
 - **事实自己查，决策交环境主人**：拿不准的不擅自定夺——在 `.scratch/<feature>/issues/` 开工单记录（约定见 issue-tracker.md），由环境主人定夺，任一机器会话可执行。
 - **小修直接 commit main**（pre-commit 钩子会跑无副作用校验把关），push 是常态；大改先开工单。
+- **打 tag 与发 release 同一会话收口**：push tag 不等于 release 发布（v0.3.0 实录：tag 已推、release 漏建，次日才补发）——打 tag 后同一会话内 `gh release create <tag> --latest --title <名> --notes-file <笔记>` 收口；笔记以 tag 注释的主题句为骨架、按上一版 release 的版式扩写（非 draft、非 prerelease、无附件）。
 - **红线**：机器自留地工具（JetBrains/Typora 等）一概不碰（ADR-0003）；`~/.gitidentity` 内容不得出现在任何产出物（校验用「非空」检查，不打印值）；dotfiles 提交前 `git status` 核对无漂移（写穿污染见下）。
 - **长操作要有心跳**：轮询/后台任务以 30–45 秒级可见进度汇报，勿长时间静默。
 - **文档语言**：散文中文；标识符与既定格式保持英文（Status 标签词表、工单行格式如 `Status:`/`Blocked by:`、文件名、命令、代码）。
