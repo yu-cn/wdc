@@ -25,7 +25,7 @@ Node 归 **vp**（默认跟随 LTS）、Python 归 **uv**——Windows / WSL 两
 LDC 接管 apt 包 / gh / Docker Engine / uv / vp / Starship / Linux dotfiles（单一实现）；WDC 保留 WSL 生命周期引导（wsl.conf systemd、默认 shell=bash）与移除清单（Go）
 
 **dotfiles**（[dotfiles/](dotfiles/)，符号链接安装，旧文件备份 `*.bak`）
-gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL bash 三 shell 统一提示符）· Windows Terminal · VS Code settings / keybindings · bashrc 两侧（WSL bashrc 已移交 LDC，[dotfiles/wsl](dotfiles/wsl/) 冻结）
+gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL bash 三 shell 统一提示符）· Windows Terminal · VS Code settings / keybindings · bashrc（Windows 侧；Linux bashrc 归姊妹仓库 LDC，工单32 起委托接管）
 
 ## 快速开始（新机器）
 
