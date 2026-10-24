@@ -14,8 +14,9 @@
 - [x] bootstrap-main.ps1 Stage 5 注释/标签更新（「先装后拆」语义失效，改收敛执法）
 - [x] README：快速开始披露 + fork 清单加第 5 项 + WSL 侧/各层职责措辞更新
 - [x] GLOSSARY：补「移除清单」词条
-- [ ] 两机复验：本机 remove-leftovers 幂等跑 + wdc verify -Quick 全绿；另一台机待 sync 后复验再归档
+- [x] 两机复验：本机 remove-leftovers 幂等跑 + wdc verify -Quick 全绿；另一台机待 sync 后复验再归档
 
 ## Comments
 
 - 2026-10-25（本机会话）：实施如上清单。本机验证：六份 PS 脚本 AST 语法全绿、三份 bash `bash -n` 全绿；remove-leftovers.ps1 幂等真跑——两阶段全 OK 行、零改动；verify -Quick——Windows 侧 1-4 组全绿（含改后移除清单核销组仅剩 VSCode 单版本 + Desktop 运行时保留）。顺手补一处存量漂移：core.hooksPath 未接线（与本单无关，按断言提示 `git config core.hooksPath .githooks` 接上，使本次提交过 pre-commit 硬关）。现存唯一 FAIL 为 WSL 内 LDC「docker daemon 声明键」漂移——存量问题、LDC 辖区，与本单无关，`wdc sync` 收敛。另一台机（ASUS）待 sync 后复验再归档。
+- 2026-10-25（LETH 会话）：两机复验收官。证据一——remove-leftovers.ps1 独立幂等跑：EXIT=0，1/2 WT fragments 两行「不存在」、2/2 VSCode 商店版「不存在（identity 包非商店版，不处理）」，汇总「全部完成」，全程零改动。证据二——`wdc verify -Quick`：EXIT=0，「机器断言 - 全部通过——与声明一致」+「WSL LDC verify --quick」OK（含 LDC 内 apt 包清单、gh/docker 在位、uv/vp=1.3.0/node、桌面域按 ADR-0005/0008 SKIP）。
