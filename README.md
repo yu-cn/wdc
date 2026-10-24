@@ -7,26 +7,6 @@
 
 这是作者的日常开发环境，以仓库形式维护：配置只描述「一台机器应当处于什么状态」，由 bootstrap 负责把机器收敛到这个状态。基于 microsoft/WindowsDeveloperConfig 的经验自建（不 fork，见 [ADR-0001](docs/adr/0001-own-tree-not-fork-upstream.md)）。仓库以 [MIT](LICENSE) 开源，欢迎直接使用或 fork 改造成你自己的环境（见「[使用与改造](#使用与改造)」）。
 
-## 一条命令得到什么
-
-**系统**（[base-windows 域](configs/base-windows.winget)，27 项注册表 opinion）
-开发者模式 · 启用 Sudo · 长路径 · 深色主题 · 显示扩展名/隐藏文件 · 资源管理器与任务栏去噪 · 开始菜单关 Web 搜索与推荐 · 关 Recall / Click To Do / 小组件 · Edge 新标签空白 · 关远程桌面
-
-**CLI**（[cli-tools 域](configs/cli-tools.winget)，17 个 winget 包）
-Git · GitHub CLI · Chrome · Everything · PowerToys · lazygit · delta · fzf / fd / ripgrep / zoxide / bat / jq · make · JetBrainsMono NF 字体（PowerShell 7 由入口引导层负责安装与升级）
-
-**编辑器**（[editors 域](configs/editors.winget)）
-VS Code + 32 个扩展（Python / Jupyter 全家、Remote-WSL / SSH / Containers、Prettier / Vitest / oxc、中文语言包等，[完整清单](configs/vscode-extensions.txt)）
-
-**语言运行时**
-Node 归 **vp**（默认跟随 LTS）、Python 归 **uv**——Windows / WSL 两侧同工具同习惯
-
-**WSL 侧**（Ubuntu，发行版内一切委托姊妹仓库 [LDC](https://github.com/yu-cn/ldc)——[setup-ubuntu.sh](scripts/wsl/setup-ubuntu.sh) 薄包装，ADR-0007）
-LDC 接管 apt 包 / gh / Docker Engine / uv / vp / Starship / Linux dotfiles（单一实现）；WDC 保留 WSL 生命周期引导（wsl.conf systemd、默认 shell=bash）与移除清单（Go）
-
-**dotfiles**（[dotfiles/](dotfiles/)，符号链接安装，旧文件备份 `*.bak`）
-gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL bash 三 shell 统一提示符）· Windows Terminal · VS Code settings / keybindings · bashrc（Windows 侧；Linux bashrc 归姊妹仓库 LDC，工单32 起委托接管）
-
 ## 快速开始（新机器）
 
 前置：装好 Git（`winget install Git.Git` 或官网安装包）。其余无需准备——Windows 10/11 自带的 Windows PowerShell 5.1 与 winget 足以启动，缺 PowerShell 7 时 bootstrap 会自动经 winget 用户级安装（无需管理员）。然后（cmd / PowerShell / Git Bash 均可粘贴）：
@@ -50,7 +30,30 @@ bootstrap 先确保 PowerShell 7 就位（裸机自动安装），再依次跑�
 
 </details>
 
-重跑 bootstrap 幂等：已就位的全部跳过，只有漂移会被收敛。`-NoElevate` 保留为非提权单回合入口（排障逃生通道：apply 与 WSL 启用受限跳过）。
+重跑 bootstrap 幂等：已就位的全部跳过，只有漂移会被收敛。收敛完成后验收：`pwsh scripts/verify-machine.ps1`（全绿即与声明一致）。`-NoElevate` 保留为非提权单回合入口（排障逃生通道：apply 与 WSL 启用受限跳过）。
+
+<details>
+<summary><strong>一条命令得到什么</strong>（点开看完整清单）</summary>
+
+**系统**（[base-windows 域](configs/base-windows.winget)，27 项注册表 opinion）
+开发者模式 · 启用 Sudo · 长路径 · 深色主题 · 显示扩展名/隐藏文件 · 资源管理器与任务栏去噪 · 开始菜单关 Web 搜索与推荐 · 关 Recall / Click To Do / 小组件 · Edge 新标签空白 · 关远程桌面
+
+**CLI**（[cli-tools 域](configs/cli-tools.winget)，17 个 winget 包）
+Git · GitHub CLI · Chrome · Everything · PowerToys · lazygit · delta · fzf / fd / ripgrep / zoxide / bat / jq · make · JetBrainsMono NF 字体（PowerShell 7 由入口引导层负责安装与升级）
+
+**编辑器**（[editors 域](configs/editors.winget)）
+VS Code + 32 个扩展（Python / Jupyter 全家、Remote-WSL / SSH / Containers、Prettier / Vitest / oxc、中文语言包等，[完整清单](configs/vscode-extensions.txt)）
+
+**语言运行时**
+Node 归 **vp**（默认跟随 LTS）、Python 归 **uv**——Windows / WSL 两侧同工具同习惯
+
+**WSL 侧**（Ubuntu，发行版内一切委托姊妹仓库 [LDC](https://github.com/yu-cn/ldc)——[setup-ubuntu.sh](scripts/wsl/setup-ubuntu.sh) 薄包装，ADR-0007）
+LDC 接管 apt 包 / gh / Docker Engine / uv / vp / Starship / Linux dotfiles（单一实现）；WDC 保留 WSL 生命周期引导（wsl.conf systemd、默认 shell=bash）与移除清单（Go）
+
+**dotfiles**（[dotfiles/](dotfiles/)，符号链接安装，旧文件备份 `*.bak`）
+gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL bash 三 shell 统一提示符）· Windows Terminal · VS Code settings / keybindings · bashrc（Windows 侧；Linux bashrc 归姊妹仓库 LDC，工单32 起委托接管）
+
+</details>
 
 ## 使用与改造
 
