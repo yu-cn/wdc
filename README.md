@@ -21,11 +21,11 @@ VS Code + 32 个扩展（Python / Jupyter 全家、Remote-WSL / SSH / Containers
 **语言运行时**
 Node 归 **vp**（默认跟随 LTS）、Python 归 **uv**——Windows / WSL 两侧同工具同习惯
 
-**WSL 侧**（Ubuntu，[setup-ubuntu.sh](scripts/wsl/setup-ubuntu.sh)）
-build-essential 等基础包 · gh（官方源）· Docker Engine（官方源 + docker 组免 sudo）· uv / vp / Starship · 默认 shell 统一 bash
+**WSL 侧**（Ubuntu，发行版内一切委托姊妹仓库 [LDC](https://github.com/yu-cn/ldc)——[setup-ubuntu.sh](scripts/wsl/setup-ubuntu.sh) 薄包装，ADR-0007）
+LDC 接管 apt 包 / gh / Docker Engine / uv / vp / Starship / Linux dotfiles（单一实现）；WDC 保留 WSL 生命周期引导（wsl.conf systemd、默认 shell=bash）与移除清单（Go）
 
 **dotfiles**（[dotfiles/](dotfiles/)，符号链接安装，旧文件备份 `*.bak`）
-gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL bash 三 shell 统一提示符）· Windows Terminal · VS Code settings / keybindings · bashrc 两侧
+gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL bash 三 shell 统一提示符）· Windows Terminal · VS Code settings / keybindings · bashrc 两侧（WSL bashrc 已移交 LDC，[dotfiles/wsl](dotfiles/wsl/) 冻结）
 
 ## 快速开始（新机器）
 
@@ -81,8 +81,8 @@ bootstrap 先确保 PowerShell 7 就位（裸机自动安装），再依次跑�
 
 ```
 configs/    声明式层：按域拆分的 winget configuration（base-windows / cli-tools / editors + 扩展清单）
-scripts/    编排层：bootstrap 入口、语言版本（vp）、VSCode 扩展、移除清单、WSL 两侧、上游检查
-dotfiles/   dotfiles 层：windows / wsl / shared 三处，符号链接安装（旧文件备份 *.bak）
+scripts/    编排层：bootstrap 入口、语言版本（vp）、VSCode 扩展、移除清单、WSL 委托包装、上游检查
+dotfiles/   dotfiles 层：windows / shared（wsl 已冻结，Linux 模板归姊妹仓库 LDC），符号链接安装（旧文件备份 *.bak）
 ```
 
 - git 身份不入仓库：模板 include 每机本地的 `~/.gitidentity`
@@ -92,7 +92,7 @@ dotfiles/   dotfiles 层：windows / wsl / shared 三处，符号链接安装（
 
 ## Docker（WSL 侧默认装）
 
-Docker Engine 由 WSL 阶段从官方源安装，默认用户加入 docker 组（免 sudo 需重新登录 WSL 一次生效）。守护进程依赖 systemd 自启——bootstrap 会确保 `/etc/wsl.conf` 的 `[boot] systemd=true`，若为本次新写入需 `wsl --shutdown` 后下次进入生效。Windows 侧的 Docker Desktop 不在声明内（机器自留地）。
+Docker Engine 由 WSL 阶段委托 LDC 从官方源安装（免 sudo 需重新登录 WSL 一次生效）。守护进程依赖 systemd 自启——bootstrap 会确保 `/etc/wsl.conf` 的 `[boot] systemd=true`，若为本次新写入需 `wsl --shutdown` 后下次进入生效。Windows 侧的 Docker Desktop 不在声明内（机器自留地）。
 
 ## 新开发机接入（机器对等，任意台可重复）
 

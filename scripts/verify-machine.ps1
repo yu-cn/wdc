@@ -65,19 +65,21 @@ Assert 'uv 就位' { Get-Command uv -ErrorAction SilentlyContinue }
 
 # WSL 默认用户自动探测（Get-WslDefaultUser；硬编码用户名会误伤默认用户名不同的机器，工单12族）
 $wslUser = Get-WslDefaultUser
-Write-Phase '5/6 · WSL 侧'
-# 探测走 scripts/wsl/probe.sh（与安装期 install-wsl-env.ps1 同源，工单05；key:value 单行输出）
+Write-Phase '5/6 · WSL 侧（LDC 委托，工单32/ADR-0007）'
+# WSL 特有项走 scripts/wsl/probe.sh（与安装期 install-wsl-env.ps1 同源，工单05）：默认 shell、systemd——
+# WDC 保留职责（ADR-0007 契约），不随委托移交
 $probeSh = ConvertTo-WslPath (Join-Path $repo 'scripts\wsl\probe.sh')
 $probe = Invoke-WslScript -Distro 'Ubuntu' -User $wslUser -Script $probeSh
 $probeMap = @{}
 foreach ($line in ($probe.Lines | Where-Object { $_ })) { $k, $v = $line -split ':', 2; $probeMap[$k] = $v }
 Write-Step 'WSL 探测' 'INFO' (($probe.Lines | Where-Object { $_ }) -join ' ')
-Assert 'WSL bash 默认' { $probeMap['shell'] -eq '/bin/bash' }
-Assert 'WSL docker' { $probeMap['docker'] -match '^[0-9]' }
-Assert 'WSL uv' { $probeMap['uv'] -ne 'MISSING' }
-Assert 'WSL node(vp)' { $probeMap['node'] -match '^v' }
-Assert 'WSL dotfiles 链接' { [int]$probeMap['links'] -ge 1 }
-Assert 'WSL 身份带过' { $probeMap['id'] -ne 'MISSING' }
+Assert 'WSL bash 默认' { $probeMap['shell'] -eq '/bin/bash' } 'root 阶段重跑（setup-ubuntu.sh 的 WDC opinion chsh）'
+Assert 'WSL systemd 开启' { $probeMap['systemd'] -eq 'yes' } '/etc/wsl.conf 已写入但未生效——wsl --shutdown 后下次进入生效'
+# 发行版内一切（包/语言栈/dotfiles/身份/docker）委托 LDC verify —— 断言面即 LDC 单一实现（工单32）
+$verifySh = ConvertTo-WslPath (Join-Path $repo 'scripts\wsl\verify-ldc.sh')
+$ldc = Invoke-WslScript -Distro 'Ubuntu' -User $wslUser -Script $verifySh
+$ldc.Lines | ForEach-Object { Write-Host $_ }
+Assert 'WSL LDC verify --quick' { $ldc.Ok } 'LDC 断言未全绿——重跑 bootstrap（幂等）或发行版内 ldc sync'
 
 Write-Phase '6/6 · 三域漂移'
 if ($Quick) { Write-Step '漂移检查' 'SKIP' '-Quick 模式跳过' }

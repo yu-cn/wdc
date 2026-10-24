@@ -32,8 +32,9 @@ function Write-Step {
 }
 
 function Get-VpPin {
-    # vp 版本钉子的唯一来源（configs/vp-version）：Windows 侧 install-languages、WSL 侧 setup-ubuntu.sh、
-    # verify-machine 断言三方共读，升级 vp 只改这一个文件（吸收账本记一笔）
+    # vp 版本钉子的唯一来源（configs/vp-version）：委托 LDC 后 WSL 侧读 LDC 自己的钉子（工单32），
+    # 本文件只剩 Windows 侧消费者（install-languages、verify-machine 断言）——与 LDC configs/vp-version
+    # 同值联动：升级同日双改、各自账本互引记账（ADR-0007）
     $p = Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) 'configs/vp-version'
     return (Get-Content $p -Raw).Trim()
 }
