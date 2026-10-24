@@ -2,3 +2,6 @@
 *.bak
 # 校验/运行的临时产物
 *.log
+# ZCode 插件注入的本机标记（plugin_root），非仓库内容
+.v2c/
+.video_agent/
