@@ -29,3 +29,4 @@ Status: needs-triage
 ## Comments
 
 - 2026-10-25 记录（ZCode 会话）。当日已顺手收口的三件事：repo-local `git config core.hooksPath .githooks`（FAIL hint 自带修法）；`Hidden 2→1` 还原为声明值（唯一注册表真漂移；若环境主人刻意放开过「受保护的操作系统文件」，反转此处置并把仓库声明改 2）；gh 升 2.103.2。**Git 升级未动**——坑14 全套流程（bash 占用/MSYS 转换/提权读符号链接），需环境主人配合窗口，按 collaboration.md 坑14 剧本执行；在那之前 cli-tools 即使提权重跑也会因 useLatest 真红。
+- 2026-10-25（LETH 会话二）：Git 已按坑14 升至 2.56.0.3（schtasks 路线，上一条 Comments 的「Git 升级未动」与「cli-tools 即使提权重跑也真红」均已过时）。当日二次 `wdc sync` 全绿：bootstrap 7/7、verify -Full 三域漂移全 0——且该次 verify 跑在**未提权**会话，**假警报未复现**（提权 bootstrap 刚跑完的状态下）。取证记录（15/16 注册表项一致却整域报「未处于」）仍然成立，假警报定性为状态依赖的间歇形态；A/B/C 方案仍待环境主人定夺，本单保持 needs-triage。
