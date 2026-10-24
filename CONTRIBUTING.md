@@ -8,3 +8,5 @@
 - **方式**：直接开 GitHub Issue / Pull Request。`.scratch/` 本地工单流是仓库主人自己的内部流程，与外部贡献无关。
 - **CI**：PR 自动跑无副作用校验（`validate.ps1`：配置 schema + 脚本静态检查），本地可先 `pwsh validate.ps1` 自查。
 - **语言**：散文用中文；标识符、命令、既定格式保持英文。
+
+仓库主人自己的内部开发规范见 [docs/dev-standard.md](docs/dev-standard.md)（双仓同源，主作者位在 LDC）；外部贡献无需遵循其工单 / 发布流程。

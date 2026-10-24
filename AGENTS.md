@@ -12,6 +12,10 @@
 
 单一上下文：仓库根一个 `GLOSSARY.md` 与 `docs/adr/`。见 `docs/agents/domain.md`。
 
+## 开发规范（dev standard）
+
+内部开发规范：`docs/dev-standard.md`（双仓同源拷贝，主作者位在 LDC，LDC 侧 ADR-0012）——分支提交 / 工单 / ADR / 质量关卡 / 版本发布 / 双仓统筹 / 供应链以它为准。
+
 ## 协作规矩与已知坑
 
 协作规矩（一次一问、事实自查、决策归环境主人）与已知机器坑都在 `docs/agents/collaboration.md`——在任何机器上驱动 WDC 工作前先读它。机器对等（GLOSSARY「机器对等」词条）：规则属于仓库，绝不存单机 agent 记忆。
