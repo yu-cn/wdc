@@ -28,6 +28,13 @@ ensure_ldc() {
     fi
     if [ ! -d "$dir" ]; then
         log "clone LDC → $dir"
+        # 死链预清（WDC 坑15 / LDC 同构实录）：仓库缺席期 ~/.gitconfig 若为死链，git 一切命令
+        # fatal、clone 本身也跑不了——只清「链接在位且目标已消失」的死链，真文件不动；
+        # clone 后 user 阶段委托 LDC bootstrap 重链（install-dotfiles.sh 的 ln -sfn 覆盖死链）
+        if [ -L "$HOME/.gitconfig" ] && [ ! -e "$HOME/.gitconfig" ]; then
+            rm -f "$HOME/.gitconfig"
+            log "已清死链 ~/.gitconfig（目标已消失；clone 后 bootstrap 重链）"
+        fi
         mkdir -p "$(dirname "$dir")"
         git clone "$LDC_URL" "$dir"
     fi
