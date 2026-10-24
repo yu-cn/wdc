@@ -9,7 +9,13 @@
 
 ## 快速开始（新机器）
 
-前置：装好 Git（`winget install Git.Git` 或官网安装包）。其余无需准备——Windows 10/11 自带的 Windows PowerShell 5.1 与 winget 足以启动，缺 PowerShell 7 时 bootstrap 会自动经 winget 用户级安装（无需管理员）。然后（cmd / PowerShell / Git Bash 均可粘贴）：
+零前置——Windows 10/11 自带的 winget 与 Windows PowerShell 足以启动，一条命令（cmd / PowerShell / Git Bash 均可粘贴）：
+
+```powershell
+powershell -c "irm https://raw.githubusercontent.com/yu-cn/wdc/main/scripts/get.ps1 | iex"
+```
+
+get.ps1 是唯一的远程引导脚本：缺 Git 自动 winget 安装（弹一次 UAC）→ 定位或 clone 仓库（`~/.wdc` 指针有效则复用，缺省 clone 到 `~\wdc`）→ 直接进入 bootstrap 全流程（缺 PowerShell 7 自动经 winget 用户级安装）。`irm | iex` 属于直接执行网络代码——介意可先[审阅 get.ps1](scripts/get.ps1)再粘贴。偏好手动管理的等价三行（Git 需自备，`winget install Git.Git` 或官网安装包）：
 
 ```powershell
 git clone https://github.com/yu-cn/wdc.git
@@ -67,7 +73,7 @@ gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL b
   4. `.scratch/`——作者的内部工单流，可删可留（留作方法参考）
   5. `scripts/remove-leftovers.ps1`——移除清单（[ADR-0007](docs/adr/0007-removal-list-converge-only.md)：本仓自清理 + 迁移冲突，不卸语言栈），按你自己的迁移需求增删
 
-  脚本里没有写死的仓库地址，fork 后无需改动即可 bootstrap；日后跟随上游演进的 recipe 见 [docs/forking.md](docs/forking.md)。
+  脚本里没有写死的仓库地址，fork 后无需改动即可 bootstrap；日后跟随上游演进的 recipe 见 [docs/forking.md](docs/forking.md)。例外：[scripts/get.ps1](scripts/get.ps1) 是面向上游的远程一键引导、写死上游地址——fork 用户走手动 clone 三行，或把它改成你的仓库地址再发布。
 
 ## 常用命令
 
