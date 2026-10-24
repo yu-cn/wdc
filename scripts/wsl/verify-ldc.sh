@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# verify-ldc.sh — WDC 对 WSL 侧的验收委托包装（工单32/ADR-0007）：发行版内一切断言走 LDC 单一实现，
+# verify-ldc.sh — WDC 对 WSL 侧的验收委托包装（工单32/LDC-0007）：发行版内一切断言走 LDC 单一实现，
 # 退出码透传（0 全绿 / 1 有 FAIL）。WDC 侧只补机器形态差异：无 systemd 的发行版（wsl.conf 刚写入
 # 未重启的中间态）透传 LDC_SKIP_DOCKER=1——与安装面 setup-ubuntu.sh 同判定，LDC 的 docker 断言
 # 才与安装面口径一致。LDC 不在位 → FAIL 指回安装入口。

@@ -1,7 +1,7 @@
 #Requires -Version 7
-# install-wsl-env.ps1 — WSL 侧发行版内环境编排（工单32：薄委托 LDC，ADR-0007 统筹）
-# WDC 保留 WSL 生命周期引导（apt 引导依赖 / wsl.conf systemd / 默认 shell）+ WDC 特有 opinion
-# （移除清单 Go 等）+ 身份带过；包/语言栈/dotfiles/验收全部委托姊妹仓库 LDC（~/dev/ldc）——
+# install-wsl-env.ps1 — WSL 侧发行版内环境编排（工单32：薄委托 LDC，LDC-0007 统筹）
+# WDC 保留 WSL 生命周期引导（apt 引导依赖 / wsl.conf systemd / 默认 shell）+ 身份带过；
+# 包/语言栈/dotfiles/验收全部委托姊妹仓库 LDC（~/dev/ldc）——
 # root 委托其 install-packages.sh，user 委托其 bootstrap.sh。全部幂等。
 [CmdletBinding()]
 param()
@@ -31,7 +31,7 @@ Write-Phase "WSL root 阶段（用户 $wslUser）"
 $root = Invoke-WslScript -Distro 'Ubuntu' -User 'root' -Script $setupSh -ScriptArgs @('root', $wslUser)
 $root.Lines | ForEach-Object { Write-Host $_ }
 if (-not $root.Ok) { Write-Step 'root 阶段' 'FAIL' "退出码 $($root.Exit)"; exit 1 }
-Write-Step 'root 阶段' 'OK' 'LDC 委托（apt/gh/Docker）+ WDC opinion（systemd/Go/shell/docker组）完成'
+Write-Step 'root 阶段' 'OK' 'LDC 委托（apt/gh/Docker）+ WDC opinion（systemd/shell/docker组）完成'
 
 Write-Phase 'WSL user 阶段'
 $user = Invoke-WslScript -Distro 'Ubuntu' -User $wslUser -Script $setupSh -ScriptArgs @('user', $wslUser, $winIdentity)

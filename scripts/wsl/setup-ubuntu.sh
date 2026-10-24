@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# setup-ubuntu.sh — WSL 侧薄委托（工单32；ADR-0007 统筹：发行版内一切收敛走 LDC 单一实现）
+# setup-ubuntu.sh — WSL 侧薄委托（工单32；LDC-0007 统筹：发行版内一切收敛走 LDC 单一实现）
 # 本脚本只剩 WDC 保留职责的包装层：WSL 生命周期引导（apt 引导依赖 / wsl.conf systemd / 默认 shell）
-# + WDC 特有 opinion（移除清单 Go 等）+ 身份带过。包/语言栈/dotfiles/验收全部委托姊妹仓库 LDC
+# + 身份带过。包/语言栈/dotfiles/验收全部委托姊妹仓库 LDC
 # （clone 到 ~/dev/ldc，仓库步与 ldc sync 同语义）。由 install-wsl-env.ps1 调用，两种角色各跑一次：
 #   root: LDC 引导依赖 → LDC 定位（以默认用户身份）→ 委托 install-packages.sh → WDC opinion
 #   user: 身份带过 → LDC 定位 → 委托 bootstrap.sh（root 阶段已核销自动跳过）
@@ -90,9 +90,6 @@ if [ "$ROLE" = "root" ]; then
 
     log "root 委托 LDC install-packages.sh（apt 清单/gh/Docker/桌面应用域按机器形态自动 SKIP）"
     bash "$(user_home)/dev/ldc/scripts/install-packages.sh"
-
-    log "WDC opinion · 移除清单：移除 Go（工单21：退出通用核心；~/go 用户数据不碰）"
-    [ -d /usr/local/go ] && rm -rf /usr/local/go || true
 
     log "WDC opinion · 默认 shell = bash（LDC 未接管 chsh 前保留在包装层；root 改免 PAM）"
     current_shell=$(getent passwd "$WDC_USER" | cut -d: -f7)

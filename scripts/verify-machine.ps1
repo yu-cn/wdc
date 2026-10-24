@@ -41,9 +41,6 @@ Assert '系统通知开启(=1)' { (Get-ItemProperty 'HKCU:\SOFTWARE\Microsoft\Wi
 Assert '长路径开启' { (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' -Name LongPathsEnabled -EA SilentlyContinue).LongPathsEnabled -eq 1 }
 
 Write-Phase '3/6 · 移除清单核销'
-Assert 'oh-my-posh 已卸' { -not (Get-Command oh-my-posh -ErrorAction SilentlyContinue) }
-Assert 'nvm 目录已清' { -not (Test-Path (Join-Path $env:LOCALAPPDATA 'nvm')) -and -not (Test-Path 'C:\nvm4w') }
-Assert '.NET SDK 已卸' { $null = winget list --id Microsoft.DotNet.SDK.10 -e --accept-source-agreements 2>$null; $LASTEXITCODE -ne 0 }
 # VSCode 自更新会在安装目录内注册 Developer 签名的 identity MSIX（1.0.x sparse 包，坑13）——非商店第二份；
 # 商店安装必为 Store 签名，按签名只拦真商店版（identity 包按包名卸了会随每次自更新回归）
 Assert 'VSCode 单版本(商店 MSIX 已卸)' { -not (Get-AppxPackage -Name 'Microsoft.VisualStudioCode' -ErrorAction SilentlyContinue | Where-Object SignatureKind -eq 'Store') }
@@ -65,9 +62,9 @@ Assert 'uv 就位' { Get-Command uv -ErrorAction SilentlyContinue }
 
 # WSL 默认用户自动探测（Get-WslDefaultUser；硬编码用户名会误伤默认用户名不同的机器，工单12族）
 $wslUser = Get-WslDefaultUser
-Write-Phase '5/6 · WSL 侧（LDC 委托，工单32/ADR-0007）'
+Write-Phase '5/6 · WSL 侧（LDC 委托，工单32/LDC-0007）'
 # WSL 特有项走 scripts/wsl/probe.sh（与安装期 install-wsl-env.ps1 同源，工单05）：默认 shell、systemd——
-# WDC 保留职责（ADR-0007 契约），不随委托移交
+# WDC 保留职责（LDC-0007 契约），不随委托移交
 $probeSh = ConvertTo-WslPath (Join-Path $repo 'scripts\wsl\probe.sh')
 $probe = Invoke-WslScript -Distro 'Ubuntu' -User $wslUser -Script $probeSh
 $probeMap = @{}

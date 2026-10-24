@@ -19,6 +19,8 @@ powershell -ExecutionPolicy Bypass -File bootstrap.ps1
 
 bootstrap 先确保 PowerShell 7 就位（裸机自动安装），再依次跑七个阶段（预检 → 无副作用校验 → 应用声明配置 → 用户级安装 → 移除清单 → WSL 侧 → dotfiles），全程输出分阶段报告。**一条命令一键收敛**：未提权启动会弹一次 UAC，提权子回合一回合跑完全部七阶段（含 WSL），无需手动二次运行。
 
+> **直接在自己机器上跑之前先知道**：bootstrap 是作者的日常环境收敛——会应用注册表系统设置（含关远程桌面等 opinion），并执行一份显式移除清单（[ADR-0007](docs/adr/0007-removal-list-converge-only.md)：卸载商店版 VSCode 换 winget 版、清理退役终端片段；**不卸载任何语言栈与已装软件**）。想用自己的偏好，建议先 fork 按下文「使用与改造」裁剪再跑。
+
 <details>
 <summary><strong>首次运行你需要配合的五件事</strong>（UAC 提权 · SmartScreen 放行 · 重启续跑 · 填写身份 · 关 VSCode 设置同步）</summary>
 
@@ -47,8 +49,8 @@ VS Code + 32 个扩展（Python / Jupyter 全家、Remote-WSL / SSH / Containers
 **语言运行时**
 Node 归 **vp**（默认跟随 LTS）、Python 归 **uv**——Windows / WSL 两侧同工具同习惯
 
-**WSL 侧**（Ubuntu，发行版内一切委托姊妹仓库 [LDC](https://github.com/yu-cn/ldc)——[setup-ubuntu.sh](scripts/wsl/setup-ubuntu.sh) 薄包装，ADR-0007）
-LDC 接管 apt 包 / gh / Docker Engine / uv / vp / Starship / Linux dotfiles（单一实现）；WDC 保留 WSL 生命周期引导（wsl.conf systemd、默认 shell=bash）与移除清单（Go）
+**WSL 侧**（Ubuntu，发行版内一切委托姊妹仓库 [LDC](https://github.com/yu-cn/ldc)——[setup-ubuntu.sh](scripts/wsl/setup-ubuntu.sh) 薄包装，LDC-0007）
+LDC 接管 apt 包 / gh / Docker Engine / uv / vp / Starship / Linux dotfiles（单一实现）；WDC 保留 WSL 生命周期引导（wsl.conf systemd、默认 shell=bash）
 
 **dotfiles**（[dotfiles/](dotfiles/)，符号链接安装，旧文件备份 `*.bak`）
 gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL bash 三 shell 统一提示符）· Windows Terminal · VS Code settings / keybindings · bashrc（Windows 侧；Linux bashrc 归姊妹仓库 LDC，工单32 起委托接管）
@@ -63,6 +65,7 @@ gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL b
   2. `dotfiles/`——shell / git / 终端 / 编辑器偏好
   3. `LICENSE`——版权人换成你自己
   4. `.scratch/`——作者的内部工单流，可删可留（留作方法参考）
+  5. `scripts/remove-leftovers.ps1`——移除清单（[ADR-0007](docs/adr/0007-removal-list-converge-only.md)：本仓自清理 + 迁移冲突，不卸语言栈），按你自己的迁移需求增删
 
   脚本里没有写死的仓库地址，fork 后无需改动即可 bootstrap；日后跟随上游演进的 recipe 见 [docs/forking.md](docs/forking.md)。
 
@@ -91,7 +94,7 @@ dotfiles/   dotfiles 层：windows / shared（wsl 已冻结，Linux 模板归姊
 - git 身份不入仓库：模板 include 每机本地的 `~/.gitidentity`
 - Node 全权归 **vp**（钉 1.3.0，默认跟随 LTS），Python 全权归 **uv**，两侧同工具同习惯
 - 提示符三 shell（pwsh / Git Bash / WSL bash）统一 **Starship**，一份 `starship.toml`
-- 移除清单显式执行，**清单外不碰**：JetBrains 套件、Typora、GitHub Desktop 等机器自留地安全
+- 移除清单只做两类事（[ADR-0007](docs/adr/0007-removal-list-converge-only.md)）：本仓自清理（退役 WT fragments）与迁移冲突（VSCode 商店版→winget 版），**清单外不碰**——JetBrains 套件、Typora、GitHub Desktop 等机器自留地安全，语言栈与已装软件一律不卸
 
 ## Docker（WSL 侧默认装）
 

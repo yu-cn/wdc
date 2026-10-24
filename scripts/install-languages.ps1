@@ -50,7 +50,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 Write-Step 'vp env install' 'CHANGED' '已安装解析环境（LTS Node 进 vp 商店）'
 
-# 启用托管模式（node/npm/pnpm 等经 vp shims 解析；system node 由移除清单清掉）
+# 启用托管模式（node/npm/pnpm 等经 vp shims 解析；system node 若在由 PATH 优先级裁决——移除清单不再卸语言栈，ADR-0007）
 & $vpExe env on
 if ($LASTEXITCODE -eq 0) {
     $cur = (& $vpExe env current) 2>$null

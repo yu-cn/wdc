@@ -151,9 +151,9 @@ $null = Invoke-Stage 'Stage 4/7 - 用户级安装（vp + VSCode 扩展）' {
 }
 
 # ---------------------------------------------------------------------------
-# Stage 5/7 · 移除清单（先装后拆：languages 已就位后才清旧轨）
+# Stage 5/7 · 移除清单（自清理 + 迁移冲突，ADR-0007——幂等、全用户级，无「先装后拆」依赖）
 # ---------------------------------------------------------------------------
-$null = Invoke-Stage 'Stage 5/7 - 移除清单（先装后拆）' {
+$null = Invoke-Stage 'Stage 5/7 - 移除清单（自清理+迁移冲突）' {
     if ($ValidateOnly) { Write-Step '移除清单' 'SKIP' '-ValidateOnly 模式不执行'; return $true }
     return (Invoke-Subscript -Label 'remove-leftovers.ps1' -Path (Join-Path $PSScriptRoot 'scripts/remove-leftovers.ps1'))
 }
