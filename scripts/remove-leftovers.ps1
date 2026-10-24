@@ -78,12 +78,14 @@ foreach ($p in @(
 # 2/5 · VSCode 商店 MSIX 版（收敛为 winget 用户版单份；当前用户卸载，无需提权）
 # ---------------------------------------------------------------------------
 Write-Phase '移除清单 2/5 - VSCode 商店版'
-$msix = Get-AppxPackage -Name 'Microsoft.VisualStudioCode' -ErrorAction SilentlyContinue
+# 只拦 Store 签名的商店版；VSCode 自更新注册的 Developer 签名 identity 包不碰（坑13：卸了随自更新回归）
+$msix = Get-AppxPackage -Name 'Microsoft.VisualStudioCode' -ErrorAction SilentlyContinue |
+    Where-Object SignatureKind -eq 'Store'
 if ($msix) {
     $msix | Remove-AppxPackage
     Write-Step 'VSCode MSIX' 'CHANGED' '商店版已卸载（用户数据与 winget 版独立，互不影响）'
 } else {
-    Write-Step 'VSCode MSIX' 'OK' '不存在'
+    Write-Step 'VSCode MSIX' 'OK' '不存在（VSCode 自身 identity 包非商店版，不处理）'
 }
 
 # ---------------------------------------------------------------------------

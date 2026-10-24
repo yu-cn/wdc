@@ -44,7 +44,9 @@ Write-Phase '3/6 · 移除清单核销'
 Assert 'oh-my-posh 已卸' { -not (Get-Command oh-my-posh -ErrorAction SilentlyContinue) }
 Assert 'nvm 目录已清' { -not (Test-Path (Join-Path $env:LOCALAPPDATA 'nvm')) -and -not (Test-Path 'C:\nvm4w') }
 Assert '.NET SDK 已卸' { $null = winget list --id Microsoft.DotNet.SDK.10 -e --accept-source-agreements 2>$null; $LASTEXITCODE -ne 0 }
-Assert 'VSCode 单版本(MSIX 已卸)' { -not (Get-AppxPackage -Name 'Microsoft.VisualStudioCode' -ErrorAction SilentlyContinue) }
+# VSCode 自更新会在安装目录内注册 Developer 签名的 identity MSIX（1.0.x sparse 包，坑13）——非商店第二份；
+# 商店安装必为 Store 签名，按签名只拦真商店版（identity 包按包名卸了会随每次自更新回归）
+Assert 'VSCode 单版本(商店 MSIX 已卸)' { -not (Get-AppxPackage -Name 'Microsoft.VisualStudioCode' -ErrorAction SilentlyContinue | Where-Object SignatureKind -eq 'Store') }
 Assert '.NET Desktop 运行时保留' { ((Get-ChildItem "$env:ProgramFiles\dotnet\shared\Microsoft.WindowsDesktop.App" -EA SilentlyContinue | Measure-Object).Count -ge 1) -or ((Get-ChildItem "${env:ProgramFiles(x86)}\dotnet\shared\Microsoft.WindowsDesktop.App" -EA SilentlyContinue | Measure-Object).Count -ge 1) }
 # 清单精确核销（只核有无缺失；机器自装扩展属自留地不核销，ADR-0003）
 Assert '扩展清单全部在位' {
