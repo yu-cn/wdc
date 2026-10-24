@@ -22,7 +22,7 @@ systemd_ready() { [ -d /run/systemd/system ]; }
 ensure_ldc() {
     # LDC 定位（ADR-0007 契约1；$HOME 必须已是目标用户的 home）：~/dev/ldc 不存在则 clone；
     # 已存在则 fetch + pull --ff-only（与 ldc sync 仓库步同语义），分叉/本地领先中止交人工
-    local dir="$HOME/dev/ldc" counts ahead behind
+    local dir="$HOME/dev/ldc" ahead=0 behind=0
     if [ -d "$dir" ] && [ ! -d "$dir/.git" ]; then
         log "ERROR: $dir 已存在但不是 git 仓库——不代删，人工处置后重跑"; exit 1
     fi

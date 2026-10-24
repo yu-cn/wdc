@@ -14,7 +14,7 @@ try {
 $failCount = 0
 
 # --- 1. winget configuration 逐份校验 ---
-Write-Phase 'Validate 1/2 - winget 配置校验'
+Write-Phase 'Validate 1/3 - winget 配置校验'
 $configDir = Join-Path $PSScriptRoot 'configs'
 $configFiles = @(Get-ChildItem $configDir -Filter '*.winget' -ErrorAction SilentlyContinue)
 if ($configFiles.Count -eq 0) {
@@ -49,7 +49,7 @@ foreach ($f in $configFiles) {
 }
 
 # --- 2. PowerShell 脚本静态检查 ---
-Write-Phase 'Validate 2/2 - 脚本静态检查'
+Write-Phase 'Validate 2/3 - 脚本静态检查'
 $scriptFiles = @()
 $scriptFiles += (Get-ChildItem (Join-Path $PSScriptRoot 'scripts') -Filter '*.ps1' -Recurse -ErrorAction SilentlyContinue)
 foreach ($rootScript in 'bootstrap.ps1', 'bootstrap-main.ps1') {
@@ -88,6 +88,35 @@ foreach ($f in $scriptFiles) {
             Write-Step $f.Name 'FAIL' $detail
             $failCount++
         }
+    }
+}
+
+# --- 3. bash 脚本静态检查（WSL shellcheck，工单34）---
+# bash -n 只保语法，shellcheck 才抓语义坑（工单32 实录：rev-list 输出 TAB 分隔被按空格切分，bash -n 全绿放行）。
+# 关卡设在 WSL 侧（shellcheck 由 LDC cli-tools.pkg 装进发行版）：无 WSL/Ubuntu（CI runner）或
+# shellcheck 未就位（LDC 接管前的旧机）→ SKIP 不拦；调用走 Invoke-WslBounded（坑①纪律）
+Write-Phase 'Validate 3/3 - bash 脚本静态检查（WSL shellcheck）'
+$bashFiles = @(Get-ChildItem (Join-Path $PSScriptRoot 'scripts\wsl') -Filter '*.sh' -ErrorAction SilentlyContinue)
+if ((Get-WslDistros) -notcontains 'Ubuntu') {
+    Write-Step 'WSL shellcheck' 'SKIP' 'Ubuntu 未就位（发行版内 bash 脚本的把关在 WSL 侧）'
+} elseif ($bashFiles.Count -eq 0) {
+    Write-Step 'WSL shellcheck' 'SKIP' 'scripts/wsl/ 下无 .sh 文件'
+} else {
+    $repoWsl = ConvertTo-WslPath $PSScriptRoot
+    # 直通姿势：`wsl -e shellcheck <files...>` 逐文件独立 argv——不走 bash -c 串（pwsh 拼命令行
+    # 时空格参数引号不保，实测 bash 只拿到 shellcheck 一个词，报 No files specified）
+    $r = Invoke-WslBounded -ArgumentList (@('-d', 'Ubuntu', '-e', 'shellcheck') + @($bashFiles | ForEach-Object { "$repoWsl/scripts/wsl/$($_.Name)" })) -TimeoutSeconds 120
+    $code = if ($null -ne $r) { $r.Exit } else { $null }
+    if ($code -eq 0) {
+        Write-Step 'WSL shellcheck' 'OK' "$($bashFiles.Count) 个脚本"
+    } elseif ($code -eq 127) {
+        Write-Step 'WSL shellcheck' 'SKIP' 'shellcheck 未装（LDC cli-tools.pkg 接管后自动就位）'
+    } elseif ($null -eq $code) {
+        Write-Step 'WSL shellcheck' 'SKIP' 'wsl.exe 超时/不可用'
+    } else {
+        $detail = (@($r.Lines) | Select-Object -First 8) -join ' | '
+        Write-Step 'WSL shellcheck' 'FAIL' $detail
+        $failCount++
     }
 }
 
