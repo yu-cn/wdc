@@ -11,11 +11,11 @@
   - 结构 `<type>(可选 scope): 中文描述` + 空行 + 可选正文 + 空行 + 可选脚注；
   - feat / fix 为规范保留 type，直接驱动版本号：feat→MINOR、fix→PATCH；v0.x 阶段破坏性变更按 semver 走 MINOR；
   - 扩展 type 用惯用集：build / chore / ci / docs / perf / refactor / revert / style / test；
-  - scope 可选、取名词（如 plan / docker / desktop）；
+  - scope 可选：单一主落点明显时取组件 / 域名（词表：bootstrap · install-packages · user-tools · dotfiles · desktop · docker · cli · verify · plan · configs · pins · validate · ci · agents · standard · dev-env），跨域大改省略；名词用英文；
   - 描述全中文、动词开头、句末不加句号（Angular 惯例；规范本身不限制语言）；
   - 破坏性变更：type 后加 `!` 或脚注 `BREAKING CHANGE: 说明`；
   - 锚点（工单 / ADR / CI run id）写正文或脚注，脚注用 git trailer 形态（如 `Refs: 工单07`）。
-- **已推送历史不可回改**：修错用 revert；被 tag 锚定的提交永不改写。
+- **已推送历史不可回改**：修错用 revert；被 tag 锚定的提交永不改写（一次性例外已发生：2026-10-25 全历史迁移至本规范，远端 `backup/pre-cc-20261025` 分支留档旧历史；此后本条无例外）。
 - **钩子纪律**：pre-commit 是硬关（跑无副作用校验），禁止 `--no-verify` 绕过；钩子失败即修而不是绕过。跨环境提交（钩子未接线 / 依赖不在）走「CI 兜底」既定路径——push 后 validate 必绿，不绿即修，无需任何绕过动作。
 
 ## 2. 工单流（`.scratch/`）
