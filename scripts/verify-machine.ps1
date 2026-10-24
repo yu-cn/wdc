@@ -81,13 +81,21 @@ Assert 'WSL LDC verify --quick' { $ldc.Ok } 'LDC 断言未全绿——重跑 boo
 Write-Phase '6/6 · 三域漂移'
 if ($Quick) { Write-Step '漂移检查' 'SKIP' '-Quick 模式跳过' }
 else {
+    # 工单01 方案A：未提权会话对含 HKLM/机器级单元的域评估不可靠（评估失败被记为「未处于」，整域假警报）——
+    # 相关域降级 SKIP，退出码不因假警报红；提权重跑才计入 FAIL。域的相关性由 Test-WdcDomainNeedsElevation 单一来源声明。
+    $unelevated = -not (Test-IsElevated)
+    if ($unelevated) { Write-Step '提权状态' 'INFO' '未提权会话对含 HKLM/机器级单元的域评估不可靠——相关域降为 SKIP，提权重跑才计入' }
     try { $domains = Get-WdcDomains } catch { Write-Step '域清单' 'FAIL' $_.Exception.Message; exit 1 }
     foreach ($d in $domains) {
         $domain = $d
+        if ($unelevated -and (Test-WdcDomainNeedsElevation -Domain $domain)) {
+            Write-Step "$domain 漂移" 'SKIP' '含 HKLM/机器级单元——未提权评估不可靠（工单01），提权重跑验证'
+            continue
+        }
         Assert "$domain 漂移=0" {
             $out = (winget configure test --file (Join-Path $repo "configs\$domain.winget") --accept-configuration-agreements 2>&1 | ForEach-Object { $_ -replace "`0", '' }) -join "`n"
             (([regex]::Matches($out, '未处于')).Count -eq 0) -and ($LASTEXITCODE -eq 0)
-        }
+        } '漂移≠0 或评估失败——先看会话是否提权：HKLM/机器级域未提权评估不可靠（工单01）；真漂移用 winget configure 应用收敛'
     }
 }
 

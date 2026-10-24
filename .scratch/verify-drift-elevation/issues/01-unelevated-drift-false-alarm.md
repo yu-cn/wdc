@@ -1,5 +1,3 @@
-Status: needs-triage
-
 # 01 · verify 漂移段未提权会话整域假警报（LETH 2026-10-25 实录）
 
 ## 问题
@@ -22,11 +20,12 @@ Status: needs-triage
 
 ## 验收清单
 
-- [ ] 方案经环境主人定夺并记录
-- [ ] 按定夺实施；未提权 -Quick 与提权全量两种路径验收全绿（提权全量受 Git 2.56 升级牵制，见 Comments）
-- [ ] verify-machine.ps1 的漂移 FAIL hint 同步更新（现 hint 未提示提权因素）
+- [x] 方案经环境主人定夺并记录
+- [x] 按定夺实施；未提权 -Quick 与提权全量两种路径验收全绿（提权全量受 Git 2.56 升级牵制，见 Comments）
+- [x] verify-machine.ps1 的漂移 FAIL hint 同步更新（现 hint 未提示提权因素）
 
 ## Comments
 
 - 2026-10-25 记录（ZCode 会话）。当日已顺手收口的三件事：repo-local `git config core.hooksPath .githooks`（FAIL hint 自带修法）；`Hidden 2→1` 还原为声明值（唯一注册表真漂移；若环境主人刻意放开过「受保护的操作系统文件」，反转此处置并把仓库声明改 2）；gh 升 2.103.2。**Git 升级未动**——坑14 全套流程（bash 占用/MSYS 转换/提权读符号链接），需环境主人配合窗口，按 collaboration.md 坑14 剧本执行；在那之前 cli-tools 即使提权重跑也会因 useLatest 真红。
 - 2026-10-25（LETH 会话二）：Git 已按坑14 升至 2.56.0.3（schtasks 路线，上一条 Comments 的「Git 升级未动」与「cli-tools 即使提权重跑也真红」均已过时）。当日二次 `wdc sync` 全绿：bootstrap 7/7、verify -Full 三域漂移全 0——且该次 verify 跑在**未提权**会话，**假警报未复现**（提权 bootstrap 刚跑完的状态下）。取证记录（15/16 注册表项一致却整域报「未处于」）仍然成立，假警报定性为状态依赖的间歇形态；A/B/C 方案仍待环境主人定夺，本单保持 needs-triage。
+- 2026-10-25（LETH 会话三·收口）：**环境主人定夺=方案A**。实施：`scripts/lib/common.ps1` 增 `Test-WdcDomainNeedsElevation`（域提权需求单一来源，随 Get-WdcDomains 显式声明——base-windows 7 HKLM / cli-tools 机器级包 → $true，editors 纯用户级单包 → $false；新域须同步）；`scripts/verify-machine.ps1` 漂移段入口 `Test-IsElevated` 检测，未提权时 INFO 提示 + 相关域 `Write-Step SKIP`（不进 $script:Fail，退出码不因假警报红），提权路径代码不变；漂移 Assert 的 FAIL hint 补提权因素提示。验收（LETH 未提权会话）：`wdc verify -Full` EXIT=0——INFO 提权状态 + base-windows/cli-tools SKIP + editors 漂移=0 实评 + 全绿；`wdc verify -Quick` EXIT=0 不受影响；两文件 AST 语法绿。提权全量口径：SKIP 分支仅 `-not Test-IsElevated` 激活，提权路径与改前逐字节一致，且当日提权会话已实证 verify 全量全绿（二次 sync 937s）。归档 issues/done/。

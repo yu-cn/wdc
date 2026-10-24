@@ -79,6 +79,15 @@ function Get-WdcDomains {
     return $ordered
 }
 
+function Test-WdcDomainNeedsElevation {
+    # 域的提权需求单一来源（工单01 方案A）：verify 漂移段在未提权会话对含 HKLM/机器级单元的域评估不可靠
+    # （评估失败被记为「未处于」，整域假警报）——相关域须降级 SKIP，故按域显式声明：
+    # base-windows 含 7 个 HKLM 键（混合域）；cli-tools 包单元均机器级安装（winget 默认 machine scope）；
+    # editors 纯用户级单包（VSCode user setup），未提权可正常评估。新域或单元 scope 变更须同步此表。
+    param([Parameter(Mandatory)][ValidateSet('base-windows', 'cli-tools', 'editors')][string]$Domain)
+    return @{ 'base-windows' = $true; 'cli-tools' = $true; 'editors' = $false }[$Domain]
+}
+
 function Test-WingetExitCode {
     # winget 退出码语义一处定义（坑④；官方码表：winget-cli returnCodes.md）：
     # 0=通过；负 HRESULT=真错。validate 另认 1=仅警告（私有配置单元/未指定模块两类，本仓库设计固有，实测 winget 1.29）；
