@@ -24,7 +24,7 @@
 - [x] 文档对齐（AGENTS 坑6 / GLOSSARY / README / inventory）
 - [x] 本机实测：迁移 → verify 全绿 → 漂移链路双向 → 第二遍 bootstrap 零 CHANGED
 - [x] CI 锚点：validate（windows-latest）+ fresh-machine 冒烟 run id 入档——validate 40216099975 绿；冒烟三发后绿：40216164784 红（身份待办既有缺口）→ 40217849824 红（GITHUB_ACTIONS 不跨 WSL 边界，发行版内探测恒空）→ **40219485428 绿**（LDC_SMOKE 改调用方传参 e741664）；复红实录与修复已单列 fix 提交（5070015 / e741664）
-- [ ] 发布由主人指令触发（feat → MINOR）——主人 2026-10-26 已指令：全绿后发 v0.6.0
+- [x] 发布由主人指令触发（feat → MINOR）——主人 2026-10-26 已指令，v0.6.0 已发布：annotated tag（锚 f847c4d，验证锚点入 tag 信息）+ [release](https://github.com/yu-cn/wdc/releases/tag/v0.6.0)（notes 四段）；CHANGELOG 0.6.0 节同步收口（dev-standard §5 CHANGELOG 同步行）
 
 ## Comments
 
