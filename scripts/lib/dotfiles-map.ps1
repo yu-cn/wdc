@@ -40,3 +40,58 @@ function Test-DotfileInSync {
     if ((Get-FileHash -LiteralPath $Target).Hash -eq (Get-FileHash -LiteralPath $Source).Hash) { return 'ok' }
     return 'drift'
 }
+
+function Get-WdcRenderStateFile {
+    # 渲染账本（对齐 LDC ADR-0015 补注：漂移方向判定）——格式与 sha256sum 兼容「<hash>␣␣<落点绝对路径>」，
+    # 记录上次渲染时各落点的内容指纹。账本可丢：缺失/损坏时方向判定退化为 unknown（等同 ADR-0015
+    # 首版行为），下次渲染自愈重建。机器本地状态，不入仓库（ADR-0004 模式）。
+    Join-Path $env:LOCALAPPDATA 'wdc\rendered.sha256'
+}
+
+function Get-RenderedState {
+    # 上次渲染时的落点内容 hash；无记录返回 $null
+    param([Parameter(Mandatory)][string]$Target)
+    $f = Get-WdcRenderStateFile
+    if (-not (Test-Path -LiteralPath $f)) { return $null }
+    # 路径自第 67 字符起（64 位 hash + 2 空格）——精确匹配避免前缀串扰
+    foreach ($l in (Get-Content -LiteralPath $f)) {
+        if ($l.Length -gt 66 -and $l.Substring(66) -eq $Target) { return $l.Substring(0, 64) }
+    }
+    return $null
+}
+
+function Set-RenderedState {
+    # 单行更新（有则覆写无则追加；tmp+mv 原子落盘）
+    param(
+        [Parameter(Mandatory)][string]$Target,
+        [Parameter(Mandatory)][string]$Hash
+    )
+    $f = Get-WdcRenderStateFile
+    $dir = Split-Path $f -Parent
+    if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+    $tmp = "$f.tmp"
+    $keep = @()
+    if (Test-Path -LiteralPath $f) {
+        $keep = @(Get-Content -LiteralPath $f | Where-Object { $_.Length -le 66 -or $_.Substring(66) -ne $Target })
+    }
+    $keep += ('{0}  {1}' -f $Hash, $Target)
+    Set-Content -LiteralPath $tmp -Value $keep -Encoding utf8
+    Move-Item -LiteralPath $tmp -Destination $f -Force
+}
+
+function Get-DriftDirection {
+    # 漂移方向（对齐 LDC ADR-0015 补注）——仅在 drift 状态下调用（落点须存在，Get-FileHash 不容缺失）：
+    #   template-update 模板更新（落点自上次渲染未动——纯模板更新，重渲染无机器侧内容可失）
+    #   machine         机器侧改动（模板自上次渲染未动）
+    #   both            双向漂移（吸收会盖掉模板更新——需人工判读 diff 再定）
+    #   unknown         无账本记录（账本丢失 / 首版升级机器）
+    param(
+        [Parameter(Mandatory)][string]$Source,
+        [Parameter(Mandatory)][string]$Target
+    )
+    $rec = Get-RenderedState -Target $Target
+    if (-not $rec) { return 'unknown' }
+    if ((Get-FileHash -LiteralPath $Target).Hash -eq $rec) { return 'template-update' }
+    if ((Get-FileHash -LiteralPath $Source).Hash -eq $rec) { return 'machine' }
+    return 'both'
+}

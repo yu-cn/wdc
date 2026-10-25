@@ -48,7 +48,13 @@ function Install-Dotfile {
         }
         elseif ((Get-FileHash -LiteralPath $item.FullName).Hash -eq (Get-FileHash -LiteralPath $Source).Hash) {
             Write-Step $leaf 'OK' '已与模板一致（幂等跳过）'
+            # 账本自愈：SKIP 路径内容=模板，指纹必对（账本丢失场景在此重建）
+            Set-RenderedState -Target $Target -Hash (Get-FileHash -LiteralPath $Target).Hash
             return
+        }
+        elseif ((Get-DriftDirection -Source $Source -Target $Target) -eq 'template-update') {
+            # 纯模板更新（渲染账本判定：落点自上次渲染未动）——直接覆盖，无机器侧内容可失，不产 .bak 噪声
+            Write-Step $leaf 'CHANGED' '模板已更新——落点自上次渲染未动，直接重渲染'
         }
         else {
             $bak = Get-BackupPath $Target
@@ -57,6 +63,7 @@ function Install-Dotfile {
         }
     }
     Copy-Item -LiteralPath $Source -Destination $Target -Force
+    Set-RenderedState -Target $Target -Hash (Get-FileHash -LiteralPath $Target).Hash
     Write-Step $leaf 'CHANGED' "已渲染 <- $Source"
 }
 

@@ -40,7 +40,14 @@ $absorbList = [System.Collections.Generic.List[string]]::new()
 $restored = 0
 $skipped = 0
 foreach ($d in $drift) {
-    Write-Host "── $($d.Name)（模板 dotfiles/$($d.Rel) ↔ 落点 $($d.Target)）──"
+    # 方向标注（渲染账本，ADR-0015 补注）：unknown 无账本不标
+    $tag = switch (Get-DriftDirection -Source $d.Template -Target $d.Target) {
+        'template-update' { '〔模板更新——通常选 r〕' }
+        'machine'         { '〔机器侧改动〕' }
+        'both'            { '〔双向漂移——注意吸收(a) 会盖掉模板更新〕' }
+        default           { '' }
+    }
+    Write-Host "── $($d.Name)$tag（模板 dotfiles/$($d.Rel) ↔ 落点 $($d.Target)）──"
     # -c core.autocrlf=false：--no-index 比对与行尾无关，静音 LF/CRLF 转换告警
     git -c core.autocrlf=false diff --no-index -- $d.Template $d.Target | ForEach-Object { Write-Host $_ -ForegroundColor DarkGray }
     if ($DryRun) { continue }
