@@ -3,6 +3,9 @@
 # 做什么：拉取 microsoft/WindowsDeveloperConfig 当前状态，与「吸收账本基线」及我们的声明对比，
 #         输出「上游新增了什么 / 我们是否已有等价物」的差异报告。只陈述事实，不改任何配置。
 # 注册表键维度已删（工单07：keys 从未参与差异输出、还把我们的键灌进上游集合污染基线；包维度即「值得考虑」提示的全部，YAGNI）
+# 包维度抓取已修（2026-10-25）：原全文件正则要求 X.Y/Z 带斜杠 token——winget 包 ID（Git.Git 等）无斜杠
+# 一个都匹配不上，抓到的全是 DSC 资源类型与 URL 片段（旧基线 31 条零个真包 ID，账本 10-21「31 包」表述失实）。
+# 现改为只抓包目录真源 steps/packages.ps1，按 `Id = '…'` 结构化字段提取。
 # 移植决策永远由环境主人做；吸收后在 docs/upstream-ledger.md 记一笔。
 # 用法：
 #   pwsh scripts/check-upstream.ps1                 # 对比基线出报告
@@ -22,22 +25,15 @@ $headSha = $head.sha
 $headDate = $head.commit.committer.date
 Write-Step '上游 HEAD' 'INFO' "$($headSha.Substring(0,10)) @ $headDate"
 
-# --- 2) 拉取 src/ 下相关文件并提取 winget 包 ID ---
-$tree = Invoke-RestMethod -Headers $apiHeaders "https://api.github.com/repos/$upstreamRepo/git/trees/main?recursive=1"
-$interesting = @($tree.tree | Where-Object {
-    $_.type -eq 'blob' -and $_.path -like 'src/*' -and (
-        $_.path -like '*.ps1' -or $_.path -like '*.winget' -or $_.path -like '*.sh' -or
-        $_.path -like '*packages*' -or $_.path -like '*registry*' -or $_.path -like '*devconfig*' -or $_.path -like '*wsl*'
-    )
-})
-Write-Step '上游扫描范围' 'INFO' "$($interesting.Count) 个文件（src/ 下的脚本与配置）"
-
-$idPattern = "[A-Za-z0-9][A-Za-z0-9_.-]*\.[A-Za-z0-9][A-Za-z0-9_.-]*/[A-Za-z0-9][A-Za-z0-9_.-]*"
+# --- 2) 上游包目录（真源：steps/packages.ps1 的 Get-DevConfigPackageCatalog）---
+$catalogRaw = Invoke-RestMethod -Headers $apiHeaders "https://raw.githubusercontent.com/$upstreamRepo/main/src/windows-dev-config/steps/packages.ps1"
 $upstreamIds = [System.Collections.Generic.SortedSet[string]]::new()
-foreach ($f in $interesting) {
-    $raw = Invoke-RestMethod -Headers $apiHeaders "https://raw.githubusercontent.com/$upstreamRepo/main/$($f.path)"
-    foreach ($m in [regex]::Matches($raw, $idPattern)) { $null = $upstreamIds.Add($m.Value) }
+foreach ($m in [regex]::Matches($catalogRaw, "(?m)^\s*Id\s*=\s*'([^']+)'")) { $null = $upstreamIds.Add($m.Groups[1].Value) }
+# 目录里 Id = $vcRedistId 按机器架构取变量；两种变体都记入，比对时人工对齐
+if ($catalogRaw -match 'Id\s*=\s*\$vcRedistId') {
+    foreach ($id in @('Microsoft.VCRedist.2015+.x64', 'Microsoft.VCRedist.2015+.arm64')) { $null = $upstreamIds.Add($id) }
 }
+Write-Step '上游包目录' 'INFO' "steps/packages.ps1 Get-DevConfigPackageCatalog：$($upstreamIds.Count) 个包"
 
 # --- 3) 我们的声明（configs/*.winget）---
 $ours = [System.Collections.Generic.SortedSet[string]]::new()
