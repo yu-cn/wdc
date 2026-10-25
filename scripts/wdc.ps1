@@ -6,7 +6,7 @@
 #   裸命令不触发同步——长操作/改状态一律显式子命令；裸 wdc 给只读快照并提示下一步。
 # 用法：
 #   wdc | wdc status    只读快照（秒级）：与 origin/main 差距 / dotfiles 落点漂移 / 身份与 WSL 首跑状态 / 最近 bootstrap 结果
-#   wdc sync            全量同步：fetch → 落后则 pull（--ff-only）→ bootstrap → verify 全量（会请求一次 UAC）
+#   wdc sync            全量同步：fetch → 落后则 pull（--ff-only）→ bootstrap → verify -Quick 收尾（会请求一次 UAC）
 #   wdc verify [-Full]  机器断言；默认 -Quick 秒级，-Full 含三域漂移（约 3 分钟）
 #   wdc triage          dotfiles 落点漂移分流（工单 17 工具入口，交互式；ADR-0015 口径）
 #   wdc log [-Lines N]  最近一次 bootstrap 日志尾部（默认 40 行，连带提权子回合日志）
@@ -30,7 +30,7 @@ try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { }
 . (Join-Path $PSScriptRoot 'lib/common.ps1')
 . (Join-Path $PSScriptRoot 'lib/dotfiles-map.ps1')
 
-$wdcCommands = 'sync', 'status', 'verify', 'triage', 'log', 'help', 'version'
+$wdcCommands = 'sync', 'status', 'verify', 'triage', 'audit', 'log', 'help', 'version'
 
 # --- 子命令校验在仓库定位之前（工单29）：help/version 与友好报错不依赖 ~/.wdc 指针 ---
 $script:SelfRepo = Split-Path $PSScriptRoot -Parent
@@ -73,9 +73,10 @@ $helpOverview = @'
 wdc — WDC 开发环境一键工具（裸命令只读快照；仓库在 ~/.wdc 指向的路径）
 
   wdc | wdc status     只读快照（秒级）：远端差距 / dotfiles 漂移 / 身份与 WSL / 最近 bootstrap
-  wdc sync             全量同步：fetch → pull → bootstrap → verify 全量（会请求一次 UAC）
+  wdc sync             全量同步：fetch → pull → bootstrap → verify -Quick 收尾（会请求一次 UAC）
   wdc verify [-Full]   机器断言（默认 -Quick；-Full 含三域漂移约 3 分钟）
   wdc triage           dotfiles 落点漂移分流（逐文件 吸收/还原，交互式）
+  wdc audit            winget 清单准入对账（只读恒 exit 0：已声明未装 / 自装未声明）
   wdc log [-Lines N]   最近一次 bootstrap 日志尾部（默认 40 行）
   wdc help [命令]      本总览或单命令详解（-h/--help 同义）
   wdc version          版本（-v/--version 同义）
@@ -93,7 +94,8 @@ wdc status — 只读快照（秒级，不改任何状态）
     'sync' = @'
 wdc sync — 全量同步（日常一键收敛；会请求一次 UAC）
   顺序：fetch → 落后则 pull --ff-only（本地领先/分叉一律中止交人工）→
-  bootstrap 七阶段（提权子回合一回合跑完，日志落 logs/elevated-*.log）→ verify 全量。
+  bootstrap 七阶段（提权子回合一回合跑完；validate 由 CI 兜底降级 SKIP、收尾 verify -Quick 秒级，
+  工单02 瘦身）→ 汇总。三域漂移详查：wdc verify -Full。
   任一段失败即非零退出，并自动贴出 bootstrap 与提权日志尾部。
 '@
     'verify' = @'
@@ -106,6 +108,12 @@ wdc triage — dotfiles 落点漂移分流（交互式）
 渲染拷贝模型（ADR-0015）下机器侧工具直改的是落点渲染物，仓库模板不受污染；本命令逐文件给出
 「吸收进模板 / 自模板还原」的处置入口（ADR-0003 判据）。verify 的内容比对断言 FAIL 时也会指向这里。
 '@
+    'audit' = @'
+wdc audit — winget 清单准入对账（只读恒 exit 0）
+两个方向（对齐 LDC audit）：① 已声明未装（configs/*.winget 逐 Id 核销，收敛待办）；
+② 自装未声明（清单准入候选，Windows 侧噪声大——首版 INFO 计数 + 头部样例）。
+这是对账报告不是断言——机器自装面属机器自留地（ADR-0003），只报不裁。
+'@
     'log' = @'
 wdc log [-Lines N] — 最近一次 bootstrap 日志尾部（默认 40 行）
   正常汇总在 logs/bootstrap-*.log，提权子回合七阶段明细在 logs/elevated-*.log——两条一起展示。
@@ -116,7 +124,7 @@ function Show-WdcHelp([string]$topic) {
     if ($topic -and $helpDetail.ContainsKey($topic)) {
         Write-Host $helpDetail[$topic]
     } elseif ($topic) {
-        Write-Host "wdc: 「$topic」没有单独的帮助（可用：sync / status / verify / triage / log）" -ForegroundColor Yellow
+        Write-Host "wdc: 「$topic」没有单独的帮助（可用：sync / status / verify / triage / audit / log）" -ForegroundColor Yellow
         Write-Host $helpOverview
     } else {
         Write-Host $helpOverview
@@ -133,7 +141,7 @@ if ($Help -or $Command -in 'help', '-h', '--help') {
 }
 if ($Command -notin $wdcCommands) {
     $sug = Get-WdcCommandSuggestion $Command
-    Write-Host "wdc: 未知子命令「$Command」（可用：sync / status / verify / triage / log / help / version）" -ForegroundColor Yellow
+    Write-Host "wdc: 未知子命令「$Command」（可用：sync / status / verify / triage / audit / log / help / version）" -ForegroundColor Yellow
     if ($sug) { Write-Host "wdc: 你是想输「$sug」吗？" -ForegroundColor Yellow }
     Write-Host $helpOverview
     exit 1
@@ -216,6 +224,11 @@ switch ($Command) {
         exit $LASTEXITCODE
     }
 
+    'audit' {
+        & pwsh -NoProfile -File (Join-Path $repo 'scripts\audit-machine.ps1')
+        exit $LASTEXITCODE
+    }
+
     'log' {
         $log = Get-LastBootstrapLog
         if (-not $log) { Write-Step '日志' 'INFO' 'logs/ 尚无 bootstrap 日志'; exit 0 }
@@ -248,7 +261,9 @@ switch ($Command) {
 
         Write-Step '提示' 'INFO' 'bootstrap 即将开始，会请求一次 UAC 提权'
         Write-Phase 'wdc sync · bootstrap'
-        & pwsh -NoProfile -File (Join-Path $repo 'bootstrap.ps1')
+        # -SkipValidate：sync 走到 bootstrap 时必然 HEAD==origin/main（领先/分叉已退出）——
+        # 同一 commit 的 validate 在 push 时 CI 已把关（dev-standard「CI 兜底」），本地 Stage 2 降级 SKIP（工单02）
+        & pwsh -NoProfile -File (Join-Path $repo 'bootstrap.ps1') -SkipValidate
         if ($LASTEXITCODE -ne 0) {
             if ($LASTEXITCODE -eq 3) {
                 Write-Step 'bootstrap' 'FAIL' '已有一次收敛在跑（运行锁占用）——等当前收敛结束再 wdc sync'
@@ -266,11 +281,11 @@ switch ($Command) {
             exit 1
         }
 
-        Write-Phase 'wdc sync · verify（全量）'
-        & pwsh -NoProfile -File (Join-Path $repo 'scripts\verify-machine.ps1')
+        Write-Phase 'wdc sync · verify（-Quick 收尾，工单02）'
+        & pwsh -NoProfile -File (Join-Path $repo 'scripts\verify-machine.ps1') -Quick
         $code = $LASTEXITCODE
         Write-Phase 'wdc sync · 汇总'
-        if ($code -eq 0) { Write-Step 'wdc' 'OK' "同步完成，机器与声明一致（$([int]$sw.Elapsed.TotalSeconds)s）" }
+        if ($code -eq 0) { Write-Step 'wdc' 'OK' "同步完成，机器与声明一致（$([int]$sw.Elapsed.TotalSeconds)s；-Quick 收尾，三域漂移详查 wdc verify -Full）" }
         else { Write-Step 'wdc' 'FAIL' 'verify 未全绿——排障后 wdc verify 复查' }
         exit $code
     }
