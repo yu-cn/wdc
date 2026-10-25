@@ -30,18 +30,31 @@ $winIdentity = "/mnt/c/Users/$env:USERNAME/.gitidentity"
 #（仅 WSLENV 声明的跨界），在发行版内探测恒空（run 40217849824 实录）；LDC_SMOKE 让 LDC bootstrap
 # 的占位身份待办降级不计（LDC ADR-0004），真机不传、护栏不动
 $smokeArg = @(); if ($env:GITHUB_ACTIONS) { $smokeArg = @('1') }
+# CI 冒烟交界面化（工单 02）：SKIP_LDC=1 时发行版内不 clone LDC、不委托安装/bootstrap——
+# 只跑 WDC 保留职责面（wsl.conf systemd / 默认 shell / 身份带过），LDC 本体收敛归 LDC 容器冒烟
+$skipLdcArg = @(); if ($env:GITHUB_ACTIONS) { $skipLdcArg = @('1') }
+
+if ($env:GITHUB_ACTIONS) { Write-Step 'WSL 冒烟模式' 'INFO' 'CI 交界面化（工单 02）：跳过 LDC 本体安装，只验 wsl.conf/shell/身份/probe 交界面' }
 
 Write-Phase "WSL root 阶段（用户 $wslUser）"
-$root = Invoke-WslScript -Distro 'Ubuntu' -User 'root' -Script $setupSh -ScriptArgs @('root', $wslUser)
+$root = Invoke-WslScript -Distro 'Ubuntu' -User 'root' -Script $setupSh -ScriptArgs (@('root', $wslUser) + $smokeArg + $skipLdcArg)
 $root.Lines | ForEach-Object { Write-Host $_ }
 if (-not $root.Ok) { Write-Step 'root 阶段' 'FAIL' "退出码 $($root.Exit)"; exit 1 }
-Write-Step 'root 阶段' 'OK' 'LDC 委托（apt/gh/Docker）+ WDC opinion（systemd/shell/docker组）完成'
+if ($skipLdcArg) {
+    Write-Step 'root 阶段' 'SKIP' 'CI 交界面化——LDC install-packages 委托未跑（WDC opinion wsl.conf/shell 已落地）'
+} else {
+    Write-Step 'root 阶段' 'OK' 'LDC 委托（apt/gh/Docker）+ WDC opinion（systemd/shell/docker组）完成'
+}
 
 Write-Phase 'WSL user 阶段'
-$user = Invoke-WslScript -Distro 'Ubuntu' -User $wslUser -Script $setupSh -ScriptArgs (@('user', $wslUser, $winIdentity) + $smokeArg)
+$user = Invoke-WslScript -Distro 'Ubuntu' -User $wslUser -Script $setupSh -ScriptArgs (@('user', $wslUser, $winIdentity) + $smokeArg + $skipLdcArg)
 $user.Lines | ForEach-Object { Write-Host $_ }
 if (-not $user.Ok) { Write-Step 'user 阶段' 'FAIL' "退出码 $($user.Exit)"; exit 1 }
-Write-Step 'user 阶段' 'OK' 'LDC bootstrap 完成（uv/vp/starship/dotfiles 归 LDC 单一实现）'
+if ($skipLdcArg) {
+    Write-Step 'user 阶段' 'SKIP' 'CI 交界面化——LDC bootstrap 委托未跑（身份带过已完成）'
+} else {
+    Write-Step 'user 阶段' 'OK' 'LDC bootstrap 完成（uv/vp/starship/dotfiles 归 LDC 单一实现）'
+}
 
 # WSL 特有项探测（scripts/wsl/probe.sh：shell/systemd 两键——发行版内其余断言已归 LDC，工单32）
 $probe = Invoke-WslScript -Distro 'Ubuntu' -User $wslUser -Script $probeSh

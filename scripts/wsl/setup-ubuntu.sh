@@ -7,13 +7,16 @@
 #   user: 身份带过 → LDC 定位 → 委托 bootstrap.sh（root 阶段已核销自动跳过）
 set -euo pipefail
 
-ROLE="${1:?用法: setup-ubuntu.sh <root|user|__ensure_ldc> <user> [win身份文件路径] [LDC_SMOKE=1]}"
+ROLE="${1:?用法: setup-ubuntu.sh <root|user|__ensure_ldc> <user> [win身份文件路径] [LDC_SMOKE=1] [SKIP_LDC=1]}"
 WDC_USER="${2:?}"
 # 身份带过唯一动作点（LDC 对已存在的 .gitidentity 不覆盖——占位护栏不破坏）
 IDENT_SRC="${3:-}"
 # CI 冒烟降级开关（Windows 侧 install-wsl-env.ps1 依 $env:GITHUB_ACTIONS 传入）：
 # WSL 发行版不继承宿主 env（仅 WSLENV 声明的跨界），CI 判定只能显式传参，不能在发行版内探测
 LDC_SMOKE_REQ="${4:-}"
+# CI 冒烟交界面化开关（工单 02，Windows 侧同路传参）：LDC 本体安装验证让位给 LDC 容器冒烟——
+# 只跑 WDC 保留职责面（wsl.conf systemd / 默认 shell / 身份带过），不 clone LDC、不委托安装/bootstrap
+SKIP_LDC="${5:-}"
 LDC_URL="https://github.com/yu-cn/ldc.git"
 
 log() { printf '[setup-ubuntu] %s\n' "$*"; }
@@ -70,13 +73,17 @@ if [ "$ROLE" = "__ensure_ldc" ]; then
 fi
 
 if [ "$ROLE" = "root" ]; then
-    log "LDC 引导依赖（git curl ca-certificates gnupg——clone 与 LDC 厂商 apt 源的前置）"
-    export DEBIAN_FRONTEND=noninteractive
-    apt-get update -qq
-    apt-get install -y -qq git curl ca-certificates gnupg >/dev/null
+    if [ "$SKIP_LDC" = "1" ]; then
+        log "CI 冒烟交界面化（工单 02）：LDC 本体安装验证让位给 LDC 容器冒烟——只跑 WDC 保留职责面"
+    else
+        log "LDC 引导依赖（git curl ca-certificates gnupg——clone 与 LDC 厂商 apt 源的前置）"
+        export DEBIAN_FRONTEND=noninteractive
+        apt-get update -qq
+        apt-get install -y -qq git curl ca-certificates gnupg >/dev/null
 
-    log "LDC 定位（以 $WDC_USER 身份落 ~/dev/ldc）"
-    su -l "$WDC_USER" -c "bash '$0' __ensure_ldc '$WDC_USER'"
+        log "LDC 定位（以 $WDC_USER 身份落 ~/dev/ldc）"
+        su -l "$WDC_USER" -c "bash '$0' __ensure_ldc '$WDC_USER'"
+    fi
 
     log "systemd 自启确保（WDC 保留职责：Docker 守护进程依赖）"
     if ! grep -q '^systemd=true' /etc/wsl.conf 2>/dev/null; then
@@ -84,15 +91,17 @@ if [ "$ROLE" = "root" ]; then
         log "已写入 [boot] systemd=true——wsl --shutdown 后下次进入生效"
     fi
 
-    # 无 systemd 的中间态（wsl.conf 刚写入未重启）里 systemctl 不可用——透传 LDC_SKIP_DOCKER=1
-    #（LDC 的 root 完成度核销同读此变量，与安装面对齐）；生效后重跑自动补装（幂等）
-    if ! systemd_ready; then
-        log "systemd 未生效（wsl.conf 刚写入的中间态）——透传 LDC_SKIP_DOCKER=1，docker 域待重启后重跑补装"
-        export LDC_SKIP_DOCKER=1
-    fi
+    if [ "$SKIP_LDC" != "1" ]; then
+        # 无 systemd 的中间态（wsl.conf 刚写入未重启）里 systemctl 不可用——透传 LDC_SKIP_DOCKER=1
+        #（LDC 的 root 完成度核销同读此变量，与安装面对齐）；生效后重跑自动补装（幂等）
+        if ! systemd_ready; then
+            log "systemd 未生效（wsl.conf 刚写入的中间态）——透传 LDC_SKIP_DOCKER=1，docker 域待重启后重跑补装"
+            export LDC_SKIP_DOCKER=1
+        fi
 
-    log "root 委托 LDC install-packages.sh（apt 清单/gh/Docker/桌面应用域按机器形态自动 SKIP）"
-    bash "$(user_home)/dev/ldc/scripts/install-packages.sh"
+        log "root 委托 LDC install-packages.sh（apt 清单/gh/Docker/桌面应用域按机器形态自动 SKIP）"
+        bash "$(user_home)/dev/ldc/scripts/install-packages.sh"
+    fi
 
     log "WDC opinion · 默认 shell = bash（LDC 未接管 chsh 前保留在包装层；root 改免 PAM）"
     current_shell=$(getent passwd "$WDC_USER" | cut -d: -f7)
@@ -111,6 +120,11 @@ fi
 log "身份带过（从 Windows 侧带过，两侧一致；LDC 对已存在的 .gitidentity 不覆盖）"
 if [ ! -e "$HOME/.gitidentity" ] && [ -n "$IDENT_SRC" ] && [ -f "$IDENT_SRC" ]; then
     cp "$IDENT_SRC" "$HOME/.gitidentity"
+fi
+
+if [ "$SKIP_LDC" = "1" ]; then
+    log "CI 冒烟交界面化（工单 02）：身份带过即止——LDC bootstrap 委托跳过（LDC 本体收敛归 LDC 容器冒烟）"
+    exit 0
 fi
 
 if ! systemd_ready; then

@@ -9,7 +9,8 @@
 param(
     [switch]$ValidateOnly,
     [switch]$NoElevate,
-    [switch]$ElevatedPass   # 内部参数：与 main 保持一致，原样转发
+    [switch]$ElevatedPass,  # 内部参数：与 main 保持一致，原样转发
+    [switch]$SkipValidate   # 工单02：wdc sync 无更新场景（HEAD==origin/main，CI 已把关），转发给 main 降级 Stage 2
 )
 $ErrorActionPreference = 'Stop'
 try {
@@ -89,5 +90,6 @@ $fwd = @()
 if ($ValidateOnly) { $fwd += '-ValidateOnly' }
 if ($NoElevate)    { $fwd += '-NoElevate' }
 if ($ElevatedPass) { $fwd += '-ElevatedPass' }
+if ($SkipValidate) { $fwd += '-SkipValidate' }
 & pwsh -NoProfile -ExecutionPolicy Bypass -File $mainScript @fwd
 exit $LASTEXITCODE

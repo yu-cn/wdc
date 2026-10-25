@@ -9,7 +9,8 @@
 param(
     [switch]$ValidateOnly,
     [switch]$NoElevate,
-    [switch]$ElevatedPass   # 内部参数：提权子回合标记（由自动串联产生，勿手动使用）
+    [switch]$ElevatedPass,  # 内部参数：提权子回合标记（由自动串联产生，勿手动使用）
+    [switch]$SkipValidate   # 工单02：调用方已确认 HEAD==origin/main（wdc sync 无更新场景）——CI 已把关同一 commit，Stage 2 降级 SKIP
 )
 $ErrorActionPreference = 'Stop'
 # 控制台统一 UTF-8：修正中文在 GBK 代码页窗口里的乱码（显示问题，不影响执行）
@@ -83,7 +84,8 @@ $null = Invoke-Stage 'Stage 1/7 - Preflight 预检' {
 if (-not $elevated -and -not $ValidateOnly -and -not $NoElevate -and -not $ElevatedPass) {
     Write-Phase '提权收敛（管理员子回合·全程七阶段）'
     $childLog = Join-Path $logDir ("elevated-{0}.log" -f (Get-Date -Format 'yyyyMMdd-HHmmss'))
-    $childCmd = "& '$PSCommandPath' -ElevatedPass *>&1 | Tee-Object -FilePath '$childLog'; exit `$LASTEXITCODE"
+    $skipValArg = if ($SkipValidate) { ' -SkipValidate' } else { '' }
+    $childCmd = "& '$PSCommandPath' -ElevatedPass$skipValArg *>&1 | Tee-Object -FilePath '$childLog'; exit `$LASTEXITCODE"
     $relaunchArgs = @('-NoProfile', '-Command', $childCmd)
     $childSw = [System.Diagnostics.Stopwatch]::StartNew()
     try {
@@ -122,6 +124,9 @@ if (-not $ValidateOnly) {
 # Stage 2/7 · Validate 无副作用校验
 # ---------------------------------------------------------------------------
 $null = Invoke-Stage 'Stage 2/7 - Validate 无副作用校验' {
+    # 跳过条件是「同一 commit CI 已把关」（wdc sync 无更新场景，工单02）——非取消把关；
+    # 手工直跑 bootstrap 无此参，validate 照跑（本地硬关不破，dev-standard §4）
+    if ($SkipValidate) { Write-Step 'validate.ps1' 'SKIP' 'HEAD==origin/main——CI 已把关同一 commit（wdc sync 无更新，工单02）'; return $true }
     # 子进程 stdout 不入本阶段返回值（Invoke-Subscript 负责转发到 Host），返回值只留 bool
     $ok = Invoke-Subscript -Label 'validate.ps1' -Path (Join-Path $PSScriptRoot 'validate.ps1')
     if (-not $ok) { Write-Host '  校验未通过——后续阶段仍执行（幂等重跑可收敛），结果见 Summary' -ForegroundColor Red }

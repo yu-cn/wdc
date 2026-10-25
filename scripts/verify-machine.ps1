@@ -78,11 +78,16 @@ foreach ($line in ($probe.Lines | Where-Object { $_ })) { $k, $v = $line -split 
 Write-Step 'WSL 探测' 'INFO' (($probe.Lines | Where-Object { $_ }) -join ' ')
 Assert 'WSL bash 默认' { $probeMap['shell'] -eq '/bin/bash' } 'root 阶段重跑（setup-ubuntu.sh 的 WDC opinion chsh）'
 Assert 'WSL systemd 开启' { $probeMap['systemd'] -eq 'yes' } '/etc/wsl.conf 已写入但未生效——wsl --shutdown 后下次进入生效'
-# 发行版内一切（包/语言栈/dotfiles/身份/docker）委托 LDC verify —— 断言面即 LDC 单一实现（工单32）
-$verifySh = ConvertTo-WslPath (Join-Path $repo 'scripts\wsl\verify-ldc.sh')
-$ldc = Invoke-WslScript -Distro 'Ubuntu' -User $wslUser -Script $verifySh
-$ldc.Lines | ForEach-Object { Write-Host $_ }
-Assert 'WSL LDC verify --quick' { $ldc.Ok } 'LDC 断言未全绿——重跑 bootstrap（幂等）或发行版内 ldc sync'
+# 发行版内一切（包/语言栈/dotfiles/身份/docker）委托 LDC verify —— 断言面即 LDC 单一实现（工单32）；
+# CI 冒烟交界面化（工单02）下发行版内 LDC 本体未安装——其收敛验证归 LDC 容器冒烟，此处降级 SKIP
+if ($env:GITHUB_ACTIONS) {
+    Write-Step 'WSL LDC verify --quick' 'SKIP' 'CI 交界面化——发行版内 LDC 本体未装，收敛验证归 LDC 容器冒烟（工单02）'
+} else {
+    $verifySh = ConvertTo-WslPath (Join-Path $repo 'scripts\wsl\verify-ldc.sh')
+    $ldc = Invoke-WslScript -Distro 'Ubuntu' -User $wslUser -Script $verifySh
+    $ldc.Lines | ForEach-Object { Write-Host $_ }
+    Assert 'WSL LDC verify --quick' { $ldc.Ok } 'LDC 断言未全绿——重跑 bootstrap（幂等）或发行版内 ldc sync'
+}
 
 Write-Phase '6/6 · 三域漂移'
 if ($Quick) { Write-Step '漂移检查' 'SKIP' '-Quick 模式跳过' }
