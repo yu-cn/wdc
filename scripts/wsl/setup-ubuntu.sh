@@ -114,6 +114,15 @@ if ! systemd_ready; then
     export LDC_SKIP_DOCKER=1   # 与 root 阶段同判定：bootstrap 的 root 完成度核销才不误报 docker
 fi
 
+# CI 冒烟语境（fresh-machine workflow）：身份刻意占位、永无桌面会话——LDC_SMOKE=1 让 LDC bootstrap
+# 的待办语义降级不计（LDC ADR-0004 / LDC GLOSSARY「LDC_SMOKE」，66e0a59 同款）。只在 CI 设：
+# 真机身份未填必须挡（git 拒提交护栏），桌面待办走下方既有的桌面域容忍分支。
+# 工单32 委托上线（2026-10-24）后首次冒烟实录（WDC run 40216164784）：不设则占位身份 PENDING
+# → exit 2 → 包装层按「真问题」拒绝容忍 → Stage 6 红。
+if [ -n "${GITHUB_ACTIONS:-}" ]; then
+    export LDC_SMOKE=1
+fi
+
 log "LDC 定位（~/dev/ldc，已存在则对齐 origin/main）"
 ensure_ldc
 

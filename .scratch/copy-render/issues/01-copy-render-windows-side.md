@@ -39,3 +39,4 @@
   - 吸收语义注意：整文件回写会把模板**未提交编辑一并卷进** pathspec commit（旧模型 checkout+commit 同语义，实测踩中后软回退清场）——吸收前先收口模板编辑（profile/bashrc 第二路提示正是为此）。
   - 完整 bootstrap 提权回合未跑（UAC 需人在场）；「第二遍 bootstrap 零 CHANGED」以 dotfiles 阶段（install-dotfiles.ps1）多遍幂等实测替代覆盖，下次 wdc sync 完整收敛顺带复核。
   - 验收清单外的顺手项：triage 的 diff 加 `-c core.autocrlf=false` 静音行尾告警（--no-index 比对与行尾无关）。
+  - **CI 冒烟锚点实录**：validate run 40216099975 绿（push 兜底全过）；fresh-machine run 40216164784 红在 Stage 6——**既有缺口、与本工单无关**：工单32 的 LDC 委托（7216068，10-24）上线后冒烟从未跑过（上次绿 10-22 跑的还是桩 user 阶段），CI 上身份刻意占位 → LDC bootstrap PENDING exit 2 → 包装层按真问题拒绝容忍 → Stage 6 红。本工单改动面（Stage 7 dotfiles 渲染）在该 run 全绿：全新机器零迁移直渲染、WT settings 落点备份轮转、starship 落点目录创建、ubuntu.ico、~/.wdc 指针全过。修复：setup-ubuntu.sh user 阶段 CI 语境（GITHUB_ACTIONS）设 `LDC_SMOKE=1`（LDC ADR-0004 冒烟降级语义，真机不设），fix 单列提交后重触发冒烟锚新 run id。
