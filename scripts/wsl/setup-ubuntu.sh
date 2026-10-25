@@ -7,10 +7,13 @@
 #   user: 身份带过 → LDC 定位 → 委托 bootstrap.sh（root 阶段已核销自动跳过）
 set -euo pipefail
 
-ROLE="${1:?用法: setup-ubuntu.sh <root|user|__ensure_ldc> <user> [win身份文件路径]}"
+ROLE="${1:?用法: setup-ubuntu.sh <root|user|__ensure_ldc> <user> [win身份文件路径] [LDC_SMOKE=1]}"
 WDC_USER="${2:?}"
 # 身份带过唯一动作点（LDC 对已存在的 .gitidentity 不覆盖——占位护栏不破坏）
 IDENT_SRC="${3:-}"
+# CI 冒烟降级开关（Windows 侧 install-wsl-env.ps1 依 $env:GITHUB_ACTIONS 传入）：
+# WSL 发行版不继承宿主 env（仅 WSLENV 声明的跨界），CI 判定只能显式传参，不能在发行版内探测
+LDC_SMOKE_REQ="${4:-}"
 LDC_URL="https://github.com/yu-cn/ldc.git"
 
 log() { printf '[setup-ubuntu] %s\n' "$*"; }
@@ -119,7 +122,9 @@ fi
 # 真机身份未填必须挡（git 拒提交护栏），桌面待办走下方既有的桌面域容忍分支。
 # 工单32 委托上线（2026-10-24）后首次冒烟实录（WDC run 40216164784）：不设则占位身份 PENDING
 # → exit 2 → 包装层按「真问题」拒绝容忍 → Stage 6 红。
-if [ -n "${GITHUB_ACTIONS:-}" ]; then
+# 首版按 GITHUB_ACTIONS 探测在 run 40217849824 复红——WSL 发行版不继承宿主 env，检测恒空；
+# 改由调用方传参（见头部 LDC_SMOKE_REQ）。
+if [ "$LDC_SMOKE_REQ" = "1" ]; then
     export LDC_SMOKE=1
 fi
 

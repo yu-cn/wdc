@@ -26,6 +26,10 @@ if (-not $wslUser) {
 $setupSh = "$repoWsl/scripts/wsl/setup-ubuntu.sh"
 $probeSh = "$repoWsl/scripts/wsl/probe.sh"
 $winIdentity = "/mnt/c/Users/$env:USERNAME/.gitidentity"
+# CI 冒烟降级开关：Windows 侧判定（$env:GITHUB_ACTIONS）显式传参——WSL 发行版不继承宿主 env
+#（仅 WSLENV 声明的跨界），在发行版内探测恒空（run 40217849824 实录）；LDC_SMOKE 让 LDC bootstrap
+# 的占位身份待办降级不计（LDC ADR-0004），真机不传、护栏不动
+$smokeArg = @(); if ($env:GITHUB_ACTIONS) { $smokeArg = @('1') }
 
 Write-Phase "WSL root 阶段（用户 $wslUser）"
 $root = Invoke-WslScript -Distro 'Ubuntu' -User 'root' -Script $setupSh -ScriptArgs @('root', $wslUser)
@@ -34,7 +38,7 @@ if (-not $root.Ok) { Write-Step 'root 阶段' 'FAIL' "退出码 $($root.Exit)"; 
 Write-Step 'root 阶段' 'OK' 'LDC 委托（apt/gh/Docker）+ WDC opinion（systemd/shell/docker组）完成'
 
 Write-Phase 'WSL user 阶段'
-$user = Invoke-WslScript -Distro 'Ubuntu' -User $wslUser -Script $setupSh -ScriptArgs @('user', $wslUser, $winIdentity)
+$user = Invoke-WslScript -Distro 'Ubuntu' -User $wslUser -Script $setupSh -ScriptArgs (@('user', $wslUser, $winIdentity) + $smokeArg)
 $user.Lines | ForEach-Object { Write-Host $_ }
 if (-not $user.Ok) { Write-Step 'user 阶段' 'FAIL' "退出码 $($user.Exit)"; exit 1 }
 Write-Step 'user 阶段' 'OK' 'LDC bootstrap 完成（uv/vp/starship/dotfiles 归 LDC 单一实现）'
