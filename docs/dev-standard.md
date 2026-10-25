@@ -42,6 +42,7 @@
 - semver；v0.x 破坏性变更走 MINOR（semver §4：主版本为零一切皆可变）。
 - **tag 语义 = 发布时验证全绿**：push → CI 全绿（validate 必绿；冒烟面手动触发）→ annotated tag（信息含验证锚点）→ release。
 - release notes 固定四段：**本批内容**（按特性分组、引 ADR）/ **已知事项** / **验证锚点**（本机形态 + CI run id + 跨仓锚点）/ **升级方式**。
+- **CHANGELOG 同步**：release 发布后，将 CHANGELOG.md（Keep a Changelog 1.1.0 格式）的 `[Unreleased]` 节摘录为对应版本节（Added/Changed 分类、版本 compare 链接）——面向使用者的要点视图，与 release notes 四段互补。
 - 发布由主人明确指令触发（「发布 vX.Y.Z」）——agent 不得自行 tag / release。
 
 ## 6. 双仓统筹（ADR-0007）
