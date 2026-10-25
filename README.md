@@ -5,7 +5,7 @@
 [![validate](https://github.com/yu-cn/wdc/actions/workflows/validate.yml/badge.svg)](https://github.com/yu-cn/wdc/actions/workflows/validate.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-这是作者的日常开发环境，以仓库形式维护：配置只描述「一台机器应当处于什么状态」，由 bootstrap 负责把机器收敛到这个状态。基于 microsoft/WindowsDeveloperConfig 的经验自建（不 fork，见 [ADR-0001](docs/adr/0001-own-tree-not-fork-upstream.md)）。仓库以 [MIT](LICENSE) 开源，欢迎直接使用或 fork 改造成你自己的环境（见「[使用与改造](#使用与改造)」）。
+这是作者的日常开发环境，以仓库形式维护：配置只描述「一台机器应当处于什么状态」，由 bootstrap 负责把机器收敛到这个状态。基于 [microsoft/WindowsDeveloperConfig](https://github.com/microsoft/WindowsDeveloperConfig) 的经验自建（不 fork，见 [ADR-0001](docs/adr/0001-own-tree-not-fork-upstream.md)）。仓库以 [MIT](LICENSE) 开源，欢迎直接使用或 fork 改造成你自己的环境（见「[使用与改造](#使用与改造)」）。
 
 ## 快速开始（新机器）
 
@@ -86,7 +86,7 @@ gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL b
 | `pwsh bootstrap.ps1 -ValidateOnly` | 只做无副作用校验（配置 schema + 脚本静态检查） |
 | `pwsh validate.ps1` | 同上的校验入口，独立可用 |
 | `winget configure test --file configs/<域>.winget` | 单域漂移检查（不动机器） |
-| `pwsh scripts/check-upstream.ps1` | 上游 WindowsDeveloperConfig 差异报告（吸收与否人工定夺） |
+| `pwsh scripts/check-upstream.ps1` | 上游 [WindowsDeveloperConfig](https://github.com/microsoft/WindowsDeveloperConfig) 差异报告（吸收与否人工定夺） |
 | `pwsh scripts/install-dotfiles.ps1` | 只重装 dotfiles 链接 |
 
 ## 各层职责（ADR-0002）
