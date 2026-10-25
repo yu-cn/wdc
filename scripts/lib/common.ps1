@@ -210,3 +210,65 @@ function ConvertTo-WslPath {
     $p = $Path.Replace('/', '\')
     "/mnt/$($p.Substring(0, 1).ToLower())/$($p.Substring(3).Replace('\', '/'))"
 }
+
+# ---------------------------------------------------------------------------
+# 运行锁（GLOSSARY「运行锁」）：全局命名互斥体，防两个收敛会话并发踩 winget
+# ---------------------------------------------------------------------------
+function Enter-WdcRunLock {
+    # 抢占式获取全局运行锁（上游 Global\WindowsDevConfigSetup 同思想）：WaitOne(0) 非阻塞。
+    # 前持锁进程崩溃时内核自动废弃并转交所有权（AbandonedMutexException 即所有权已到手）——
+    # 无「陈旧锁」清理问题。成功返回互斥体句柄（调用方负责 Exit-WdcRunLock）；被占用返回 $null。
+    $m = [System.Threading.Mutex]::new($false, 'Global\WdcBootstrap')
+    try { $acquired = $m.WaitOne(0) }
+    catch [System.Threading.AbandonedMutexException] { $acquired = $true }
+    if (-not $acquired) { $m.Dispose(); return $null }
+    return $m
+}
+
+function Exit-WdcRunLock {
+    param([Parameter(Mandatory)][System.Threading.Mutex]$Mutex)
+    try { $Mutex.ReleaseMutex() } catch { }
+    $Mutex.Dispose()
+}
+
+# ---------------------------------------------------------------------------
+# 续跑任务（GLOSSARY「续跑任务」）：WSL 功能启用需重启时登记的一次性登录任务
+# ---------------------------------------------------------------------------
+$script:WdcResumeTaskName = 'WdcBootstrapResume'
+
+function Register-WdcResumeTask {
+    # 登记一次性续跑：下次登录自动重跑 bootstrap.ps1（RunLevel Highest 免 UAC），幂等（-Force 覆盖）。
+    # 无循环保证：任务在任意一次 bootstrap 真实收敛启动时即被清除（bootstrap-main 的 Remove-WdcResumeTask），
+    # 且续跑时 WSL 已启用、不会再触发登记分支。
+    param([Parameter(Mandatory)][string]$BootstrapPath)
+    $pwshExe = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
+    $action = New-ScheduledTaskAction -Execute $pwshExe `
+        -Argument ('-NoProfile -ExecutionPolicy Bypass -File "{0}"' -f $BootstrapPath)
+    # 触发器收窄到发起 bootstrap 的用户登录（不带 -User 是「任意用户登录」，注册也要提权；
+    # scoped 后语义正确：只在该用户的下次登录续跑）
+    $trigger = New-ScheduledTaskTrigger -AtLogOn -User "$env:USERDOMAIN\$env:USERNAME"
+    $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
+        -ExecutionTimeLimit ([TimeSpan]::FromHours(2))
+    try {
+        Register-ScheduledTask -TaskName $script:WdcResumeTaskName -Action $action -Trigger $trigger `
+            -Settings $settings -RunLevel Highest -Force -ErrorAction Stop | Out-Null
+        Write-Step '续跑任务' 'CHANGED' '已登记：重启登录后自动重跑 bootstrap 收尾（无需人工）；任意一次 bootstrap 启动即清除'
+    } catch {
+        Write-Step '续跑任务' 'INFO' "自动登记未成（$($_.Exception.Message)）——重启后手工重跑 bootstrap.ps1（原路径不变）"
+    }
+}
+
+function Test-WdcResumeTaskExists {
+    [bool](Get-ScheduledTask -TaskName $script:WdcResumeTaskName -ErrorAction SilentlyContinue)
+}
+
+function Remove-WdcResumeTask {
+    # 存在即删（幂等 BestEffort）：要么本次正是续跑、要么人工已接管——残留任务不跨收敛存续
+    if (-not (Test-WdcResumeTaskExists)) { return }
+    try {
+        Unregister-ScheduledTask -TaskName $script:WdcResumeTaskName -Confirm:$false -ErrorAction Stop
+        Write-Step '续跑任务' 'CHANGED' '已清除待续跑任务（本次收敛接管）'
+    } catch {
+        Write-Step '续跑任务' 'INFO' "自动清除未成（$($_.Exception.Message)）——手工：schtasks /Delete /TN $script:WdcResumeTaskName /F"
+    }
+}

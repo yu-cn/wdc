@@ -103,6 +103,22 @@ if (-not $elevated -and -not $ValidateOnly -and -not $NoElevate -and -not $Eleva
 }
 
 # ---------------------------------------------------------------------------
+# 运行锁 + 待续跑任务消解（GLOSSARY「运行锁」「续跑任务」；上游 Global\WindowsDevConfigSetup 同思想）
+# 取锁点在提权重发分支之后：只有真正跑阶段的进程持锁（提权直跑 / -ElevatedPass 子回合 / -NoElevate），
+# 5.1 引导层与提权父进程不取锁——否则父进程持锁、提权子进程进不来即假死锁。
+# 待续跑任务在真实收敛启动时清除：要么本次正是续跑、要么人工已接管，残留绝不跨收敛存续。
+$script:RunLock = $null
+if (-not $ValidateOnly) {
+    $script:RunLock = Enter-WdcRunLock
+    if (-not $script:RunLock) {
+        Write-Step '运行锁' 'FAIL' '已有一次收敛在跑——等它结束后再跑（本次退出，退出码 3）'
+        try { Stop-Transcript | Out-Null } catch { }
+        exit 3
+    }
+    Remove-WdcResumeTask
+}
+
+# ---------------------------------------------------------------------------
 # Stage 2/7 · Validate 无副作用校验
 # ---------------------------------------------------------------------------
 $null = Invoke-Stage 'Stage 2/7 - Validate 无副作用校验' {
@@ -209,11 +225,13 @@ if (-not $ValidateOnly -and -not (Test-GitIdentityEffective)) {
 Write-Step '耗时' 'INFO' "$([int]$sw.Elapsed.TotalSeconds)s"
 if ($failed.Count -eq 0) {
     Write-Step 'bootstrap' 'OK' '收敛完成（幂等：重跑应零变更）'
+    if ($script:RunLock) { Exit-WdcRunLock $script:RunLock }
     try { Stop-Transcript | Out-Null } catch { }
     exit 0
 } else {
     Write-Step 'bootstrap' 'FAIL' "$($failed.Count) 个阶段未通过"
     Write-Step '日志' 'INFO' $logFile
+    if ($script:RunLock) { Exit-WdcRunLock $script:RunLock }
     try { Stop-Transcript | Out-Null } catch { }
     exit 1
 }

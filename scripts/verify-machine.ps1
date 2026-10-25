@@ -30,6 +30,9 @@ foreach ($m in (Get-DotfilesMap)) {
 Assert 'dotfiles 模板与 HEAD 一致（防写穿）' { @(git -C $repo status --porcelain -- dotfiles).Count -eq 0 } '写穿漂移——处置：pwsh scripts/triage-dotfiles-drift.ps1（逐文件 吸收/还原）'
 # 钩子接线断言（工单23）：collaboration 承诺 pre-commit 把关；接线由 bootstrap Stage 6 幂等保证
 Assert 'pre-commit 钩子已接线' { (git -C $repo config core.hooksPath) -eq '.githooks' } 'git config core.hooksPath .githooks（repo-local；下次 bootstrap 会自动接上）'
+# 续跑任务断言（GLOSSARY「续跑任务」）：任务只在「请求过重启」时登记、任何 bootstrap 启动即清除——
+# 存续即说明有一次重启后的收敛没跑完（效果级断言，坑11：断言效果不断言中间产物）
+Assert '续跑任务已清' { -not (Test-WdcResumeTaskExists) } '存在待续跑任务——重启登录后自动续跑，或直接重跑 bootstrap.ps1 接管'
 # WSL profile 为模板静态声明（ADR-0006），无机器侧产物需要断言；WT settings 链接本身由上面的映射断言覆盖
 Assert 'Ubuntu WSL 图标资产在位' { Test-Path (Join-Path $env:LOCALAPPDATA 'wdc\ubuntu.ico') } '缺失：重跑 bootstrap（install-dotfiles 会装 dotfiles/windows/ubuntu.ico）'
 

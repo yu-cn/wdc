@@ -24,8 +24,10 @@ if (Test-WslEnabled) {
         exit 0
     }
     if ($code -eq 0 -or $code -eq 3010 -or $code -eq 1641) {
-        # 3010/1641 = 需重启（上游同款判定）
-        Write-Step 'WSL 功能' 'CHANGED' '已启用（需重启激活）——重启电脑后重跑 bootstrap 安装 Ubuntu'
+        # 3010/1641 = 需重启（上游同款判定）。此分支登记一次性续跑（GLOSSARY「续跑任务」）：重启登录后
+        # 自动重跑 bootstrap 装 Ubuntu；任意一次 bootstrap 启动即清除，无循环（续跑时 WSL 已启用）
+        Register-WdcResumeTask -BootstrapPath (Join-Path (Split-Path $PSScriptRoot -Parent) 'bootstrap.ps1')
+        Write-Step 'WSL 功能' 'CHANGED' '已启用（需重启激活）——重启登录后自动续跑 bootstrap 安装 Ubuntu（无需人工重跑；自动登记未成时照旧手工重跑）'
     } else {
         Write-Step 'WSL 功能' 'INFO' "自动启用未成（退出码 $code）——手工路径：管理员终端 wsl --install 并重启，再重跑 bootstrap"
     }

@@ -37,6 +37,14 @@ _Avoid_: 可选模块
 bootstrap 显式执行的一小份清理清单，只含两类（ADR-0007）：本仓自清理（退役 WT fragments）与迁移冲突（VSCode 商店版换 winget 版）；**清单外一概不碰**——不卸载任何已装软件与语言栈，机器自留地绝对安全。
 _Avoid_: 卸载列表、清理脚本
 
+**运行锁**:
+bootstrap 收敛进程持有的全局命名互斥体（`Global\WdcBootstrap`）：同一时刻只允许一个收敛会话（bootstrap / `wdc sync`）在跑，后来者以非零退出码（3）让路；持锁进程崩溃由内核语义自动转交，无陈旧锁。
+_Avoid_: 锁文件（指代不同的实现）
+
+**续跑任务**:
+WSL 功能启用需重启时登记的一次性登录计划任务（`WdcBootstrapResume`）：重启登录后自动重跑 bootstrap 收尾；任意一次 bootstrap 启动即被清除，绝不循环。
+_Avoid_: RunOnce、自启项（指代不同的机制）
+
 **机器对等**:
 所有开发机地位平等、无主从：每台 clone 后 bootstrap 即得完整环境，工单与决策经仓库（`.scratch/` + git）流转，由环境主人定夺、任一机器会话可执行。
 _Avoid_: 主机、主开发机、第二台机

@@ -248,6 +248,10 @@ switch ($Command) {
         Write-Phase 'wdc sync · bootstrap'
         & pwsh -NoProfile -File (Join-Path $repo 'bootstrap.ps1')
         if ($LASTEXITCODE -ne 0) {
+            if ($LASTEXITCODE -eq 3) {
+                Write-Step 'bootstrap' 'FAIL' '已有一次收敛在跑（运行锁占用）——等当前收敛结束再 wdc sync'
+                exit 1
+            }
             Write-Step 'bootstrap' 'FAIL' '未全绿——最近日志尾部（完整见 logs/）'
             $log = Get-LastBootstrapLog
             if ($log) { Get-Content $log.FullName -Tail 30 | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray } }
