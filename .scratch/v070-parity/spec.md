@@ -17,10 +17,10 @@ LDC 已发布 **v0.7.0**（2026-10-26）：清单准入对账（`ldc audit`）�
 
 ## 验收清单
 
-- [ ] CHANGELOG.md 入仓：Unreleased 置顶 + 既有 release 全回填 + compare 链接可用
-- [ ] dev-standard.md 与 LDC 侧 diff 一致（含 §5「CHANGELOG 同步」行）
-- [ ] wdc audit：两方向实跑（至少已声明未装方向落地）、幂等重跑结果稳定
-- [ ] 漂移方向判定真机验证：WT/VSCode 写落点 → machine；改模板 → template-update 免 .bak
+- [x] CHANGELOG.md 入仓：Unreleased 置顶 + 既有 release 全回填 + compare 链接可用
+- [x] dev-standard.md 与 LDC 侧 diff 一致（含 §5「CHANGELOG 同步」行）
+- [x] wdc audit：两方向实跑（至少已声明未装方向落地）、幂等重跑结果稳定
+- [x] 漂移方向判定真机验证：改模板 → template-update 免 .bak；改落点 → machine 走轮转备份；triage 方向标注
 - [ ] 验证瘦身（工单 02）：冒烟 WSL 交界面化 + sync 收尾 -Quick + winget 优化，基线对照实测入档
 - [ ] validate.ps1 全绿（windows-latest CI 锚 run id）
-- [ ] demo GIF 首屏嵌播（必做——主人 2026-10-26 补充指令）
+- [x] demo GIF 首屏嵌播（必做——主人 2026-10-26 补充指令）

@@ -5,6 +5,11 @@
 [![validate](https://github.com/yu-cn/wdc/actions/workflows/validate.yml/badge.svg)](https://github.com/yu-cn/wdc/actions/workflows/validate.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+<p align="center">
+  <a href="docs/demo.cast"><img src="docs/demo.gif" width="720" alt="wdc 终端速览：wdc 快照 / wdc verify（约 4 秒循环播放）"></a>
+</p>
+<p align="center"><sub>↑ 速览：<code>wdc</code> 只读快照 · <code>wdc verify</code> 机器断言（源文件 <a href="docs/demo.cast">docs/demo.cast</a>）</sub></p>
+
 这是作者的日常开发环境，以仓库形式维护：配置只描述「一台机器应当处于什么状态」，由 bootstrap 负责把机器收敛到这个状态。基于 [microsoft/WindowsDeveloperConfig](https://github.com/microsoft/WindowsDeveloperConfig) 的经验自建（不 fork，见 [ADR-0001](docs/adr/0001-own-tree-not-fork-upstream.md)）。仓库以 [MIT](LICENSE) 开源，欢迎直接使用或 fork 改造成你自己的环境（见「[使用与改造](#使用与改造)」）。
 
 ## 快速开始（新机器）
@@ -80,7 +85,7 @@ gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL b
 | 命令 | 用途 |
 |---|---|
 | `wdc` | 只读快照（裸命令默认，秒级）：远端差距 / dotfiles 漂移 / 身份与 WSL / 最近 bootstrap |
-| `wdc sync` | 日常一键同步（fetch → pull → bootstrap → verify 全量；会请求一次 UAC） |
+| `wdc sync` | 日常一键同步（fetch → pull → bootstrap → verify -Quick 收尾；会请求一次 UAC） |
 | `wdc verify [-Full]` / `wdc triage` / `wdc log` / `wdc help` | 机器断言（默认 -Quick）/ dotfiles 落点漂移分流 / 最近日志尾部 / 帮助与版本 |
 | `pwsh bootstrap.ps1` | 完整收敛（日常改了配置后重跑） |
 | `pwsh bootstrap.ps1 -ValidateOnly` | 只做无副作用校验（配置 schema + 脚本静态检查） |
@@ -115,7 +120,7 @@ Docker Engine 由 WSL 阶段委托 LDC 从官方源安装（免 sudo 需重新�
 
 ## 文档
 
-- 词汇表：[GLOSSARY.md](GLOSSARY.md) · 决策：[docs/adr/](docs/adr/) · 上游调研：[docs/research/](docs/research/) · 吸收账本：[docs/upstream-ledger.md](docs/upstream-ledger.md)
+- 词汇表：[GLOSSARY.md](GLOSSARY.md) · 决策：[docs/adr/](docs/adr/) · 上游调研：[docs/research/](docs/research/) · 吸收账本：[docs/upstream-ledger.md](docs/upstream-ledger.md) · 变更记录：[CHANGELOG.md](CHANGELOG.md)
 - Fork 跟随：[docs/forking.md](docs/forking.md)（改造成自己环境后如何跟上游演进）
 - 贡献指南：[CONTRIBUTING.md](CONTRIBUTING.md)（fork 自用为主，通用核心改进欢迎 PR）
 - 工单与规格：`.scratch/`（作者的本地 markdown 工单流；外部贡献请走 GitHub Issues/PR）

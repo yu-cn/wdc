@@ -11,13 +11,19 @@
 
 **Status:** ready-for-agent
 
-- [ ] CHANGELOG.md（回填全部 release + 链接表）+ dev-standard §5 拷贝对齐
-- [ ] 渲染账本 + Test-DotfileInSync 方向扩展 + install-dotfiles 免 .bak + triage 方向标注
-- [ ] wdc audit 子命令 + audit-machine.ps1（至少已声明未装方向）
-- [ ] 真机验证：WT 写落点 → machine；改模板 → template-update 免 .bak；audit 幂等
+- [x] CHANGELOG.md（回填全部 release + 链接表）+ dev-standard §5 拷贝对齐（diff --strip-trailing-cr 全等；[0.6.0] 节随 0.6.0 发布同步收口）
+- [x] 渲染账本 + Test-DotfileInSync 方向扩展 + install-dotfiles 免 .bak + triage 方向标注
+- [x] wdc audit 子命令 + audit-machine.ps1（两方向；自装未声明方向按工单口径降级 INFO 计数 + 头部样例）
+- [x] 真机验证：改模板 → template-update 免 .bak（实测：`模板已更新——落点自上次渲染未动，直接重渲染`，零 .bak 噪声）；改落点 → machine 走轮转备份；triage -DryRun 方向标注〔机器侧改动〕；audit 幂等（19 Id 全核销零缺失 / 51 项候选 + 头部样例）
 - [ ] validate.ps1 绿 + CI run id 入档（Comments）
-- [ ] demo GIF 首屏嵌播（必做——主人 2026-10-26 补充指令）
+- [x] demo GIF 首屏嵌播（必做——主人 2026-10-26 补充指令）
 
 ## Comments
 
 - 2026-10-26（LDC 侧会话代立）：依据 LDC v0.7.0 发布与主人「WDC 同步跟进」指示代立。语义争议以 LDC 对应实现与 ADR-0015 补注为准；CHANGELOG 格式标准以 keepachangelog.com 1.1.0 中文页为准。发布 vX.Y.0 由主人指令触发。
+- 2026-10-26（ASUS 会话实施）实录：
+  - **方向判定契约偏差说明**：`Test-DotfileInSync` 保持三态字符串返回（六方共读既有契约），方向判定另立 `Get-DriftDirection` 纯函数（template-update / machine / both / unknown）——工单原文「返回对象加 Direction 属性」会破坏字符串消费方，独立函数动静更小；账本 `%LOCALAPPDATA%\wdc\rendered.sha256`（Get-FileHash 格式「hash␣␣路径」，单行更新 tmp+mv 原子落盘），账本可丢、缺失退 unknown 下次渲染自愈（LDC 同语义）。
+  - **免 .bak 实录**：改模板后 install-dotfiles 报 `模板已更新——落点自上次渲染未动，直接重渲染`，BAK_COUNT 不变；改落点后走轮转备份分支（.bak.N 实测创建）。
+  - **audit 实录**：声明面 19 包 Id（winget export JSON 取已装面——winget list 表格解析随 locale 变弃用）；已声明未装零项；自装未声明 51 项候选（Typora/Lark 等机器自留地，符合预期噪声面）。
+  - **demo GIF 三坑实录（Windows 侧生成比预想曲折，最终姿势 = WSL 内 Linux 版 agg 渲染）**：① agg Windows 构建对无 BOM UTF-8 按本地代码页错读、带 BOM 拒读（`not a v1,v2,v3 asciicast`）——放弃 Windows 构建；② 发行版无 CJK 字体——Noto Sans CJK SC 用户级装入 `~/.local/share/fonts`（免 sudo）；③ **捕获根因**：pwsh 外层进程按 GBK 解码内层 pwsh 的 UTF-8 stdout——捕获前须外层先设 `[Console]::OutputEncoding = UTF8`（教训同坑③族但方向相反：这次是读侧不是显示侧）。GIF 970KB（--font-size 12 --speed 3），自检帧经 ffmpeg 正确解码确认（System.Drawing 抽 GIF 动画帧有差分撕裂，不可作验收依据）。cast 合成脚本随工单档案保留（`.scratch/v070-parity/gen-demo-cast.ps1`，真实命令输出脱敏生成）。
+  - CHANGELOG 生成：`gh release list/view` 回填五版 + [0.6.0] 节（随发布收口）+ compare 链接表；文档区补 CHANGELOG 链接。

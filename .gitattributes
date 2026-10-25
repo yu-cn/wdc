@@ -6,3 +6,6 @@ dotfiles/** text eol=lf
 configs/vp-version text eol=lf
 # 二进制资产不参与行尾归一——上面的 dotfiles/** 文本规则会误伤它们（ubuntu.ico 曾被洗掉 2 字节，2026-10-22 实录）
 *.ico binary
+# README 首屏演示 GIF 同族豁免（v070-parity；asciinema v2 源文件 demo.cast 保持文本 LF）
+*.gif binary
+docs/demo.cast text eol=lf
