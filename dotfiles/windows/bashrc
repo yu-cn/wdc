@@ -61,12 +61,34 @@ wdc() {
     pwsh -NoProfile -File "$repo/scripts/wdc.ps1" "$@"
 }
 
-# --- dotfiles 漂移即时提示（工单24）：写穿/未提交模板开新终端即见（与 pwsh profile 同款）---
+# --- dotfiles 漂移即时提示（工单24，ADR-0015 口径）：开新终端即见，零漂移静默（与 pwsh profile 同款）---
+# 信号一「落点漂移」：落点内容 ≠ 模板——bash 无法 dot-source ps1，经一次性 pwsh -NoProfile 读
+#   单一来源映射逐项 hash 比对（~300ms 启动换单源，可接受）；WSL 侧无 pwsh 时静默跳过
+# 信号二「未提交模板编辑」：git porcelain——「改完记得 commit」红线提醒，非误报（工单24 Comments 定性）
 if [ -f "$HOME/.wdc" ]; then
     _wdc_repo=$(head -n 1 "$HOME/.wdc")
-    if [ -d "$_wdc_repo/dotfiles" ]; then
+    if [ -f "$_wdc_repo/scripts/lib/dotfiles-map.ps1" ]; then
+        if command -v pwsh >/dev/null 2>&1; then
+            # 仓库路径经环境变量传入（-Command 会把后续参数并进命令串，$args 不可靠）；
+            # 须独立 export——`VAR=x var=$(pwsh …)` 前缀赋值不进命令替换子壳（实测 pwsh 读到空值）
+            export WDC_REPO="$_wdc_repo"
+            _wdc_drift=$(pwsh -NoProfile -NonInteractive -Command '
+                $repo = $env:WDC_REPO
+                & {
+                    . (Join-Path $repo "scripts/lib/dotfiles-map.ps1")
+                    $n = 0
+                    foreach ($m in (Get-DotfilesMap)) {
+                        $src = Join-Path (Join-Path $repo "dotfiles") $m.Source
+                        if ((Test-DotfileInSync -Source $src -Target $m.Target) -ne "ok") { $n++ }
+                    }
+                    $n
+                }' 2>/dev/null)
+            unset WDC_REPO
+            [ "${_wdc_drift:-0}" -gt 0 ] 2>/dev/null && printf '\033[33mwdc: dotfiles 落点漂移 %s 项——重跑 bootstrap 渲染或 wdc triage 分流\033[0m\n' "$_wdc_drift"
+        fi
         _wdc_n=$(git --no-optional-locks -C "$_wdc_repo" status --porcelain -- dotfiles/ 2>/dev/null | wc -l)
-        [ "${_wdc_n:-0}" -gt 0 ] && printf '\033[33mwdc: dotfiles 漂移 %s 处——commit 吸收或 wdc triage 处置\033[0m\n' "$_wdc_n"
+        [ "${_wdc_n:-0}" -gt 0 ] && printf '\033[33mwdc: dotfiles 模板有 %s 处未提交编辑——commit 收口\033[0m\n' "$_wdc_n"
     fi
-    unset _wdc_repo _wdc_n
+    unset _wdc_repo _wdc_drift _wdc_n
 fi
+

@@ -1,6 +1,11 @@
 #Requires -Version 7
-# install-dotfiles.ps1 — dotfiles 层安装器（GLOSSARY: dotfiles / 身份文件）
-# 职责：身份文件（迁移或占位）+ Windows 侧符号链接。WSL 侧由 WSL 阶段负责。
+# install-dotfiles.ps1 — dotfiles 层安装器（GLOSSARY: dotfiles / 身份文件；ADR-0015 渲染拷贝）
+# 职责：身份文件（迁移或占位）+ Windows 侧渲染拷贝。WSL 侧由 WSL 阶段负责（LDC 接管）。
+# 渲染语义（ADR-0015）：落点 = 安装期 Copy-Item，模板仍是唯一声明源——
+#   同内容（hash 相等）幂等跳过；不同内容轮转备份 .bak 后拷贝（机器侧内容绝不静默丢弃）；
+#   落点为符号链接（现役机器的旧安装形态/外来链接）直接 -Force 移除不备份——链接本体可再造，指向内容不受影响。
+# 施工红线（LDC 实录教训，run 40211476066）：「仅首次」类判据一律以产物存在性（Test-Path）为准，
+#   绝不以「落点是不是链接」为判据——渲染后落点恒为实体文件，形态判据会把自家渲染物误当待接管原始文件。
 [CmdletBinding()]
 param()
 $ErrorActionPreference = 'Stop'
@@ -31,25 +36,28 @@ function Install-Dotfile {
         New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
         Write-Step $leaf 'CHANGED' "创建目录 $targetDir"
     }
-    $item = Get-Item $Target -Force -ErrorAction SilentlyContinue
+    $item = Get-Item -LiteralPath $Target -Force -ErrorAction SilentlyContinue
     if ($item) {
-        if ($item.LinkType -eq 'SymbolicLink' -and ($item.Target -join '') -eq $Source) {
-            Write-Step $leaf 'OK' '已是本仓库符号链接'
-            return
+        if ($item.PSIsContainer) { Write-Step $leaf 'FAIL' "落点是目录，无法渲染——请人工处理：$Target"; return }
+        if ($item.LinkType) {
+            # 符号链接残形（ADR-0015 迁移/外来链接）：直接替换不备份——链接本体可再造，指向内容不受影响。
+            # 原指向须在删除前取出——Remove-Item 后 FileInfo 失效、Target 读为空
+            $oldTarget = $item.Target -join ''
+            Remove-Item -LiteralPath $item.FullName -Force
+            Write-Step $leaf 'CHANGED' "符号链接已替换为渲染拷贝（原指向 $oldTarget）"
         }
-        if ($item.LinkType -eq 'SymbolicLink' -and -not (Test-Path ($item.Target -join ''))) {
-            # 死链（仓库目录改名/搬移后遗留）：Test-Path 视为不存在但落点已被占，不清除则 New-Item 撞 already exists；直接清不留 bak
-            Remove-Item $item.FullName -Force
-            Write-Step $leaf 'CHANGED' "已清除死链（指向 $($item.Target -join '')）"
+        elseif ((Get-FileHash -LiteralPath $item.FullName).Hash -eq (Get-FileHash -LiteralPath $Source).Hash) {
+            Write-Step $leaf 'OK' '已与模板一致（幂等跳过）'
+            return
         }
         else {
             $bak = Get-BackupPath $Target
-            Move-Item -Path $Target -Destination $bak
-            Write-Step $leaf 'CHANGED' "旧文件备份为 $(Split-Path $bak -Leaf)"
+            Copy-Item -LiteralPath $Target -Destination $bak
+            Write-Step $leaf 'CHANGED' "落点与模板不一致——旧内容已备份 $(Split-Path $bak -Leaf)（可 triage 吸收）"
         }
     }
-    New-Item -ItemType SymbolicLink -Path $Target -Value $Source | Out-Null
-    Write-Step $leaf 'CHANGED' "已链接 -> $Source"
+    Copy-Item -LiteralPath $Source -Destination $Target -Force
+    Write-Step $leaf 'CHANGED' "已渲染 <- $Source"
 }
 
 # ---------------------------------------------------------------------------
@@ -82,10 +90,10 @@ if (Test-Path $identityPath) {
 }
 
 # ---------------------------------------------------------------------------
-# 2/3 · Windows 侧符号链接
+# 2/3 · Windows 侧渲染拷贝（ADR-0015）
 # ---------------------------------------------------------------------------
-Write-Phase 'Dotfiles 2/3 - Windows 侧符号链接'
-# 落点清单来自 Get-DotfilesMap 单一来源（verify 断言与 inventory 盘点同读一份，防三面漂移）
+Write-Phase 'Dotfiles 2/3 - Windows 侧渲染拷贝'
+# 落点清单来自 Get-DotfilesMap 单一来源（verify 断言、triage 分流、status 盘点与 profile 提示同读一份，防多面漂移）
 foreach ($m in (Get-DotfilesMap)) {
     Install-Dotfile -Source (Join-Path $dotfilesRoot $m.Source) -Target $m.Target
 }
@@ -113,5 +121,5 @@ if (-not (Test-Path $wdcPtr) -or ((Get-Content $wdcPtr -Raw -ErrorAction Silentl
 # 3/3 · WSL 侧（占位说明）
 # ---------------------------------------------------------------------------
 Write-Phase 'Dotfiles 3/3 - WSL 侧'
-Write-Step 'WSL dotfiles' 'SKIP' '由 WSL 阶段负责（bashrc / gitconfig / starship 链接进 Ubuntu）'
+Write-Step 'WSL dotfiles' 'SKIP' '由 WSL 阶段负责（LDC 接管，ADR-0015 渲染拷贝）'
 exit 0

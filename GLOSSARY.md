@@ -52,3 +52,19 @@ _Avoid_: 主机、主开发机、第二台机
 **身份文件**:
 每台机器本地保存 git user.name/email 的文件（`~/.gitidentity`），bootstrap 首次生成占位、永不入仓库；gitconfig 模板通过 include 引用它。
 _Avoid_: git 凭据（指代不同的东西）
+
+**渲染（render）**:
+bootstrap 把模板内容拷贝到落点的安装方式（ADR-0015）：覆盖前轮转备份 `.bak`/`.bak.N`、同内容幂等跳过、符号链接残形直接替换不备份；模板仍是唯一声明源。
+_Avoid_: 符号链接安装（旧模型）
+
+**落点内容断言**:
+verify/status 的「落点与模板一致」逐项 hash 比对——断效果不断实现（坑11 教训）；取代旧「dotfiles 与 HEAD 一致（防写穿）」断言（ADR-0015 后退役）。
+_Avoid_: readlink 断言、防写穿断言（旧模型语义）
+
+**写穿**:
+机器侧工具直改落点渲染物（WT / VSCode / gh auth setup-git 等）。渲染拷贝模型下仓库不受污染；落点≠模板即「落点漂移」，triage 负责分流。
+_Avoid_: 污染仓库（旧模型语义，已不存在）
+
+**分流（triage）**:
+落点漂移的逐文件处置（ADR-0003 判据）：吸收=落点回写模板（显式 pathspec commit，「禁 git add -A」不变）/ 还原=自模板重渲染（丢弃机器改动，不可逆）。
+_Avoid_: git checkout（旧实现）

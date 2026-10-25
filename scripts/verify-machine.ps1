@@ -20,20 +20,23 @@ function Assert {
     } catch { Write-Step $Name 'FAIL' $_.Exception.Message; $script:Fail++ }
 }
 
-Write-Phase '1/6 · Windows 侧 dotfiles 符号链接'
-# 断言面 = 安装面：落点清单来自 Get-DotfilesMap 单一来源（含 keybindings——此前 6 项清单已实际漏验它）
+Write-Phase '1/6 · Windows 侧 dotfiles 渲染拷贝'
+# 断言面 = 安装面：落点清单来自 Get-DotfilesMap 单一来源（含 keybindings——此前 6 项清单已实际漏验它）；
+# 状态判定单一来源 = Test-DotfileInSync。断效果不断实现（坑11 教训）：断「落点与模板内容一致」，
+# 不断言链接形态；「dotfiles 模板与 HEAD 一致（防写穿）」断言随渲染拷贝模型退役（ADR-0015——机器侧
+# 工具直改的是落点渲染物，仓库不再可能被写穿；落点漂移由下面的逐项比对抓取）
+$dotfilesRoot = Join-Path $repo 'dotfiles'
 foreach ($m in (Get-DotfilesMap)) {
+    $src = Join-Path $dotfilesRoot $m.Source
     $target = $m.Target
-    Assert $m.Name { (Get-Item $target -ErrorAction SilentlyContinue).LinkType -eq 'SymbolicLink' }
+    Assert $m.Name { (Test-DotfileInSync -Source $src -Target $target) -eq 'ok' } "落点缺失或与模板不一致——重跑 bootstrap 渲染（幂等）；机器侧直改的取舍走 wdc triage（逐文件 吸收/还原）"
 }
-# dotfiles 是符号链接的落点，被机器侧工具写穿会直接污染仓库（gh auth login 实锤，工单14）——验收前必须与 HEAD 一致
-Assert 'dotfiles 模板与 HEAD 一致（防写穿）' { @(git -C $repo status --porcelain -- dotfiles).Count -eq 0 } '写穿漂移——处置：pwsh scripts/triage-dotfiles-drift.ps1（逐文件 吸收/还原）'
 # 钩子接线断言（工单23）：collaboration 承诺 pre-commit 把关；接线由 bootstrap Stage 6 幂等保证
 Assert 'pre-commit 钩子已接线' { (git -C $repo config core.hooksPath) -eq '.githooks' } 'git config core.hooksPath .githooks（repo-local；下次 bootstrap 会自动接上）'
 # 续跑任务断言（GLOSSARY「续跑任务」）：任务只在「请求过重启」时登记、任何 bootstrap 启动即清除——
 # 存续即说明有一次重启后的收敛没跑完（效果级断言，坑11：断言效果不断言中间产物）
 Assert '续跑任务已清' { -not (Test-WdcResumeTaskExists) } '存在待续跑任务——重启登录后自动续跑，或直接重跑 bootstrap.ps1 接管'
-# WSL profile 为模板静态声明（ADR-0006），无机器侧产物需要断言；WT settings 链接本身由上面的映射断言覆盖
+# WSL profile 为模板静态声明（ADR-0006），无机器侧产物需要断言；WT settings 渲染本身由上面的映射断言覆盖
 Assert 'Ubuntu WSL 图标资产在位' { Test-Path (Join-Path $env:LOCALAPPDATA 'wdc\ubuntu.ico') } '缺失：重跑 bootstrap（install-dotfiles 会装 dotfiles/windows/ubuntu.ico）'
 
 Write-Phase '2/6 · 身份与注册表断言'

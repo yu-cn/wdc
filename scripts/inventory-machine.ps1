@@ -42,14 +42,19 @@ KV 'NVM_HOME(env)' $([Environment]::GetEnvironmentVariable('NVM_HOME', 'User') ?
 Section 'WSL'
 (& wsl.exe -l -v) 2>$null | ForEach-Object { $_ -replace "`0", '' } | Where-Object { $_.Trim() }
 
-Section 'dotfiles 存在性（只报有无与大小，不读内容）'
-# 落点清单来自 Get-DotfilesMap 单一来源；身份文件另加（非链接，属机器数据，ADR-0003）
-$probes = @(Get-DotfilesMap) + @(@{ Name = '~/.gitidentity'; Target = (Join-Path $HOME '.gitidentity') })
+Section 'dotfiles 存在性（只报有无与大小/状态，不读内容）'
+# 落点清单来自 Get-DotfilesMap 单一来源；身份文件另加（机器数据，ADR-0003）
+# 安装形态自 ADR-0015 起为渲染拷贝——盘点读内容状态（ok/absent/drift，Test-DotfileInSync 同源），不再报链接形态
+$repo = Split-Path $PSScriptRoot -Parent
+$probes = @(Get-DotfilesMap) + @(@{ Name = '~/.gitidentity'; Source = ''; Target = (Join-Path $HOME '.gitidentity') })
 foreach ($f in $probes) {
-    if (Test-Path $f.Target) {
-        $item = Get-Item $f.Target
-        $link = if ($item.LinkType) { " [ $($item.LinkType) -> $($item.Target) ]" } else { '' }
-        KV $f.Name "$([math]::Round($item.Length / 1KB, 1))KB$link"
+    if (Test-Path -LiteralPath $f.Target) {
+        $item = Get-Item -LiteralPath $f.Target
+        $state = ''
+        if ($f.Source) {
+            $state = " [$(Test-DotfileInSync -Source (Join-Path (Join-Path $repo 'dotfiles') $f.Source) -Target $f.Target)]"
+        }
+        KV $f.Name "$([math]::Round($item.Length / 1KB, 1))KB$state"
     } else { KV $f.Name '不存在' }
 }
 

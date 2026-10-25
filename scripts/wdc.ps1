@@ -5,10 +5,10 @@
 # 体验约定（业界对齐：jj 裸命令=只读状态、git/gh 裸命令不跑长操作）：
 #   裸命令不触发同步——长操作/改状态一律显式子命令；裸 wdc 给只读快照并提示下一步。
 # 用法：
-#   wdc | wdc status    只读快照（秒级）：与 origin/main 差距 / dotfiles 写穿漂移 / 身份与 WSL 首跑状态 / 最近 bootstrap 结果
+#   wdc | wdc status    只读快照（秒级）：与 origin/main 差距 / dotfiles 落点漂移 / 身份与 WSL 首跑状态 / 最近 bootstrap 结果
 #   wdc sync            全量同步：fetch → 落后则 pull（--ff-only）→ bootstrap → verify 全量（会请求一次 UAC）
 #   wdc verify [-Full]  机器断言；默认 -Quick 秒级，-Full 含三域漂移（约 3 分钟）
-#   wdc triage          dotfiles 写穿漂移分流（工单 17 工具入口，交互式）
+#   wdc triage          dotfiles 落点漂移分流（工单 17 工具入口，交互式；ADR-0015 口径）
 #   wdc log [-Lines N]  最近一次 bootstrap 日志尾部（默认 40 行，连带提权子回合日志）
 #   wdc help [命令]     总览或单命令详解；-h/--help 同义
 #   wdc version         版本（git describe）；-v/--version 同义
@@ -28,6 +28,7 @@ param(
 $ErrorActionPreference = 'Stop'
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { }
 . (Join-Path $PSScriptRoot 'lib/common.ps1')
+. (Join-Path $PSScriptRoot 'lib/dotfiles-map.ps1')
 
 $wdcCommands = 'sync', 'status', 'verify', 'triage', 'log', 'help', 'version'
 
@@ -74,7 +75,7 @@ wdc — WDC 开发环境一键工具（裸命令只读快照；仓库在 ~/.wdc 
   wdc | wdc status     只读快照（秒级）：远端差距 / dotfiles 漂移 / 身份与 WSL / 最近 bootstrap
   wdc sync             全量同步：fetch → pull → bootstrap → verify 全量（会请求一次 UAC）
   wdc verify [-Full]   机器断言（默认 -Quick；-Full 含三域漂移约 3 分钟）
-  wdc triage           dotfiles 写穿漂移分流（逐文件 吸收/还原，交互式）
+  wdc triage           dotfiles 落点漂移分流（逐文件 吸收/还原，交互式）
   wdc log [-Lines N]   最近一次 bootstrap 日志尾部（默认 40 行）
   wdc help [命令]      本总览或单命令详解（-h/--help 同义）
   wdc version          版本（-v/--version 同义）
@@ -83,7 +84,8 @@ wdc — WDC 开发环境一键工具（裸命令只读快照；仓库在 ~/.wdc 
 $helpDetail = @{
     'status' = @'
 wdc status — 只读快照（秒级，不改任何状态）
-  远端差距（fetch 后与 origin/main 的领先/落后）、dotfiles 写穿漂移（>0 提示 wdc triage）、
+  远端差距（fetch 后与 origin/main 的领先/落后）、dotfiles 落点漂移（逐项内容比对，ADR-0015；
+  >0 提示 wdc triage，落点缺失则重跑 bootstrap）、
   身份文件是否生效（占位未填则 git 拒绝提交护栏仍在）、WSL/Ubuntu 首跑状态、
   距上次上游检查天数（>30 天提示补课）、最近一次 bootstrap 判定行。
   裸 wdc 等价于 wdc status。
@@ -96,13 +98,13 @@ wdc sync — 全量同步（日常一键收敛；会请求一次 UAC）
 '@
     'verify' = @'
 wdc verify [-Full] — 机器断言
-  六组断言：dotfiles 符号链接 / 身份与注册表 / 移除清单核销 / 语言栈 / WSL 侧 / 三域漂移。
+  六组断言：dotfiles 渲染拷贝（内容比对）/ 身份与注册表 / 移除清单核销 / 语言栈 / WSL 侧 / 三域漂移。
   默认 -Quick（秒级）；-Full 加三域 winget configure test 漂移（约 3 分钟）。
 '@
     'triage' = @'
-wdc triage — dotfiles 写穿漂移分流（交互式）
-  WT/VSCode 等 UI 会把设置写穿符号链接进仓库文件；本命令逐文件给出「吸收进模板 / 还原为机器噪声」
-  的处置入口（ADR-0003 判据）。verify 的「dotfiles 与 HEAD 一致」断言 FAIL 时也会指向这里。
+wdc triage — dotfiles 落点漂移分流（交互式）
+渲染拷贝模型（ADR-0015）下机器侧工具直改的是落点渲染物，仓库模板不受污染；本命令逐文件给出
+「吸收进模板 / 自模板还原」的处置入口（ADR-0003 判据）。verify 的内容比对断言 FAIL 时也会指向这里。
 '@
     'log' = @'
 wdc log [-Lines N] — 最近一次 bootstrap 日志尾部（默认 40 行）
@@ -170,9 +172,9 @@ switch ($Command) {
         $ab = Get-AheadBehind
         if ($ab[0] -eq 0 -and $ab[1] -eq 0) { Write-Step '仓库' 'OK' '与 origin/main 一致' }
         else { Write-Step '仓库' 'INFO' "领先 $($ab[0]) / 落后 $($ab[1])——wdc sync 同步之" }
-        $drift = @(git -C $repo status --porcelain -- dotfiles)
-        if ($drift.Count -eq 0) { Write-Step 'dotfiles 漂移' 'OK' '与 HEAD 一致' }
-        else { Write-Step 'dotfiles 漂移' 'FAIL' "$($drift.Count) 项写穿——wdc triage 分流" }
+        $drift = @(Get-DotfilesMap | Where-Object { (Test-DotfileInSync -Source (Join-Path (Join-Path $repo 'dotfiles') $_.Source) -Target $_.Target) -ne 'ok' })
+        if ($drift.Count -eq 0) { Write-Step 'dotfiles 漂移' 'OK' '全部落点与模板一致' }
+        else { Write-Step 'dotfiles 漂移' 'FAIL' "$($drift.Count) 项落点与模板不一致——wdc triage 分流（缺失落点重跑 bootstrap）" }
         # 首跑两件手工事的状态可见（工单29）：身份占位未填则「拒提交」护栏仍在；WSL 未启用/Ubuntu 未装则收敛未完成
         if (Test-GitIdentityEffective) { Write-Step '身份文件' 'OK' 'name/email 经 include 生效' }
         else { Write-Step '身份文件' 'FAIL' '未填写——编辑 ~/.gitidentity（占位已生成）；不填则 git 拒绝提交' }

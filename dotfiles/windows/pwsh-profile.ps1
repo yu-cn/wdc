@@ -42,11 +42,26 @@ function wdc {
     & pwsh -NoProfile -File (Join-Path $repo 'scripts\wdc.ps1') @args
 }
 
-# --- dotfiles 漂移即时提示（工单24）：写穿/未提交模板开新终端即见——红线「提交前核对无漂移」的自动守卫 ---
+# --- dotfiles 漂移即时提示（工单24，ADR-0015 口径）：开新终端即见，零漂移静默 ---
+# 信号一「落点漂移」：落点内容 ≠ 模板（机器侧直改渲染物或模板更新未重渲染）——经 ~/.wdc 指针
+#   dot-source 落点映射后逐项 hash 比对（7 个小文件毫秒级；子作用域加载，映射函数不落会话）
+# 信号二「未提交模板编辑」：git porcelain——「改完记得 commit」红线提醒，非误报（工单24 Comments 定性）
 # --no-optional-locks：不与并行运行的 lazygit/starship 抢 index 锁（只读探测的标准姿势）
 $__wdcRepo = Get-Content "$HOME\.wdc" -ErrorAction SilentlyContinue | Select-Object -First 1
-if ($__wdcRepo -and (Test-Path (Join-Path $__wdcRepo 'dotfiles'))) {
-    $__drift = @(git --no-optional-locks -C "$__wdcRepo" status --porcelain -- dotfiles/).Count
-    if ($__drift -gt 0) { Write-Host "wdc: dotfiles 漂移 ${__drift} 处——commit 吸收或 wdc triage 处置" -ForegroundColor Yellow }
+if ($__wdcRepo -and (Test-Path (Join-Path $__wdcRepo 'scripts\lib\dotfiles-map.ps1'))) {
+    $__driftNames = & {
+        . (Join-Path $__wdcRepo 'scripts\lib\dotfiles-map.ps1')
+        $names = @()
+        foreach ($m in (Get-DotfilesMap)) {
+            $src = Join-Path (Join-Path $__wdcRepo 'dotfiles') $m.Source
+            if ((Test-DotfileInSync -Source $src -Target $m.Target) -ne 'ok') { $names += $m.Name }
+        }
+        $names -join '、'
+    }
+    if ($__driftNames) {
+        Write-Host "wdc: dotfiles 落点漂移（$__driftNames）——重跑 bootstrap 渲染，或 wdc triage 分流" -ForegroundColor Yellow
+    }
+    $__uncommitted = @(git --no-optional-locks -C "$__wdcRepo" status --porcelain -- dotfiles/).Count
+    if ($__uncommitted -gt 0) { Write-Host "wdc: dotfiles 模板有 $__uncommitted 处未提交编辑——commit 收口" -ForegroundColor Yellow }
 }
-Remove-Variable __wdcRepo, __drift -ErrorAction SilentlyContinue
+Remove-Variable __wdcRepo, __driftNames, __uncommitted -ErrorAction SilentlyContinue

@@ -58,7 +58,7 @@ Node 归 **vp**（默认跟随 LTS）、Python 归 **uv**——Windows / WSL 两
 **WSL 侧**（Ubuntu，发行版内一切委托姊妹仓库 [LDC](https://github.com/yu-cn/ldc)——[setup-ubuntu.sh](scripts/wsl/setup-ubuntu.sh) 薄包装，LDC-0007）
 LDC 接管 apt 包 / gh / Docker Engine / uv / vp / Starship / Linux dotfiles（单一实现）；WDC 保留 WSL 生命周期引导（wsl.conf systemd、默认 shell=bash）
 
-**dotfiles**（[dotfiles/](dotfiles/)，符号链接安装，旧文件备份 `*.bak`）
+**dotfiles**（[dotfiles/](dotfiles/)，渲染拷贝安装（ADR-0015），旧文件备份 `*.bak`）
 gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL bash 三 shell 统一提示符）· Windows Terminal · VS Code settings / keybindings · bashrc（Windows 侧；Linux bashrc 归姊妹仓库 LDC，工单32 起委托接管）
 
 </details>
@@ -81,20 +81,20 @@ gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL b
 |---|---|
 | `wdc` | 只读快照（裸命令默认，秒级）：远端差距 / dotfiles 漂移 / 身份与 WSL / 最近 bootstrap |
 | `wdc sync` | 日常一键同步（fetch → pull → bootstrap → verify 全量；会请求一次 UAC） |
-| `wdc verify [-Full]` / `wdc triage` / `wdc log` / `wdc help` | 机器断言（默认 -Quick）/ dotfiles 写穿分流 / 最近日志尾部 / 帮助与版本 |
+| `wdc verify [-Full]` / `wdc triage` / `wdc log` / `wdc help` | 机器断言（默认 -Quick）/ dotfiles 落点漂移分流 / 最近日志尾部 / 帮助与版本 |
 | `pwsh bootstrap.ps1` | 完整收敛（日常改了配置后重跑） |
 | `pwsh bootstrap.ps1 -ValidateOnly` | 只做无副作用校验（配置 schema + 脚本静态检查） |
 | `pwsh validate.ps1` | 同上的校验入口，独立可用 |
 | `winget configure test --file configs/<域>.winget` | 单域漂移检查（不动机器） |
 | `pwsh scripts/check-upstream.ps1` | 上游 [WindowsDeveloperConfig](https://github.com/microsoft/WindowsDeveloperConfig) 差异报告（吸收与否人工定夺） |
-| `pwsh scripts/install-dotfiles.ps1` | 只重装 dotfiles 链接 |
+| `pwsh scripts/install-dotfiles.ps1` | 只重装 dotfiles 渲染拷贝 |
 
 ## 各层职责（ADR-0002）
 
 ```
 configs/    声明式层：按域拆分的 winget configuration（base-windows / cli-tools / editors + 扩展清单）
 scripts/    编排层：bootstrap 入口、语言版本（vp）、VSCode 扩展、移除清单、WSL 委托包装、上游检查
-dotfiles/   dotfiles 层：windows / shared（wsl 已冻结，Linux 模板归姊妹仓库 LDC），符号链接安装（旧文件备份 *.bak）
+dotfiles/   dotfiles 层：windows / shared（wsl 已冻结，Linux 模板归姊妹仓库 LDC），渲染拷贝安装（旧文件备份 *.bak）
 ```
 
 - git 身份不入仓库：模板 include 每机本地的 `~/.gitidentity`

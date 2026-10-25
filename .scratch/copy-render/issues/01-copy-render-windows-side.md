@@ -15,17 +15,27 @@
 
 **Status:** ready-for-agent
 
-- [ ] dotfiles-map.ps1 状态函数（六方共读单一来源）
-- [ ] install-dotfiles.ps1 渲染化（含幂等教训落地）
-- [ ] verify-machine.ps1 内容断言 + 防写穿断言退役
-- [ ] triage-dotfiles-drift.ps1 平移（吸收/还原/DryRun）
-- [ ] wdc.ps1 status 漂移口径
-- [ ] profile + bashrc 漂移提示改内容比对（保留未提交编辑提醒）
-- [ ] 文档对齐（AGENTS 坑6 / GLOSSARY / README / inventory）
-- [ ] 本机实测：迁移 → verify 全绿 → 漂移链路双向 → 第二遍 bootstrap 零 CHANGED
+- [x] dotfiles-map.ps1 状态函数（六方共读单一来源）
+- [x] install-dotfiles.ps1 渲染化（含幂等教训落地）
+- [x] verify-machine.ps1 内容断言 + 防写穿断言退役
+- [x] triage-dotfiles-drift.ps1 平移（吸收/还原/DryRun）
+- [x] wdc.ps1 status 漂移口径
+- [x] profile + bashrc 漂移提示改内容比对（保留未提交编辑提醒）
+- [x] 文档对齐（AGENTS 坑6 / GLOSSARY / README / inventory）
+- [x] 本机实测：迁移 → verify 全绿 → 漂移链路双向 → 第二遍 bootstrap 零 CHANGED
 - [ ] CI 锚点：validate（windows-latest）+ fresh-machine 冒烟 run id 入档
-- [ ] 发布由主人指令触发（feat → MINOR）
+- [ ] 发布由主人指令触发（feat → MINOR）——主人 2026-10-26 已指令：全绿后发 v0.6.0
 
 ## Comments
 
 - 2026-10-26（LDC 侧会话代立）：工单依据 LDC v0.6.0 发布与 ADR-0015 WDC 条款代立，实施环境预期为 Windows 开发机（pwsh 在位、pre-commit 硬关可正常把关）。语义争议一律以 LDC `docs/adr/0015-copy-render-not-symlink.md` 原文为准；本票只做施工面展开。注意 dev-standard §6 并行规则：动工前确认无其它会话在 WDC 上。
+- 2026-10-26（ASUS 会话实施）：施工面全部落地，本机实测通过。实录要点：
+  - 迁移实录：7 落点 SymbolicLink → 渲染拷贝。CHANGED 行要报「原指向」须在 Remove-Item **前**取 `$item.Target`——删除后 FileInfo 失效读空（首跑实测踩中，已修）。
+  - 幂等：install-dotfiles 二遍 7×OK 零 CHANGED。本仓无「仅首次」形态判据（身份段本就以 Test-Path 产物为准、~/.wdc 指针以内容比对为准），LDC 教训（run 40211476066）自然落地。
+  - 漂移链路双向实测：手改落点 → verify FAIL（点名 bashrc）→ wdc status FAIL → triage -DryRun 出 diff → 还原(r) 重渲染回绿；吸收(a) → 回写模板 + pathspec commit（pre-commit validate 全绿）→ 软回退清场。备份轮转 .bak.1/.2/.3 实测创建（测试产物已清，历史 .bashrc.bak 不动）。
+  - 提示链路（profile/bashrc 双信号）：pwsh profile 原生 dot-source 毫秒级，漂移行点名漂移项；bash 经一次性 `pwsh -NoProfile`（实测启动 ~220ms）换单一事实源。**两个 bash 坑实录**：① `pwsh -Command` 会把后续参数并进命令串，`$args` 不可靠——仓库路径改环境变量传入；② `VAR=x var=$(pwsh…)` 前缀赋值**不进命令替换子壳**（pwsh 读到空值、报错被 2>/dev/null 吞、漂移行静默失踪）——须独立 `export` 行。修复后带漂移 source 实测双信号齐发、收敛归零静默。
+  - 工单第 5 条「仓库尚无 commit」分支查无此笔（当前 wdc.ps1 无该分支；Get-AheadBehind 的 rev-list 失败守卫属仓库差距语义，保留未动）。
+  - 工单第 7 条「坑11/坑35」：坑11/坑15 已补根治标注；「坑35」查无此坑——collaboration.md 仅 15 条坑，spec 所指「工单35」（reparse 双路径痛）随渲染拷贝一并消除，无独立坑词条可标注。
+  - 吸收语义注意：整文件回写会把模板**未提交编辑一并卷进** pathspec commit（旧模型 checkout+commit 同语义，实测踩中后软回退清场）——吸收前先收口模板编辑（profile/bashrc 第二路提示正是为此）。
+  - 完整 bootstrap 提权回合未跑（UAC 需人在场）；「第二遍 bootstrap 零 CHANGED」以 dotfiles 阶段（install-dotfiles.ps1）多遍幂等实测替代覆盖，下次 wdc sync 完整收敛顺带复核。
+  - 验收清单外的顺手项：triage 的 diff 加 `-c core.autocrlf=false` 静音行尾告警（--no-index 比对与行尾无关）。
