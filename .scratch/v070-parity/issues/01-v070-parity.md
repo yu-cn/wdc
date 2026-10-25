@@ -15,7 +15,7 @@
 - [x] 渲染账本 + Test-DotfileInSync 方向扩展 + install-dotfiles 免 .bak + triage 方向标注
 - [x] wdc audit 子命令 + audit-machine.ps1（两方向；自装未声明方向按工单口径降级 INFO 计数 + 头部样例）
 - [x] 真机验证：改模板 → template-update 免 .bak（实测：`模板已更新——落点自上次渲染未动，直接重渲染`，零 .bak 噪声）；改落点 → machine 走轮转备份；triage -DryRun 方向标注〔机器侧改动〕；audit 幂等（19 Id 全核销零缺失 / 51 项候选 + 头部样例）
-- [ ] validate.ps1 绿 + CI run id 入档（Comments）
+- [x] validate.ps1 绿 + CI run id 入档（Comments）——CI validate 40222785897 绿（0.7.0 提交面）；fresh-machine 冒烟 40225764469 绿（13m11s，含验证瘦身交界面化）；本机收敛 184s 全绿（工单02）
 - [x] demo GIF 首屏嵌播（必做——主人 2026-10-26 补充指令）
 
 ## Comments
