@@ -19,7 +19,7 @@
 3. **控制台乱码只是显示问题**（GBK 代码页）——脚本已自设 UTF-8，乱码不影响执行与判断。
 4. **winget 退出码语义**：validate 的 1 = 仅警告（良性），负 HRESULT 才是错；`configure test` 漂移判定看「未处于」计数 + 退出码。
 5. **`git config --global/--file/--local` 按设计不展开 include**（需 `--includes`），只有全栈查询默认展开——用带作用域查询探测「include 是否生效」会假阴性。
-6. **被符号链接的 settings.json 会被 UI 写穿**：Windows Terminal 设置 UI 保存、VSCode 的 innocuous 操作（如打开 .md 时选编辑器）都会把状态重写进仓库文件——改这类设置改仓库模板；写穿由 verify 的「dotfiles 与 HEAD 一致」断言兜底暴露，处置=还原机器噪声 / 吸收点名偏好（ADR-0003 判据）。
+6. **被符号链接的 settings.json 会被 UI 写穿**：Windows Terminal 设置 UI 保存、VSCode 的 innocuous 操作（如打开 .md 时选编辑器）都会把状态重写进仓库文件——改这类设置改仓库模板；写穿由 verify 的「dotfiles 与 HEAD 一致」断言兜底暴露，处置=还原机器噪声 / 吸收点名偏好（ADR-0003 判据）。**补注（2026-10-25，主人纠正实录：LETH 的 VS 2022 动态 profile 被误还原）**：「还原为机器噪声」只适用纯噪声（排版重排/无关键值）；**动态 profile 写穿（VS 2022 的 Developer 终端对、pwsh 的 source 标注）必须吸收进模板静态声明**——强制还原=打地鼠（生成器每次启动重写）且违背 ADR-0003「自留地不碰」；WT 按 source 去重，模板声明后写穿消失，生成器缺席的机器上为惰性条目（模板里 Azure Cloud Shell 条目同款先例）。后续他机的生成器若产出不同名单（如 VS 2019），同口径吸收。
 7. **同 ID 多版本并存的 winget 卸载会匹配歧义**（0x8A150014）——`Remove-WingetPackage` 已按逐版本显式卸载处理。补注（2026-10-21，官方码表核实）：0x8A150014 实为 NO_APPLICATIONS_FOUND「找不到包」，匹配歧义对应 0x8A150016 MULTIPLE_APPLICATIONS_FOUND；当日另实证——配置单元引用已从 winget 目录除名的包（Microsoft.CascadiaCode，manifest 404）即报 0x8A150014，处置见 `.scratch/cascadia-font-source/`。
 8. **dotfiles 与 `.sh` 的行尾已由 `.gitattributes` 钉 LF**——Windows checkout 的 CRLF 会破坏 WSL 侧 include/bash 执行；新增跨侧文件时记得纳入规则。同族坑：`dotfiles/**` 的文本规则会误伤二进制资产（`ubuntu.ico` 曾被洗损 2 字节）——新增二进制资产记得 `binary` 豁免（现行规则 `*.ico binary`）。
 9. **机器派生值（发行版 ID/随机 GUID/本机路径）不入仓库文件**——按 ADR-0004 安装期渲染到机器本地（如 WT fragment）。

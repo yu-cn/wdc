@@ -62,6 +62,7 @@
                 "hidden": false,
                 "icon": "ms-appx:///ProfileIcons/pwsh.png",
                 "name": "PowerShell",
+                "source": "Windows.Terminal.PowershellCore",
                 "startingDirectory": "%USERPROFILE%"
             },
             {
@@ -83,6 +84,18 @@
                 "guid": "{61c54bbd-c2c6-5271-96e7-009a87ff44bf}",
                 "hidden": true,
                 "name": "Windows PowerShell"
+            },
+            {
+                "guid": "{f8deeac4-f9cf-5408-af09-58f19de8e347}",
+                "hidden": false,
+                "name": "Developer Command Prompt for VS 2022",
+                "source": "Windows.Terminal.VisualStudio"
+            },
+            {
+                "guid": "{c2fb1617-2d79-555a-8faf-fe7a53a13d80}",
+                "hidden": false,
+                "name": "Developer PowerShell for VS 2022",
+                "source": "Windows.Terminal.VisualStudio"
             }
         ]
     },
