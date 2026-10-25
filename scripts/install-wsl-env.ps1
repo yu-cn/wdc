@@ -38,8 +38,9 @@ if ($env:GITHUB_ACTIONS) { Write-Step 'WSL 冒烟模式' 'INFO' 'CI 交界面化
 
 Write-Phase "WSL root 阶段（用户 $wslUser）"
 # $3 必须占位（root 角色不用身份文件，但 SKIP_LDC 在 $5——少占位会把 '1' 顶进 IDENT_SRC、SKIP_LDC 落空，
-# run 40222841315 实录：冒烟绿但 root 段交界面化未生效，日志 grep 才抓出）
-$root = Invoke-WslScript -Distro 'Ubuntu' -User 'root' -Script $setupSh -ScriptArgs (@('root', $wslUser, '') + $smokeArg + $skipLdcArg)
+# run 40222841315 实录）；占位用 '-' 不能用空串——Start-Process ArgumentList 拒绝空串元素
+#（run 40224424790 实录：Cannot bind argument 'ArgumentList' ... empty string）
+$root = Invoke-WslScript -Distro 'Ubuntu' -User 'root' -Script $setupSh -ScriptArgs (@('root', $wslUser, '-') + $smokeArg + $skipLdcArg)
 $root.Lines | ForEach-Object { Write-Host $_ }
 if (-not $root.Ok) { Write-Step 'root 阶段' 'FAIL' "退出码 $($root.Exit)"; exit 1 }
 if ($skipLdcArg) {
