@@ -6,7 +6,8 @@
     "copyOnSelect": false,
     "defaultInputScope": "alphanumericHalfWidth",
     "defaultProfile": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
-    "keybindings": [
+    "keybindings": 
+    [
         {
             "id": "Terminal.CopyToClipboard",
             "keys": "ctrl+c"
@@ -20,18 +21,22 @@
             "keys": "alt+shift+d"
         }
     ],
-    "newTabMenu": [
+    "newTabMenu": 
+    [
         {
             "type": "remainingProfiles"
         }
     ],
-    "profiles": {
-        "defaults": {
+    "profiles": 
+    {
+        "defaults": 
+        {
             "colorScheme": "Catppuccin Mocha",
             "compatibility.allowDECRQCRA": true,
             "experimental.rainbowSuggestions": true,
             "experimental.repositionCursorWithMouse": true,
-            "font": {
+            "font": 
+            {
                 "face": "JetBrainsMono NFM"
             },
             "opacity": 95,
@@ -41,7 +46,8 @@
             "showMarksOnScrollbar": true,
             "useAcrylic": false
         },
-        "list": [
+        "list": 
+        [
             {
                 "commandline": "%SystemRoot%\\System32\\cmd.exe",
                 "guid": "{0caa0dad-35be-5f56-a8ff-afceeeaa6101}",
@@ -87,41 +93,42 @@
             },
             {
                 "guid": "{f8deeac4-f9cf-5408-af09-58f19de8e347}",
-                "hidden": false,
+                "hidden": true,
                 "name": "Developer Command Prompt for VS 2022",
                 "source": "Windows.Terminal.VisualStudio"
             },
             {
                 "guid": "{c2fb1617-2d79-555a-8faf-fe7a53a13d80}",
-                "hidden": false,
+                "hidden": true,
                 "name": "Developer PowerShell for VS 2022",
                 "source": "Windows.Terminal.VisualStudio"
             }
         ]
     },
-    "schemes": [
+    "schemes": 
+    [
         {
-            "name": "Catppuccin Mocha",
             "background": "#1E1E2E",
-            "foreground": "#CDD6F4",
-            "cursorColor": "#A6E3A1",
-            "selectionBackground": "#45475A",
             "black": "#45475A",
-            "red": "#F38BA8",
-            "green": "#A6E3A1",
-            "yellow": "#F9E2AF",
             "blue": "#89B4FA",
-            "purple": "#CBA6F7",
-            "cyan": "#94E2D5",
-            "white": "#BAC2DE",
             "brightBlack": "#585B70",
-            "brightRed": "#F38BA8",
-            "brightGreen": "#A6E3A1",
-            "brightYellow": "#F9E2AF",
             "brightBlue": "#89B4FA",
-            "brightPurple": "#CBA6F7",
             "brightCyan": "#94E2D5",
-            "brightWhite": "#A6ADC8"
+            "brightGreen": "#A6E3A1",
+            "brightPurple": "#CBA6F7",
+            "brightRed": "#F38BA8",
+            "brightWhite": "#A6ADC8",
+            "brightYellow": "#F9E2AF",
+            "cursorColor": "#A6E3A1",
+            "cyan": "#94E2D5",
+            "foreground": "#CDD6F4",
+            "green": "#A6E3A1",
+            "name": "Catppuccin Mocha",
+            "purple": "#CBA6F7",
+            "red": "#F38BA8",
+            "selectionBackground": "#45475A",
+            "white": "#BAC2DE",
+            "yellow": "#F9E2AF"
         }
     ],
     "tabWidthMode": "equal",
