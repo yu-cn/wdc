@@ -10,8 +10,10 @@
 - [x] CHANGELOG `[Unreleased]` 记 Changed 一条
 - [x] 真机验证（WSL Ubuntu）：LDC bootstrap 实跑 exit 2、待办恰一条 `[LDC_TODO=desktop]`（root 已核销、git 身份已生效）；新判定逻辑对真实输出判容忍；root-handoff、git-identity、未知新标记三类合成负例均判不容忍（fail-safe 方向闭环）
 - [x] WSL 内 `ldc validate.sh` 全绿（Windows Git Bash 下的 `ln` 符号链接 FAIL 属 MSYS 环境限制，真 Linux 全绿——本地 validate 以 WSL 为准）
-- [ ] push 后 CI validate 全绿（锚点回填 Comments）
+- [x] push 后 CI validate 全绿（锚点回填 Comments）
 
 ## Comments
+
+- 2026-10-26（ASUS 会话）：CI 锚点——validate 绿 run 40341784763（be921c1）；提交时本地 pre-commit 钩子已接线全过（winget schema + PS 静态检查 + WSL shellcheck）。
 
 - 2026-10-26（ASUS 会话）：识别于主人评估「WDC↔LDC 协作（尤其 WSL 部分）是否合适」→ LDC 侧先行落地（LDC 工单08）→ 本单消费方切换。真机验证实录：机器 `~/dev/ldc` 经 /mnt/d 本地镜像 ff-only 推进至 00a0ea5（github.com:443 自 WSL 直连被 TLS 拦截 `certificate signer not trusted`，代理仅绑 Windows 环回、WSL 不可达——LETH 宿主网络坑同族形态）；bootstrap 实跑输出形态与线上期望一致。完整委托编排（`install-wsl-env.ps1`）重跑两次均 abort 于 ensure_ldc fetch 的同款 TLS 拦截（幂等、机器状态零变化）——完整链路留待网络翻面后随任意一次 bootstrap 自然覆盖；判定逻辑已对真实输出单测闭环。
