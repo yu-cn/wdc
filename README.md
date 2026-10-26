@@ -17,10 +17,10 @@
 零前置——Windows 10/11 自带的 winget 与 Windows PowerShell 足以启动，一条命令（cmd / PowerShell / Git Bash 均可粘贴）：
 
 ```powershell
-powershell -c "irm https://raw.githubusercontent.com/yu-cn/wdc/main/scripts/get.ps1 | iex"
+powershell -c "iex ((irm https://raw.githubusercontent.com/yu-cn/wdc/main/scripts/get.ps1).Trim([char]0xFEFF))"
 ```
 
-get.ps1 是唯一的远程引导脚本：缺 Git 自动 winget 安装（弹一次 UAC）→ 定位或 clone 仓库（`~/.wdc` 指针有效则复用，缺省 clone 到 `~\wdc`）→ 直接进入 bootstrap 全流程（缺 PowerShell 7 自动经 winget 用户级安装）。`irm | iex` 属于直接执行网络代码——介意可先[审阅 get.ps1](scripts/get.ps1)再粘贴。偏好手动管理的等价三行（Git 需自备，`winget install Git.Git` 或官网安装包）：
+get.ps1 是唯一的远程引导脚本：缺 Git 自动 winget 安装（弹一次 UAC）→ 定位或 clone 仓库（`~/.wdc` 指针有效则复用，缺省 clone 到 `~\wdc`）→ 直接进入 bootstrap 全流程（缺 PowerShell 7 自动经 winget 用户级安装）。`Trim([char]0xFEFF)` 是剥掉 raw 返回的 UTF-8 BOM——Windows PowerShell 5.1 不剥它，BOM 前缀会把首行注释粘成命令导致解析/运行失败（collaboration.md 已知坑16）。该命令属于直接执行网络代码——介意可先[审阅 get.ps1](scripts/get.ps1)再粘贴。偏好手动管理的等价三行（Git 需自备，`winget install Git.Git` 或官网安装包）：
 
 ```powershell
 git clone https://github.com/yu-cn/wdc.git

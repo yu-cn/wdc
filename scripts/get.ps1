@@ -1,12 +1,13 @@
 ﻿# get.ps1 - 远程一键引导（运行时仓库尚不存在，故不依赖本仓库任何脚本）
 # 用法（裸机任一 shell 粘贴，Windows 10/11 自带的 winget + Windows PowerShell 即够）：
-#   powershell -c "irm https://raw.githubusercontent.com/yu-cn/wdc/main/scripts/get.ps1 | iex"
+#   powershell -c "iex ((irm https://raw.githubusercontent.com/yu-cn/wdc/main/scripts/get.ps1).Trim([char]0xFEFF))"
 # 职责：确保 winget 在位 → 缺 Git 则 winget 安装（弹一次 UAC，bootstrap 本也要提权）
 #       → 定位或 clone 仓库 → 转发 bootstrap.ps1（PowerShell 7 装配在其内，本文件保持 5.1 可解析）
 # fork 用户：本文件写死上游地址——fork 后走 README 的手动 clone 路径，或把地址改成你的仓库
 # 约束：禁用三元/??/&& 等 PS7 语法；含中文字符串，需 UTF-8 BOM（与 bootstrap.ps1 同）
-#       不可加 [CmdletBinding()]/param()——raw 按原样返回带 BOM 的字节，irm 传回的字符串带 BOM 前缀，
-#       5.1 对该字符串解析会把首部 attribute 判「意外的属性」（本文件零参数无需它们）；文件执行不受此影响
+#       不可加 [CmdletBinding()]/param()，且用法命令必须 Trim([char]0xFEFF)——raw 按原样返回带 BOM 的字节，
+#       irm 不剥 BOM：5.1 对带 \uFEFF 前缀的字符串会把首部 attribute 判「意外的属性」、把首行注释粘成
+#       \uFEFF# 命令调用（注释失效）；Trim 去 BOM 后 AST 才干净。文件执行不受此影响（读文件剥 BOM）
 $ErrorActionPreference = 'Stop'
 try {
     [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
