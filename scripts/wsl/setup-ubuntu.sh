@@ -151,11 +151,13 @@ set +e
 bash "$HOME/dev/ldc/bootstrap.sh" 2>&1 | tee "$out"
 rc=${PIPESTATUS[0]}
 set -e
-# bootstrap 退出码 2 = 有待办手工步骤。WSL 机器形态的唯一预期待办 = 桌面域（无 GNOME 会话，
-# 登录桌面重跑在 WSL 永不适用）；root 交接 / git 身份待办是真问题，不容忍。模式用「标签：关键词」
-# ——phase 标题也含「· 标签」（如 === 3/7 · root 阶段 ===），裸标签会误伤；待办明细才有冒号后缀
-if [ "$rc" -eq 2 ] && grep -q '桌面域：登录' "$out" \
-    && ! grep -q 'root 阶段：cd' "$out" && ! grep -q 'git 身份：编辑' "$out"; then
+# bootstrap 退出码 2 = 有待办手工步骤。语义判定走行尾 LDC_TODO 机器标记（ADR-0007 委托契约
+# 2026-10-26：标记字面量属契约，变更与 LDC bootstrap.sh 同日双改；LDC fresh-container handoff
+# job 断言标记在位——生产侧活测试）。严格容忍形态：待办集合恰为 {desktop}（WSL 无 GNOME 会话，
+# 登录桌面重跑永不适用）才算预期消化；root 交接 / git 身份 / 任何未知新标记都是真问题，
+# 如实透传非零——宁可误红不可静默吞待办。旧散文文案 grep（「桌面域：登录」等，工单32）已退役
+todos=$(grep -c 'LDC_TODO=' "$out" || true)
+if [ "$rc" -eq 2 ] && [ "$todos" -eq 1 ] && grep -q 'LDC_TODO=desktop' "$out"; then
     log "bootstrap 待办=桌面域（WSL 无 GNOME 会话，预期内不适用）——视为完成"
     rc=0
 fi

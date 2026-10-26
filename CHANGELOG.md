@@ -4,6 +4,11 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)（显著变更人为记录、分类归档、每个版本可跳转）；版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)（v0.x 阶段破坏性变更走 MINOR）；提交信息遵循 [Conventional Commits](https://www.conventionalcommits.org/zh-hans/v1.0.0/)——feat / fix 驱动版本号。发布动作与验证锚点见各 [release](https://github.com/yu-cn/wdc/releases)。
 
+## [Unreleased]
+
+### Changed
+- WSL 委托的 bootstrap exit-2 待办判定改按 LDC 机器标记 `[LDC_TODO=tag]`（严格容忍：恰为 desktop 一项才按 WSL 形态消化，未知新标记一律真问题透传），退役散文文案 grep——两仓间字符串契约的静默失效面对齐 [LDC ADR-0007 补记](https://github.com/yu-cn/ldc/blob/main/docs/adr/0007-wdc-ldc-coordination.md) 根治
+
 ## [0.7.0] – 2026-10-26
 
 ### Added
