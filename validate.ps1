@@ -107,10 +107,13 @@ if ((Get-WslDistros) -notcontains 'Ubuntu') {
     # 时空格参数引号不保，实测 bash 只拿到 shellcheck 一个词，报 No files specified）
     $r = Invoke-WslBounded -ArgumentList (@('-d', 'Ubuntu', '-e', 'shellcheck') + @($bashFiles | ForEach-Object { "$repoWsl/scripts/wsl/$($_.Name)" })) -TimeoutSeconds 120
     $code = if ($null -ne $r) { $r.Exit } else { $null }
+    $outText = if ($null -ne $r) { @($r.Lines) -join ' ' } else { '' }
     if ($code -eq 0) {
         Write-Step 'WSL shellcheck' 'OK' "$($bashFiles.Count) 个脚本"
-    } elseif ($code -eq 127) {
-        Write-Step 'WSL shellcheck' 'SKIP' 'shellcheck 未装（LDC cli-tools.pkg 接管后自动就位）'
+    } elseif ($code -eq 127 -or $outText -match 'execvpe\(shellcheck\)|shellcheck.*No such file') {
+        # SKIP 面=「shellcheck 不可执行」而非「脚本报错」：127=发行版内未装（LDC cli-tools.pkg 接管后自动就位）；
+        # execvpe 形态=WSL 列得出发行版但执行不了（run 40356743323 实录：CI runner 启用 WSL 后的中继半态，退出码非 127）
+        Write-Step 'WSL shellcheck' 'SKIP' 'shellcheck 未装/不可执行（发行版内 bash 脚本的把关在 WSL 侧）'
     } elseif ($null -eq $code) {
         Write-Step 'WSL shellcheck' 'SKIP' 'wsl.exe 超时/不可用'
     } else {
