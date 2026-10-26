@@ -1,10 +1,11 @@
 # get.ps1 - one-shot remote bootstrap (runs before the repo exists; depends on nothing in this repo)
 # Usage (paste into any shell on a bare machine; stock winget + Windows PowerShell 5.1 suffice):
 #   powershell -c "irm https://raw.githubusercontent.com/yu-cn/wdc/main/scripts/get.ps1 | iex"
+# Env overrides (set BEFORE the same one-liner; iex cannot pass arguments):
+#   $env:WDC_TAG  = 'v0.7.0'                                # pin a release tag (fresh clone only; tag list: GitHub Releases)
+#   $env:WDC_REPO = 'https://github.com/you/wdc.git'        # fork users: bootstrap your own repo with the same one-liner
 # Chain: ensure winget -> install Git via winget if missing (one UAC prompt; bootstrap elevates anyway)
 #        -> locate or clone the repo -> hand over to bootstrap.ps1 (PowerShell 7 setup lives there)
-# Fork users: the upstream URL is hardcoded - after forking, use the manual clone path in README,
-#        or point the URL at your own repo
 # Constraints: keep this file PURE ASCII - no BOM, no non-ASCII anywhere - so the raw copy survives
 #        `irm | iex` under Windows PowerShell 5.1: irm does not strip a BOM, and a leading U+FEFF
 #        poisons the string parse (header attributes break it; it also glues the first comment line
@@ -15,7 +16,7 @@ try {
     [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
     $OutputEncoding = [System.Text.Encoding]::UTF8
 } catch { }
-$repoUrl = 'https://github.com/yu-cn/wdc.git'
+$repoUrl = if ($env:WDC_REPO) { $env:WDC_REPO } else { 'https://github.com/yu-cn/wdc.git' }
 $defaultDir = Join-Path $HOME 'wdc'
 
 function Write-Log { param([string]$Message) Write-Host "[get] $Message" }
@@ -70,6 +71,14 @@ if (-not $repo) {
         if ($LASTEXITCODE -ne 0) {
             Write-Log "clone failed (git exit code $LASTEXITCODE) - check network and re-run"
             exit 1
+        }
+        if ($env:WDC_TAG) {
+            Write-Log "pinning to tag $env:WDC_TAG"
+            & git -C $defaultDir checkout $env:WDC_TAG
+            if ($LASTEXITCODE -ne 0) {
+                Write-Log "checkout $env:WDC_TAG failed - check the tag name against GitHub Releases and re-run"
+                exit 1
+            }
         }
         $repo = $defaultDir
     }

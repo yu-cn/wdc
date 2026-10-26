@@ -20,7 +20,7 @@
 powershell -c "irm https://raw.githubusercontent.com/yu-cn/wdc/main/scripts/get.ps1 | iex"
 ```
 
-get.ps1 是唯一的远程引导脚本：缺 Git 自动 winget 安装（弹一次 UAC）→ 定位或 clone 仓库（`~/.wdc` 指针有效则复用，缺省 clone 到 `~\wdc`）→ 直接进入 bootstrap 全流程（缺 PowerShell 7 自动经 winget 用户级安装）。get.ps1 全程纯 ASCII（无 BOM），`irm | iex` 在裸机 Windows PowerShell 5.1 即安全——含中文的脚本不可走这条路（BOM 毒化实录见 [collaboration.md 已知坑16](docs/agents/collaboration.md)）。该命令属于直接执行网络代码——介意可先[审阅 get.ps1](scripts/get.ps1)再粘贴。偏好手动管理的等价三行（Git 需自备，`winget install Git.Git` 或官网安装包）：
+get.ps1 是唯一的远程引导脚本：缺 Git 自动 winget 安装（弹一次 UAC）→ 定位或 clone 仓库（`~/.wdc` 指针有效则复用，缺省 clone 到 `~\wdc`）→ 直接进入 bootstrap 全流程（缺 PowerShell 7 自动经 winget 用户级安装）。get.ps1 全程纯 ASCII（无 BOM），`irm | iex` 在裸机 Windows PowerShell 5.1 即安全——含中文的脚本不可走这条路（BOM 毒化实录见 [collaboration.md 已知坑16](docs/agents/collaboration.md)）。该命令属于直接执行网络代码——介意可先[审阅 get.ps1](scripts/get.ps1)再粘贴。求稳可先钉版本：`$env:WDC_TAG = 'v0.7.0'` 再执行同一条命令（clone 后 checkout 该 tag，仅作用于全新 clone；tag 清单见 [Releases](https://github.com/yu-cn/wdc/releases)）；fork 用户把地址指到自己的仓库：`$env:WDC_REPO = 'https://github.com/<你>/wdc.git'`——同样一条命令完成引导。偏好手动管理的等价三行（Git 需自备，`winget install Git.Git` 或官网安装包）：
 
 ```powershell
 git clone https://github.com/yu-cn/wdc.git
@@ -71,7 +71,7 @@ gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL b
 ## 使用与改造
 
 - **直接用**：照上文「快速开始」clone 本仓库跑 bootstrap。仓库不含作者的身份与机器派生值——`~/.gitidentity` 填你自己的 git name/email，WSL 终端配置按你本机发行版渲染（[ADR-0004](docs/adr/0004-machine-adaptive-rendering.md)）——之后 `wdc sync` 一键跟进上游演进。
-- **fork 改造（推荐）**：fork 成你自己的仓库再 bootstrap，偏好由你定。改造清单：
+- **fork 改造（推荐）**：fork 成你自己的仓库再 bootstrap（引导命令前设 `$env:WDC_REPO` 指向你的仓库即可，get.ps1 写死的是上游地址），偏好由你定。改造清单：
   1. `configs/*.winget` 与 `configs/vscode-extensions.txt`——软件与扩展清单，删你不用的
   2. `dotfiles/`——shell / git / 终端 / 编辑器偏好
   3. `LICENSE`——版权人换成你自己
