@@ -15,5 +15,6 @@
 ## Comments
 
 - 2026-10-26（ASUS 会话）：CI 锚点——validate 绿 run 40341784763（be921c1）；提交时本地 pre-commit 钩子已接线全过（winget schema + PS 静态检查 + WSL shellcheck）。
+- 2026-10-26（ASUS 会话）：**完整委托编排全链路收口**——网络翻面后重跑 `install-wsl-env.ps1` 一次通过：ensure_ldc origin fetch 正常、user 阶段 LDC bootstrap exit 2 恰一条 `[LDC_TODO=desktop]`、新容忍分支在真实委托路径触发（「待办=桌面域——视为完成」→ `[OK] user 阶段`）、探测 shell/systemd 双绿、整体 exit 0。真机全链证据补齐，本单验收闭环。
 
 - 2026-10-26（ASUS 会话）：识别于主人评估「WDC↔LDC 协作（尤其 WSL 部分）是否合适」→ LDC 侧先行落地（LDC 工单08）→ 本单消费方切换。真机验证实录：机器 `~/dev/ldc` 经 /mnt/d 本地镜像 ff-only 推进至 00a0ea5（github.com:443 自 WSL 直连被 TLS 拦截 `certificate signer not trusted`，代理仅绑 Windows 环回、WSL 不可达——LETH 宿主网络坑同族形态）；bootstrap 实跑输出形态与线上期望一致。完整委托编排（`install-wsl-env.ps1`）重跑两次均 abort 于 ensure_ldc fetch 的同款 TLS 拦截（幂等、机器状态零变化）——完整链路留待网络翻面后随任意一次 bootstrap 自然覆盖；判定逻辑已对真实输出单测闭环。
