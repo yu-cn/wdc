@@ -203,10 +203,15 @@ switch ($Command) {
         }
         $log = Get-LastBootstrapLog
         if ($log) {
-            # 正常收尾的日志有 "[OK|FAIL] bootstrap" 汇总行；UAC 被取消等早退日志没有——兜底显示最后一条判定行
-            $m = Select-String -Path $log.FullName -Pattern '^\[(OK|FAIL)\] ' | Select-Object -Last 1
+            # 判定行落点随流程而异：提权委托流的七阶段汇总在 elevated-*.log 收尾（工单19），-NoElevate 流在主日志
+            # ——取两者中较新者搜判定；UAC 被取消等早退日志没有 bootstrap 汇总行，兜底显示最后一条判定行
+            $verdictLog = $log
+            $elog = Get-LastElevatedLog
+            if ($elog -and $elog.LastWriteTime -gt $log.LastWriteTime) { $verdictLog = $elog }
+            $m = Select-String -Path $verdictLog.FullName -Pattern '^\[(OK|FAIL)\] bootstrap' | Select-Object -Last 1
+            if (-not $m) { $m = Select-String -Path $verdictLog.FullName -Pattern '^\[(OK|FAIL)\] ' | Select-Object -Last 1 }
             $verdict = if ($m) { $m.Line } else { '（无判定行）' }
-            Write-Step '最近 bootstrap' 'INFO' "$($log.Name) → $verdict"
+            Write-Step '最近 bootstrap' 'INFO' "$($verdictLog.Name) → $verdict"
         } else { Write-Step '最近 bootstrap' 'INFO' 'logs/ 尚无日志' }
         if ($bare) {
             Write-Step '提示' 'INFO' '裸 wdc 即本快照（只读）。同步收敛：wdc sync；全部命令：wdc help'
