@@ -43,12 +43,15 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # 安装解析出的环境（显式 lts：裸 `vp env install` 在无项目钉版的目录会拒绝）
+# ensure 型步骤报 OK 不报 CHANGED（对齐 LDC install-user-tools.sh 同款）：vp env install 对已装环境是
+# 幂等快操作、CLI 不区分装没装过——首装的变更信号由上面 vp 本体安装的 CHANGED 行承担
+# （fresh-machine 幂等重跑腿以 [CHANGED] 为零变更依据，run 40361634404 实录本行每轮误报）
 & $vpExe env install lts
 if ($LASTEXITCODE -ne 0) {
     Write-Step 'vp env install' 'FAIL' "退出码 $LASTEXITCODE"
     exit 1
 }
-Write-Step 'vp env install' 'CHANGED' '已安装解析环境（LTS Node 进 vp 商店）'
+Write-Step 'vp env install' 'OK' '已确保解析环境就位（LTS Node 进 vp 商店）'
 
 # 启用托管模式（node/npm/pnpm 等经 vp shims 解析；system node 若在由 PATH 优先级裁决——移除清单不再卸语言栈，ADR-0007）
 & $vpExe env on
