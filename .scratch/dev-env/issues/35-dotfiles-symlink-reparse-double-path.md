@@ -4,8 +4,9 @@
 
 **Blocked by:** None
 
-**Status:** ready-for-human
+**Status:** done
 
 ## Comments
 
 - 2026-10-24（ASUS 会话，Git 升级收口时发现）：候选方向供定夺——a) 提权审计全部 dotfiles 链接 reparse 缓冲，同款统一重建（删链重建单路径形态；建链权限姿势需确认：提权会话或 Developer Mode）；b) `install-dotfiles.ps1` 建链后自检 reparse 缓冲（断言单份路径），防新机器复发；c) 若判定双写无实害（普通读写全通、仅提权 git 受累），记「已知形态、不处置」——但每次升级 Git 安装器都会再弹一轮报错。
+- 2026-10-26（LETH 会话，工单38 批次重分诊）：关单归档——研究对象（dotfiles 符号链接 reparse 缓冲双写）随 ADR-0015 渲染拷贝模型（v0.6.0）整体退役：两机 dotfiles 落点已是实体文件、`Test-DotfileInSync` 内容断言全绿（LETH 本日 `wdc status` 实测），符号链接不复存在，坑14③ 的提权读失败面随之消失，原列三方向（审计重建/建链自检/记不处置）全部失去对象。坑14 历史注记保留于 collaboration.md；不做残余链接审计（无残余）。若未来 Git 升级再报 system config 弹错，按坑14 的直写恢复配方处置，与本单无关。

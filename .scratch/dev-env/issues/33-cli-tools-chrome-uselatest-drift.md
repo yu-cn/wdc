@@ -4,7 +4,7 @@
 
 **Blocked by:** None
 
-**Status:** ready-for-human
+**Status:** done
 
 ## Comments
 
@@ -12,3 +12,4 @@
 - 2026-10-24（续取证）：三方版本一致仍报「未处于」——`chrome.exe` 文件版本、`winget list` 登记版本、`winget show` 源 manifest 版本同为 156.0.8078.48。排除「版本比对」与「ARP 登记滞后」两个假设；useLatest 的 test 判定与版本无关，指向 DSC 资源对 useLatest 的 get 实现（或 upgrade 可用性检查）。低成本路径：观察一个 Chrome 自更新周期（源索引跟进后复测），自愈则定性为节奏差抖动、按 b) 记「接受」处置；不自愈再深挖 DSC 实现。
 - 2026-10-24（ASUS 会话，工单32 机器对等复验时取证）：ASUS 同域报漂移但形态不同——configure test「未处于」的两单元为 Git（装 2.55.0.5，源 manifest 2.56.0）与 GitHubCLI（装 2.103.0，源 2.103.2），均为真实版本滞后；Chrome 本轮为满足态。对照本单 LETH 实录（三方一致仍报「未处于」）：test 判定对「有升级可用」的单元确实报漂移——ASUS 两例属可被 `winget upgrade` 消化的真滞后，非 useLatest 假阳性同款；Chrome 假阳性仍是独立未解问题。ASUS 两例不在工单32 迁移任务内处置，留待主人定夺升级节奏。
 - 2026-10-24（ASUS 会话，收口）：主人定夺升级消化——Git 2.55.0.5→2.56.0.3、gh 2.103.0→2.103.2，复测 cli-tools 漂移=0、verify-machine 六组全绿。升级过程踩出的三道坎与处置已入 collaboration.md 坑14；安装器报错的根因候选（dotfiles 符号链接 reparse 缓冲双写路径）另开工单35。本单 Chrome 假阳性（LETH）仍未解，状态维持 ready-for-human。
+- 2026-10-26（LETH 会话，工单38 批次复测收口）：`winget configure test --file configs/cli-tools.winget` 复测**全绿自愈**——Chrome 单元「系统处于描述的配置状态」，17 单元全部满足，exit 0。细节：Chrome 版本未动（仍 156.0.8078.48，与 10-24 报漂移时同版），状态却翻面——佐证 test 对 useLatest 的判定走 upgrade 可用性/源索引状态而非版本比对（10-24 假设方向），源索引状态随时间自愈。定性按 b)「节奏差抖动、接受」归档：不深挖 DSC 实现、Chrome 项保持 useLatest；若再发，等数日复测即可（本单即先例）。

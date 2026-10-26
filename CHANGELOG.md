@@ -6,8 +6,17 @@
 
 ## [Unreleased]
 
+### Added
+- get.ps1 支持 `WDC_TAG` 钉版与 `WDC_REPO` 覆盖（env 形态——`irm | iex` 传不了参数；tag 钉版对齐 LDC get.sh 既有能力，fork 用户一条命令引导自己的仓库）
+- CI 新增 dev-standard-guard 双仓同源守护工作流：每周拉姊妹仓 LDC 的 `docs/dev-standard.md` 去 CR 归一比对，漂移即红（刻意不挂 push——双仓协同编辑必有先后，瞬时红污染 badge）；本仓 `.gitattributes` 同步钉该文件 LF 消跨仓行尾假红
+- 坑14 Git 升级计划任务剧本自 `logs/`（gitignore 盲区、机器间不可见）沉淀 `scripts/adhoc/` 入库，创建器参数化去机器硬编码路径
+
 ### Changed
 - WSL 委托的 bootstrap exit-2 待办判定改按 LDC 机器标记 `[LDC_TODO=tag]`（严格容忍：恰为 desktop 一项才按 WSL 形态消化，未知新标记一律真问题透传），退役散文文案 grep——两仓间字符串契约的静默失效面对齐 [LDC ADR-0007 补记](https://github.com/yu-cn/ldc/blob/main/docs/adr/0007-wdc-ldc-coordination.md) 根治
+- fresh-machine 冒烟补幂等重跑腿（第二遍除「身份文件」占位提醒外零 `[CHANGED]` 才放行，对齐 LDC fresh-container）并月度定时常态化（公开仓库 runner 免费，此前仅手动）
+
+### Fixed
+- `wdc status` 最近 bootstrap 判定行覆盖提权子回合日志（取主/elevated 两日志较新者搜判定）——此前提权委托路径下恒显示「（无判定行）」，真判定就在配对 elevated 日志尾
 
 ## [0.7.0] – 2026-10-26
 
