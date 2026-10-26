@@ -9,3 +9,5 @@ configs/vp-version text eol=lf
 # README 首屏演示 GIF 同族豁免（v070-parity；asciinema v2 源文件 demo.cast 保持文本 LF）
 *.gif binary
 docs/demo.cast text eol=lf
+# 双仓同源拷贝（dev-standard：主作者位在 LDC）：钉 LF 消跨仓 diff 行尾假红——守护工作流按内容比对，两侧行尾也应稳定
+docs/dev-standard.md text eol=lf

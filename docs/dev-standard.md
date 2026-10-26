@@ -43,6 +43,7 @@
 - **tag 语义 = 发布时验证全绿**：push → CI 全绿（validate 必绿；冒烟面手动触发）→ annotated tag（信息含验证锚点）→ release。
 - release notes 固定四段：**本批内容**（按特性分组、引 ADR）/ **已知事项** / **验证锚点**（本机形态 + CI run id + 跨仓锚点）/ **升级方式**。
 - **CHANGELOG 同步**：release 发布后，将 CHANGELOG.md（Keep a Changelog 1.1.0 格式）的 `[Unreleased]` 节摘录为对应版本节（Added/Changed 分类、版本 compare 链接）——面向使用者的要点视图，与 release notes 四段互补。
+- **双仓版本对齐**：双仓联动变更（委托契约 / 同源规范 / 同值钉子）发版时两仓版本号对齐收口——`[Unreleased]` 同批积压联动变更时，下一版本号取两仓一致，避免同一契约散落在两仓不同版本号（2026-10-26 LDC_TODO 契约实录定规矩）。
 - 发布由主人明确指令触发（「发布 vX.Y.Z」）——agent 不得自行 tag / release。
 
 ## 6. 双仓统筹（ADR-0007）

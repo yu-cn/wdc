@@ -1,0 +1,23 @@
+name: dev-standard-guard
+# 双仓同源拷贝守护（工单38；dev-standard「主作者位在 LDC」）：每周拉姊妹仓 LDC 的该文件，去 CR 归一后
+# 逐字比对——漂移即红（典型成因：改了 LDC 侧规范忘了同步 WDC 拷贝）。刻意不挂 push 触发：双仓协同编辑
+# 必有先后，push 时触发必产瞬时红污染 badge；漂移窗口 ≤7 天足够（成因是忘同步，非紧急事故）。手动 dispatch 随时可用。
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '30 4 * * 1'   # 每周一 04:30 UTC（LDC 侧守护 04:00 错峰）
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: 拉姊妹仓 dev-standard 归一比对
+        run: |
+          curl -fsSL -o /tmp/sibling.md https://raw.githubusercontent.com/yu-cn/ldc/main/docs/dev-standard.md
+          if diff <(tr -d '\r' < docs/dev-standard.md) <(tr -d '\r' < /tmp/sibling.md); then
+            echo "同源拷贝一致（与 yu-cn/ldc main）"
+          else
+            echo "::error::docs/dev-standard.md 与姊妹仓 LDC 漂移——主作者位在 LDC：先改 LDC 侧提交，再同步拷贝到本仓"
+            exit 1
+          fi
