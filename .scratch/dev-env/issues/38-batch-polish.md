@@ -25,3 +25,4 @@
   ③ 40361634404 红：vp env install 每轮误报 CHANGED（ensure 型步骤语义错位，LETH 本机历次日志同病）→ 对齐 LDC ensure 型 OK 口径（d3de23b）。
   各次修复的 push validate 均绿：40356738714 / 40361631573 / 40366213599。
 - 2026-10-26（LETH 会话，附带收获）：CI 步骤加载 pwsh profile 在 WT 真实漂移下打出「落点漂移（WT settings）」黄字——工单24 漂移提示的第三个独立实证（ASUS 模板向 / LETH 受控落点向 / runner 环境写穿向）。本单归档；CHANGELOG [Unreleased] 待下次发版与 LDC 同号收口（dev-standard §5 双仓版本对齐新约）。
+- 2026-10-27（LETH 会话，发版收口）：主人指令「发布 v0.8.0」——**双仓同号同日发版（§5 双仓版本对齐新约首次执行）**：WDC tag v0.8.0（锚定 5b2070d，20 提交）+ [release](https://github.com/yu-cn/wdc/releases/tag/v0.8.0)；LDC tag v0.8.0（锚定 e72d927，7 提交）+ [release](https://github.com/yu-cn/ldc/releases/tag/v0.8.0)；两仓 CHANGELOG 收节（WDC 补记冒烟连环修复两 Fixed 与幂等腿排除面更新，470f9b7 / LDC 31c80fe）。tag 注释含全部验证锚点，release notes 四段按上版版式。
