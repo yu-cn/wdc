@@ -2,9 +2,12 @@ name: fresh-machine
 # 新机冒烟（工单26）：fresh clone → 5.1 入口 bootstrap。runner 为管理员上下文——提权路径自动满足
 # （不弹 UAC）；WSL 阶段在提权回合真实执行（工单30 全程提权）：runner 无嵌套虚拟化、发行版装不上
 # 属预期 BestEffort 降级（黄字手工指引），不打红，判读以日志为准。
-# 仅手动触发（workflow_dispatch）：spec 曾将「CI 常态化测试」列为 Out-of-Scope，本工作流不定期跑，
-# 需要证明「clone 后一条命令开箱即用」时手动来一发。
-on: workflow_dispatch
+# 手动触发随时可用；工单38 起月度定时常态化（公开仓库 runner 免费）+ 幂等重跑腿
+# （对齐 LDC fresh-container：第二遍除「身份文件」占位提醒外零 [CHANGED] 才放行）。
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 5 1 * *'   # 每月 1 日 05:00 UTC
 jobs:
   smoke:
     runs-on: windows-latest
@@ -19,6 +22,25 @@ jobs:
         run: |
           git clone https://github.com/yu-cn/wdc.git "%RUNNER_TEMP%\wdc"
           powershell -NoProfile -ExecutionPolicy Bypass -File "%RUNNER_TEMP%\wdc\bootstrap.ps1"
+      # 幂等重跑腿（工单38）：重跑一遍完整 bootstrap，断言零变更。「身份文件」占位提醒每轮必报
+      # [CHANGED]（runner 无人填身份）——它是手工待办提醒不是机器变更，唯一排除项。
+      # 判定读 bootstrap 自写的 logs/*.log（UTF-8），不读控制台重定向（编码随控制台代码页漂移）。
+      - name: 重跑 bootstrap（幂等证明：第二遍应零变更）
+        shell: pwsh
+        run: |
+          $start = Get-Date
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$env:RUNNER_TEMP\wdc\bootstrap.ps1" *> "$env:RUNNER_TEMP\rerun-console.log"
+          if ($LASTEXITCODE -ne 0) {
+            Get-Content "$env:RUNNER_TEMP\rerun-console.log" -Tail 30
+            exit 1
+          }
+          $logs = @(Get-ChildItem "$env:RUNNER_TEMP\wdc\logs" -Filter '*.log' | Where-Object { $_.LastWriteTime -ge $start })
+          $changed = @($logs | ForEach-Object { Select-String -Path $_.FullName -Pattern '^\[CHANGED\]' } | Where-Object { $_.Line -notmatch '身份文件' })
+          if ($changed.Count -gt 0) {
+            $changed | ForEach-Object { Write-Host $_.Line }
+            exit 1
+          }
+          Write-Host "幂等重跑通过：第二遍零变更（核查 $($logs.Count) 份日志，排除项=身份占位提醒）"
       # run1 实录：cmd 步骤被 Ctrl+C 掐断仍报 success（假阳性），transcript 随 runner 销毁——
       # 成败都带日志工件回来，判读以日志为准、不看结论位
       - name: 上传 bootstrap 日志（成败都传）
@@ -26,4 +48,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: bootstrap-logs
-          path: ${{ runner.temp }}\wdc\logs\
+          path: |
+            ${{ runner.temp }}\wdc\logs\
+            ${{ runner.temp }}\rerun-console.log
