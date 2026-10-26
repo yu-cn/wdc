@@ -22,8 +22,10 @@ jobs:
         run: |
           git clone https://github.com/yu-cn/wdc.git "%RUNNER_TEMP%\wdc"
           powershell -NoProfile -ExecutionPolicy Bypass -File "%RUNNER_TEMP%\wdc\bootstrap.ps1"
-      # 幂等重跑腿（工单38）：重跑一遍完整 bootstrap，断言零变更。「身份文件」占位提醒每轮必报
-      # [CHANGED]（runner 无人填身份）——它是手工待办提醒不是机器变更，唯一排除项。
+      # 幂等重跑腿（工单38）：重跑一遍完整 bootstrap，断言零变更。排除两类已知「非 bootstrap 非幂等」噪声：
+      # ① 「身份文件」占位提醒每轮必报 [CHANGED]（runner 无人填身份）——手工待办提醒不是机器变更；
+      # ② WT settings 的漂移重渲染——runner 上 Windows Terminal 首启会自改落点（坑6 动态生成器直改落点类，
+      #    run 40352220515 实录：两遍间隔 5 分钟即被写穿，重渲染属预期收敛；其余 6 个 dotfiles 幂等跳过实证）。
       # 判定读 bootstrap 自写的 logs/*.log（UTF-8），不读控制台重定向（编码随控制台代码页漂移）。
       - name: 重跑 bootstrap（幂等证明：第二遍应零变更）
         shell: pwsh
@@ -35,12 +37,14 @@ jobs:
             exit 1
           }
           $logs = @(Get-ChildItem "$env:RUNNER_TEMP\wdc\logs" -Filter '*.log' | Where-Object { $_.LastWriteTime -ge $start })
-          $changed = @($logs | ForEach-Object { Select-String -Path $_.FullName -Pattern '^\[CHANGED\]' } | Where-Object { $_.Line -notmatch '身份文件' })
+          $changed = @($logs | ForEach-Object { Select-String -Path $_.FullName -Pattern '^\[CHANGED\]' } | Where-Object {
+              $_.Line -notmatch '身份文件' -and $_.Line -notmatch 'settings\.json - (落点与模板不一致|已渲染 <- .*terminal-settings)'
+          })
           if ($changed.Count -gt 0) {
             $changed | ForEach-Object { Write-Host $_.Line }
             exit 1
           }
-          Write-Host "幂等重跑通过：第二遍零变更（核查 $($logs.Count) 份日志，排除项=身份占位提醒）"
+          Write-Host "幂等重跑通过：第二遍零变更（核查 $($logs.Count) 份日志，排除项=身份占位提醒 + WT settings 环境写穿）"
       # run1 实录：cmd 步骤被 Ctrl+C 掐断仍报 success（假阳性），transcript 随 runner 销毁——
       # 成败都带日志工件回来，判读以日志为准、不看结论位
       - name: 上传 bootstrap 日志（成败都传）
