@@ -5,8 +5,8 @@
 #       → 定位或 clone 仓库 → 转发 bootstrap.ps1（PowerShell 7 装配在其内，本文件保持 5.1 可解析）
 # fork 用户：本文件写死上游地址——fork 后走 README 的手动 clone 路径，或把地址改成你的仓库
 # 约束：禁用三元/??/&& 等 PS7 语法；含中文字符串，需 UTF-8 BOM（与 bootstrap.ps1 同）
-[CmdletBinding()]
-param()
+#       不可加 [CmdletBinding()]/param()——raw 按原样返回带 BOM 的字节，irm 传回的字符串带 BOM 前缀，
+#       5.1 对该字符串解析会把首部 attribute 判「意外的属性」（本文件零参数无需它们）；文件执行不受此影响
 $ErrorActionPreference = 'Stop'
 try {
     [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
