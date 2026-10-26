@@ -6,6 +6,8 @@
 
 ## [Unreleased]
 
+## [0.8.0] – 2026-10-27
+
 ### Added
 - get.ps1 支持 `WDC_TAG` 钉版与 `WDC_REPO` 覆盖（env 形态——`irm | iex` 传不了参数；tag 钉版对齐 LDC get.sh 既有能力，fork 用户一条命令引导自己的仓库）
 - CI 新增 dev-standard-guard 双仓同源守护工作流：每周拉姊妹仓 LDC 的 `docs/dev-standard.md` 去 CR 归一比对，漂移即红（刻意不挂 push——双仓协同编辑必有先后，瞬时红污染 badge）；本仓 `.gitattributes` 同步钉该文件 LF 消跨仓行尾假红
@@ -13,10 +15,13 @@
 
 ### Changed
 - WSL 委托的 bootstrap exit-2 待办判定改按 LDC 机器标记 `[LDC_TODO=tag]`（严格容忍：恰为 desktop 一项才按 WSL 形态消化，未知新标记一律真问题透传），退役散文文案 grep——两仓间字符串契约的静默失效面对齐 [LDC ADR-0007 补记](https://github.com/yu-cn/ldc/blob/main/docs/adr/0007-wdc-ldc-coordination.md) 根治
-- fresh-machine 冒烟补幂等重跑腿（第二遍除「身份文件」占位提醒外零 `[CHANGED]` 才放行，对齐 LDC fresh-container）并月度定时常态化（公开仓库 runner 免费，此前仅手动）
+- fresh-machine 冒烟补幂等重跑腿（第二遍除身份占位提醒与 WT settings 环境写穿两项已知噪声外零 `[CHANGED]` 才放行，对齐 LDC fresh-container）并月度定时常态化（公开仓库 runner 免费，此前仅手动）
+- dev-standard §5 补「双仓版本对齐」约定（LDC 主笔、本仓同步拷贝）：双仓联动变更发版时两仓版本号对齐收口——本版与 LDC v0.8.0 同号同日为首次执行
 
 ### Fixed
 - `wdc status` 最近 bootstrap 判定行覆盖提权子回合日志（取主/elevated 两日志较新者搜判定）——此前提权委托路径下恒显示「（无判定行）」，真判定就在配对 elevated 日志尾
+- validate 的 WSL shellcheck 腿对「发行版列得出但 execvpe(shellcheck) 失败」中继半态误 FAIL——SKIP 面补不可执行证据（此前只认退出码 127；幂等重跑腿 run 40356743323 实录）
+- vp env install 每轮误报 `[CHANGED]`——ensure 型步骤改报 OK（对齐 LDC 口径；LETH 本机历次日志同病，幂等重跑腿 run 40361634404 实录）
 
 ## [0.7.0] – 2026-10-26
 
@@ -71,7 +76,8 @@
 ### Added
 - 开源基线（[v0.1.0](https://github.com/yu-cn/wdc/releases/tag/v0.1.0)）：MIT、README 门面化、CONTRIBUTING、fork 跟随指南；裸机入口降门槛（PowerShell 5.1 自举 PowerShell 7）；WSL 侧 Docker Engine 纳入默认；pre-commit 钩子接线 + verify 断言 + dotfiles 漂移即时提示；fresh-machine 手动冒烟工作流
 
-[Unreleased]: https://github.com/yu-cn/wdc/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/yu-cn/wdc/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/yu-cn/wdc/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/yu-cn/wdc/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/yu-cn/wdc/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/yu-cn/wdc/compare/v0.4.0...v0.5.0
