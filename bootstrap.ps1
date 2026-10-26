@@ -78,8 +78,13 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
     # pwsh 宿主（wdc sync 常态）：绝不在本宿主内升级 PS7——MSI 会强杀整条链（工单27 runner 实证）；
     # 只做列表探测并提示（不安装），一次性升级走 5.1 入口
     if (-not $ValidateOnly) {
-        & cmd /c 'winget upgrade -e --id Microsoft.PowerShell --source winget --accept-source-agreements --disable-interactivity' | Out-Null
-        if ($LASTEXITCODE -eq 0) {
+        # 探测必须带界等待：winget 下载走 GitHub Releases，网络形态不稳时会无限挂起、
+        # 隐形卡死在 Stage 0 之前（2026-10-26 LETH 实录：黑屏 12 分钟）——60s 未完成按
+        # 「无新版」处理；taskkill /T 树杀，防 cmd 死后 winget 孤儿占全局锁
+        $probe = Start-Process -FilePath 'cmd.exe' -ArgumentList '/c', 'winget upgrade -e --id Microsoft.PowerShell --source winget --accept-source-agreements --disable-interactivity > NUL 2>&1' -PassThru -WindowStyle Hidden
+        if (-not $probe.WaitForExit(60000)) {
+            taskkill /PID $probe.Id /T /F | Out-Null
+        } elseif ($probe.ExitCode -eq 0) {
             Write-Host '[bootstrap] PowerShell 7 有新版：本入口跑在 pwsh 宿主内、不自动升级（防 MSI 杀宿主）。一次性升级：powershell -ExecutionPolicy Bypass -File bootstrap.ps1' -ForegroundColor Yellow
         }
     }
