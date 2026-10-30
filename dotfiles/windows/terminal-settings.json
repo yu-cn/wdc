@@ -58,7 +58,7 @@
                 "commandline": "\"C:/Program Files/Git/bin/bash.exe\" -i -l",
                 "guid": "{d8726aa7-c805-4223-b980-13fefe204b72}",
                 "hidden": false,
-                "icon": "C:/Program Files/Git/mingw64/share/git/git-for-windows.ico",
+                "icon": "C:/Program Files/Git/git-bash.exe",
                 "name": "Git Bash",
                 "startingDirectory": "%USERPROFILE%"
             },
