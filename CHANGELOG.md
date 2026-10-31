@@ -9,6 +9,7 @@
 - **破坏性**：语言管理器 vp 退役、mise 升正（联动 [LDC ADR-0016](https://github.com/yu-cn/ldc/blob/main/docs/adr/0016-vp-retire-mise-takeover.md)、工单39）——`install-languages.ps1` 重写为 mise 默认环境（`mise use -g node@lts`）；`configs/cli-tools.winget` 声明 mise（jdx.mise，useLatest 域内惯例免钉）；remove-leftovers 增 vp 退役迁移项（迁移冲突通道，ADR-0007 宪章内——三种布局目录 + 用户 PATH 注入清除）；`configs/vp-version` 钉子退役（两仓同值钉子消失，dev-standard §6 钉子同值标注「当前无实例」——LDC 主笔同步拷贝）；`configs/vscode-extensions.txt` 去 vite-plus 扩展包；common.ps1 vp 助手、verify/inventory/bootstrap-main/install-wsl-env 换面；README 五处措辞同步；.gitattributes 相应行退役
 ### Added
 - dotfiles/windows：pwsh profile 挂 `mise activate pwsh`、Git Bash bashrc 挂 shims PATH + activate（Node 等语言工具链按目录切换，与 LDC 侧同款）
+- VSCode 扩展清单补 fss/ZCode 上游推荐三件（better-comments / mermaid-preview / tailwindcss）——vite-plus 扩展包退役时核实其仅捆绑 vitest+oxc（清单均已单独声明，摘包零损失）
 
 ## [0.8.0] – 2026-10-27
 
