@@ -23,3 +23,4 @@
 
 - 2026-10-31（ASUS 会话，开工）：联动 LDC ADR-0016/0017 与工单10 同日提交；两 ADR 落纸见 LDC 仓。
 - 2026-10-31（ASUS 会话，真机验收实录）：install-languages 实跑 OK（mise use -g node@lts——Windows 侧复用 fss 已装 node 24.14.0，零下载；WSL 侧同命令解析 26.13.0，两侧各自满足 lts 语义）；install-dotfiles 重渲染 pwsh profile + Git Bash bashrc（漂移双信号即清）；remove-leftovers 实跑——用户 PATH 清 2 条 vite-plus 注入，`~/.vite-plus` 目录**占用未删（FAIL 如实报告，幂等收尾）**：占用者是 ZCode 上下文插件（`zcode-context/0.3.10/dist/server.mjs` 经 vp node shim 运行，6 进程）——不能杀，待 ZCode 重启后任一次 bootstrap 自动收尾；已为该形态补 try/catch 优雅降级（占用不炸阶段，PATH 清理照走）。verify -Quick 全绿（含经委托的 LDC 侧新断言：mise=钉子 2026.10.25 / uv=钉子 0.13.6）。发现 vp 第三种布局变体 `~/.vite-plus\<版本>\`（版本化子目录，删根目录即覆盖）。待办：⑩ demo 重录（agg 不在本机，发版腿）、⑪ 冒烟基线复核、CI 锚点、v0.9.0 与 LDC 同日发版。
+- 2026-10-31（ASUS 会话，CI 锚点）：实现提交 6578fef push 后 validate 绿 run 41208294073；fresh-machine 冒烟已触发 run 41208406792（结论收口时回填；重点观察面：新装机 mise winget 首装 + node@lts 全新解析 + 幂等重跑腿基线）。
