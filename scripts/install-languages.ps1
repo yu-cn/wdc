@@ -8,18 +8,26 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'lib/common.ps1')
 
 Write-Phase 'Languages - 默认环境（mise node@lts）'
-$mise = (Get-Command mise -ErrorAction SilentlyContinue).Source
+# mise 探测（strict 安全 + 多级兜底）：common.ps1 Set-StrictMode Latest 下 $null.Source 会抛
+# PropertyNotFound 终止脚本（run 41210369668 重跑腿实录——兜底代码没跑到先炸）——三步走：
+# ① 会话 PATH ② 注册表 PATH 刷新再试（winget 安装期写入 Links 条目，早启进程树的会话
+# PATH 快照可能未含）③ WinGet Links 绝对路径（Get-VpWinExe 同款智慧）。全败才 FAIL 带证据。
+$mise = $null
+$miseCmd = Get-Command mise -ErrorAction SilentlyContinue
+if ($miseCmd) { $mise = $miseCmd.Source }
 if (-not $mise) {
-    # PATH 解析兜底（Get-VpWinExe 同款智慧）：winget portable 落位固定在 WinGet Links——
-    # 会话 PATH 未必含它，Get-Command 可能假阴性（fresh-machine 重跑腿 run 41208406792 实录）
+    $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('Path', 'User')
+    $miseCmd = Get-Command mise -ErrorAction SilentlyContinue
+    if ($miseCmd) { $mise = $miseCmd.Source }
+}
+if (-not $mise) {
     $links = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Links\mise.exe'
     if (Test-Path $links) { $mise = $links }
 }
 if (-not $mise) {
-    # 失败即带现场证据：PATH 有无 WinGet 条目、Links 目录与 mise.exe 在位性——失败不再丢诊断
     $linksDir = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Links'
     $inPath = @($env:Path -split ';' | Where-Object { $_ -like '*WinGet*' }) -join ','
-    Write-Step 'mise' 'FAIL' "未找到——PATH 含 WinGet 条目=[$inPath]；Links 目录=$(Test-Path $linksDir)；mise.exe=$(Test-Path $links)"
+    Write-Step 'mise' 'FAIL' "未找到——PATH 含 WinGet 条目=[$inPath]；Links 目录=$(Test-Path $linksDir)；mise.exe=$(Test-Path (Join-Path $linksDir 'mise.exe'))"
     exit 1
 }
 # ensure 型（幂等重发即随最新 LTS，零维护口径）：报 OK 不报 CHANGED——
