@@ -34,6 +34,11 @@ jobs:
           & powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$env:RUNNER_TEMP\wdc\bootstrap.ps1" *> "$env:RUNNER_TEMP\rerun-console.log"
           if ($LASTEXITCODE -ne 0) {
             Get-Content "$env:RUNNER_TEMP\rerun-console.log" -Tail 30
+            Write-Host '=== logs/*.log 中的 [FAIL] 行（tail 30 之外不丢诊断） ==='
+            Get-ChildItem "$env:RUNNER_TEMP\wdc\logs" -Filter '*.log' |
+              Where-Object { $_.LastWriteTime -ge $start } |
+              ForEach-Object { Select-String -Path $_.FullName -Pattern '^\[FAIL\]' } |
+              ForEach-Object { Write-Host $_.Line }
             exit 1
           }
           $logs = @(Get-ChildItem "$env:RUNNER_TEMP\wdc\logs" -Filter '*.log' | Where-Object { $_.LastWriteTime -ge $start })
