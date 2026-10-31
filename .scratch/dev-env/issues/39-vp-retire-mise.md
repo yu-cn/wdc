@@ -15,9 +15,9 @@
 - [ ] ⑦ VSCode 清单去 vite-plus 扩展包
 - [ ] ⑧ remove-leftovers 增 vp 卸载（迁移冲突通道）
 - [ ] ⑨ dev-standard 拷贝同步（词表去 vp、§6 标注无实例）
-- [ ] ⑩ README / demo 重录 / CHANGELOG
+- [x] ⑩ README / demo 重录 / CHANGELOG
 - [x] ⑪ 冒烟幂等基线复核
-- [ ] 真机验收（ASUS：bootstrap 重跑收敛、vp 消失、mise+node@lts 就位、fss 前置 `mise --version` 通过）+ CI 绿 + v0.9.0 同日发版（联动 LDC 工单10）
+- [x] 真机验收（ASUS）+ CI 绿 + v0.9.0 同日发版（联动 LDC 工单10）——release https://github.com/yu-cn/wdc/releases/tag/v0.9.0
 
 ## Comments
 
@@ -28,3 +28,4 @@
 - 2026-10-31（ASUS 会话，红因二段闭环）：修复后重跑（41210369668）仍红——但诊断面立刻定位真因二段：`$mise = (Get-Command mise ...).Source` 在 Get-Command 返回 $null 时，common.ps1 的 `Set-StrictMode -Latest` 下抛 PropertyNotFound **终止脚本**（首跑找到 mise 故无害；重跑 null 即炸）——Links 兜底代码根本没执行到。修复（60d36f1 后续）：strict 安全取值（先判 $miseCmd 再取 Source）+ 注册表 PATH 刷新兜底（get.ps1 同款姿势，覆盖「winget 安装期写入 Links、早启进程树会话 PATH 快照未含」）+ Links 绝对路径终兜底；三步全败才 FAIL 带现场证据。验证 run 见下一条。
 - 2026-10-31（ASUS 会话，VSCode 插件面核实，主人问）：vite-plus 扩展包退役的插件面影响核实为零损失——Marketplace 实证该包仅捆绑 vitest.explorer + oxc.oxc-vscode，两件在本清单均单独声明（摘包=删重复声明行）；fss/ZCode 上游仓 .vscode/extensions.json 推荐 4 件（better-comments / mermaid-preview / oxc / tailwindcss），本清单原仅覆盖 oxc 一件，补齐其余三件（两仓同步，本机 install-vscode-extensions 实装 34/34）；fss lint 即 oxlint（package.json lint: oxlint），oxc 扩展（Oxlint+Oxfmt）全覆盖。
 - 2026-10-31（ASUS 会话，冒烟绿收口）：fresh-machine 四跑 GREEN（41212167402）——strict 安全化 + 注册表 PATH 刷新 + Links 终兜底生效，幂等重跑腿零变更基线（排除项=身份占位 + WT settings 环境写穿）成立。剩余待办：demo 重录（agg 不在本机，发版腿做）、v0.9.0 与 LDC 同日发版（待主人指令）、本机 ~/.vite-plus 占用残留待 ZCode 重启后重跑 remove-leftovers 收尾。
+- 2026-10-31（ASUS 会话，发版收口）：主人指令「发布 v0.9.0」——demo 重录（docs/demo.cast 换轨后真实输出重生成 + agg v1.9.0 本机重转 GIF，帧检中文无豆腐、语言栈段 mise 断言在位；提交 621155a）→ CHANGELOG 收节（c8e8b28，validate 41215197096 绿）→ tag v0.9.0（锚定 c8e8b28，注释含全部验证锚点）→ [release](https://github.com/yu-cn/wdc/releases/tag/v0.9.0)（--latest，notes 四段按 v0.8.0 版式）。**双仓同号同日第二次执行**（LDC v0.9.0 同批）。本单全项收口；遗留机器侧一项：ZCode 重启后重跑 remove-leftovers 收 ~/.vite-plus 占用残留（已入已知事项）。
