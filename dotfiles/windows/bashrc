@@ -5,6 +5,9 @@
 export PATH="$HOME/.local/bin:$PATH"
 # Windows 应用执行别名 (winget / wt 等)
 export PATH="$PATH:$LOCALAPPDATA/Microsoft/WindowsApps"
+# mise 的语言工具链（shims 供非交互解析；activate 供交互按目录切换——与 LDC 侧同款，LDC ADR-0016）
+export PATH="$HOME/.local/share/mise/shims:$PATH"
+command -v mise >/dev/null 2>&1 && eval "$(mise activate bash)"
 
 # --- 历史 ---
 HISTSIZE=10000

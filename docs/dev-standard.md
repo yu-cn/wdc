@@ -11,7 +11,7 @@
   - 结构 `<type>(可选 scope): 中文描述` + 空行 + 可选正文 + 空行 + 可选脚注；
   - feat / fix 为规范保留 type，直接驱动版本号：feat→MINOR、fix→PATCH；v0.x 阶段破坏性变更按 semver 走 MINOR；
   - 扩展 type 用惯用集：build / chore / ci / docs / perf / refactor / revert / style / test；
-  - scope 可选：单一主落点明显时取组件 / 域名，跨域大改省略；名词用英文；词表按仓登记——**LDC**：bootstrap · install-packages · user-tools · dotfiles · desktop · docker · cli · verify · plan · configs · pins · validate · ci · agents · standard · dev-env；**WDC**：bootstrap · validate · cli · configs · dotfiles · wsl · remove-leftovers · vp · triage · inventory · upstream · fonts · wt · base-windows · cli-tools · editors · adr · agents · docs · standard · dev-env · ci（新组件随 ADR/工单增补词表）；
+  - scope 可选：单一主落点明显时取组件 / 域名，跨域大改省略；名词用英文；词表按仓登记——**LDC**：bootstrap · install-packages · user-tools · dotfiles · desktop · docker · cli · verify · plan · configs · pins · validate · ci · agents · standard · dev-env；**WDC**：bootstrap · validate · cli · configs · dotfiles · wsl · remove-leftovers · triage · inventory · upstream · fonts · wt · base-windows · cli-tools · editors · adr · agents · docs · standard · dev-env · ci（新组件随 ADR/工单增补词表）；
   - 描述全中文、动词开头、句末不加句号（Angular 惯例；规范本身不限制语言）；
   - 破坏性变更：type 后加 `!` 或脚注 `BREAKING CHANGE: 说明`；
   - 锚点（工单 / ADR / CI run id）写正文或脚注，脚注用 git trailer 形态（如 `Refs: 工单07`）。
@@ -50,7 +50,7 @@
 
 - **对等原则**：两仓是对等项目——按平台划界（WDC 主管 Windows 侧，LDC 主管 Linux 侧含 WSL Ubuntu）、各自完整治理；唯一交集是 WDC 的 WSL 域调用 LDC，属辖区移交而非隶属（详见 ADR-0007「对等原则」节）。
 - **主作者位**：Linux 侧模板与清单在 LDC；WDC 侧冻结，需求回流 LDC。
-- **钉子同值**：`configs/vp-version` 两仓同值，升级同日双改、各自记账。
+- **钉子同值**：跨仓同值钉子同日双改、各自记账（机制保留；随 vp 退役当前无实例——LDC ADR-0016）。
 - **委托契约**：WDC 的 WSL 阶段调用 LDC（clone/pull → root 委托 install-packages → user 委托 bootstrap → 验收委托 verify --quick）——改入口契约（参数 / 退出码 / 独立可跑性）前先想 WDC 调用方。
 - **命名**：远端与仓内引用一律小写 `yu-cn/ldc`、`yu-cn/wdc`。
 - **双仓改动自查**：这个改动另一仓有同源拷贝吗？有钉子要同值吗？动契约了吗？门面引用（README / 文档）要跟吗？

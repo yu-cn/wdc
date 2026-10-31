@@ -2,7 +2,6 @@
 dotfiles/** text eol=lf
 # shell 脚本由 WSL bash 执行：CRLF 会让 bash 把 \r 当命令名（同一族防护）
 *.sh text eol=lf
-# vp 钉子由 WSL 侧 bash 逐行读：钉 LF 防 \r 混进版本号（同一族防护）
 configs/vp-version text eol=lf
 # 二进制资产不参与行尾归一——上面的 dotfiles/** 文本规则会误伤它们（ubuntu.ico 曾被洗掉 2 字节，2026-10-22 实录）
 *.ico binary

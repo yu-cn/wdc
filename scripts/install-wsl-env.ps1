@@ -56,7 +56,7 @@ if (-not $user.Ok) { Write-Step 'user 阶段' 'FAIL' "退出码 $($user.Exit)"; 
 if ($skipLdcArg) {
     Write-Step 'user 阶段' 'SKIP' 'CI 交界面化——LDC bootstrap 委托未跑（身份带过已完成）'
 } else {
-    Write-Step 'user 阶段' 'OK' 'LDC bootstrap 完成（uv/vp/starship/dotfiles 归 LDC 单一实现）'
+    Write-Step 'user 阶段' 'OK' 'LDC bootstrap 完成（uv/mise/starship/dotfiles 归 LDC 单一实现）'
 }
 
 # WSL 特有项探测（scripts/wsl/probe.sh：shell/systemd 两键——发行版内其余断言已归 LDC，工单32）

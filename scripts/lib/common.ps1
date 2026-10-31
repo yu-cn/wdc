@@ -31,22 +31,7 @@ function Write-Step {
     Write-Host $line -ForegroundColor $color
 }
 
-function Get-VpPin {
-    # vp 版本钉子的唯一来源（configs/vp-version）：委托 LDC 后 WSL 侧读 LDC 自己的钉子（工单32），
-    # 本文件只剩 Windows 侧消费者（install-languages、verify-machine 断言）——与 LDC configs/vp-version
-    # 同值联动：升级同日双改、各自账本互引记账（LDC-0007）
-    $p = Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) 'configs/vp-version'
-    return (Get-Content $p -Raw).Trim()
-}
 
-function Get-VpWinExe {
-    # Windows 侧 vp 的绝对路径探测：新装会话 PATH 可能未含 vite-plus\bin，不能依赖 Get-Command。
-    # 两种官方布局都认（工单12）：单体 ~/.vite-plus（安装器默认/复用现有安装）与 LOCALAPPDATA\vite-plus（选根模式）；未找到返回 $null
-    @(
-        (Join-Path $env:USERPROFILE '.vite-plus\bin\vp.exe')
-        (Join-Path $env:LOCALAPPDATA 'vite-plus\bin\vp.exe')
-    ) | Where-Object { Test-Path $_ } | Select-Object -First 1
-}
 
 function Invoke-Subscript {
     # 跑一个仓库内 pwsh 子脚本并按 Write-Step 口径报告：转发输出 · 判退出码 · 打 OK/FAIL，返回 $true/$false。

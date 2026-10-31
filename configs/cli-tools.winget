@@ -1,5 +1,5 @@
 # cli-tools 域 - 基础 CLI 工具与现代化命令行（通用核心清单，Q11/共识总表）
-# 语言管理器（vp/uv 本体中的 uv 也在此）之外的具体语言版本由 bootstrap 编排层负责
+# 语言管理器本体（mise/uv）在此声明；具体语言版本与默认环境由 bootstrap 编排层负责（mise use -g node@lts）
 $schema: https://raw.githubusercontent.com/PowerShell/DSC/main/schemas/2023/08/config/document.json
 metadata:
   winget:
@@ -24,7 +24,7 @@ resources:
     source: winget
     useLatest: true
   metadata:
-    description: VC++ 2015-2022 x64 运行库（裸机缺失则 vp.exe 0xC0000135 无法启动——工单31；Stage 3 应用先于 Stage 4 的 vp 安装落位）
+    description: VC++ 2015-2022 x64 运行库（原生工具通用依赖；工单31 史项 vp.exe 0xC0000135 即此因，Stage 3 应用先于 Stage 4 语言工具落位）
 
 # PowerShell 7 不在本域（工单27）：useLatest 升级的 MSI 会强杀 pwsh 宿主内的 bootstrap——
 # 生命周期改由入口引导层全权管理（缺失自装 + 5.1 宿主内安全升级），同语言版本走编排层的先例
@@ -148,6 +148,15 @@ resources:
     useLatest: true
   metadata:
     description: uv——Python 的安装与项目管理器（Python 全权归 uv，直装版由移除清单清掉）
+
+- type: Microsoft.WinGet/Package
+  name: Mise
+  properties:
+    id: jdx.mise
+    source: winget
+    useLatest: true
+  metadata:
+    description: mise——多语言版本管理器（Node 等语言运行时归它管；默认环境 node@lts 由 install-languages 设定，vp 退役换轨见 LDC ADR-0016）
 
 # --- 效率 ---
 - type: Microsoft.WinGet/Package

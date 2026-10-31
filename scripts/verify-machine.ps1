@@ -59,11 +59,11 @@ Assert '扩展清单全部在位' {
 }
 
 Write-Phase '4/6 · 语言栈'
-Assert 'vp Windows 侧 = 钉子' {
-    $vp = Get-VpWinExe
-    $vp -and ((& $vp --version) -match [regex]::Escape((Get-VpPin)))
+Assert 'mise Windows 侧就位（cli-tools 域 winget）' { Get-Command mise -ErrorAction SilentlyContinue }
+Assert 'node 默认环境可解析（mise exec node）' {
+    $mise = (Get-Command mise -ErrorAction SilentlyContinue).Source
+    $mise -and ((& $mise exec node -- node -v) 2>$null)
 }
-Assert 'node 走 vp shim' { (Get-Command node -ErrorAction SilentlyContinue).Source -like '*vite-plus*' }
 Assert 'uv 就位' { Get-Command uv -ErrorAction SilentlyContinue }
 
 # WSL 默认用户自动探测（Get-WslDefaultUser；硬编码用户名会误伤默认用户名不同的机器，工单12族）

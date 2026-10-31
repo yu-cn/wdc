@@ -36,7 +36,6 @@ bootstrap 先确保 PowerShell 7 就位（裸机自动安装），再依次跑�
 <summary><strong>首次运行你需要配合的五件事</strong>（UAC 提权 · SmartScreen 放行 · 重启续跑 · 填写身份 · 关 VSCode 设置同步）</summary>
 
 1. **UAC 提权**——未提权启动会自动请求，点一次确认
-2. **SmartScreen 放行**——vp 安装器未代码签名，全新机器首次可能弹窗，选「仍要运行」
 3. **重启**——全新机器 bootstrap 会在提权回合内自动启用 WSL 并提示重启；重启登录后由一次性续跑任务**自动重跑** bootstrap 安装 Ubuntu 并收尾（GLOSSARY「续跑任务」：任意一次 bootstrap 启动即清除、绝不循环；自动登记未成时手工路径：重启后重跑 `bootstrap.ps1`，或管理员终端 `wsl --install`，流程相同）
 4. **填写身份**——bootstrap 生成 `~/.gitidentity` 占位后，填上**本机**的 git name/email（各机身份不同；不填则 git 拒绝提交，这是防错护栏）
 5. **关闭 VSCode 设置同步**——首次启动 VSCode 若已登录账号（齿轮/账户图标 → 设置同步 → 关闭）。设置同步是账号级开关、配置文件管不到它；不关的话云端会与仓库 dotfiles 打架（仓库是唯一主人）
@@ -58,10 +57,10 @@ Git · GitHub CLI · Chrome · Everything · PowerToys · lazygit · delta · fz
 VS Code + 32 个扩展（Python / Jupyter 全家、Remote-WSL / SSH / Containers、Prettier / Vitest / oxc、中文语言包等，[完整清单](configs/vscode-extensions.txt)）
 
 **语言运行时**
-Node 归 **vp**（默认跟随 LTS）、Python 归 **uv**——Windows / WSL 两侧同工具同习惯
+Node 归 **mise**（默认 `node@lts` 随收敛更新）、Python 归 **uv**——Windows / WSL 两侧同工具同习惯
 
 **WSL 侧**（Ubuntu，发行版内一切委托姊妹仓库 [LDC](https://github.com/yu-cn/ldc)——[setup-ubuntu.sh](scripts/wsl/setup-ubuntu.sh) 薄包装，LDC-0007）
-LDC 接管 apt 包 / gh / Docker Engine / uv / vp / Starship / Linux dotfiles（单一实现）；WDC 保留 WSL 生命周期引导（wsl.conf systemd、默认 shell=bash）
+LDC 接管 apt 包 / gh / Docker Engine / uv / mise / Starship / Linux dotfiles（单一实现）；WDC 保留 WSL 生命周期引导（wsl.conf systemd、默认 shell=bash）
 
 **dotfiles**（[dotfiles/](dotfiles/)，渲染拷贝安装（ADR-0015），旧文件备份 `*.bak`）
 gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL bash 三 shell 统一提示符）· Windows Terminal · VS Code settings / keybindings · bashrc（Windows 侧；Linux bashrc 归姊妹仓库 LDC，工单32 起委托接管）
@@ -98,12 +97,12 @@ gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL b
 
 ```
 configs/    声明式层：按域拆分的 winget configuration（base-windows / cli-tools / editors + 扩展清单）
-scripts/    编排层：bootstrap 入口、语言版本（vp）、VSCode 扩展、移除清单、WSL 委托包装、上游检查
+scripts/    编排层：bootstrap 入口、语言默认环境（mise）、VSCode 扩展、移除清单、WSL 委托包装、上游检查
 dotfiles/   dotfiles 层：windows / shared（wsl 已冻结，Linux 模板归姊妹仓库 LDC），渲染拷贝安装（旧文件备份 *.bak）
 ```
 
 - git 身份不入仓库：模板 include 每机本地的 `~/.gitidentity`
-- Node 全权归 **vp**（钉 1.3.0，默认跟随 LTS），Python 全权归 **uv**，两侧同工具同习惯
+- Node 全权归 **mise**（winget 声明、默认 `node@lts`），Python 全权归 **uv**，两侧同工具同习惯
 - 提示符三 shell（pwsh / Git Bash / WSL bash）统一 **Starship**，一份 `starship.toml`
 - 移除清单只做两类事（[ADR-0007](docs/adr/0007-removal-list-converge-only.md)）：本仓自清理（退役 WT fragments）与迁移冲突（VSCode 商店版→winget 版），**清单外不碰**——JetBrains 套件、Typora、GitHub Desktop 等机器自留地安全，语言栈与已装软件一律不卸
 

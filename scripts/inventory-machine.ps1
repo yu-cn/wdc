@@ -25,7 +25,7 @@ winget list --accept-source-agreements 2>$null | ForEach-Object { $_ -replace "`
     ForEach-Object { "- $_".TrimEnd() }
 
 Section '命令行工具版本'
-foreach ($t in 'git','node','npm','pnpm','python','uv','go','rustc','docker','gh','starship','fzf','zoxide','vp') {
+foreach ($t in 'git','node','npm','pnpm','python','uv','go','rustc','docker','gh','starship','fzf','zoxide','mise') {
     $c = Get-Command $t -ErrorAction SilentlyContinue
     if ($c) {
         $v = (& $t --version 2>$null | Select-Object -First 1)

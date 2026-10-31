@@ -5,6 +5,10 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)（显著变更人为记录、分类归档、每个版本可跳转）；版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)（v0.x 阶段破坏性变更走 MINOR）；提交信息遵循 [Conventional Commits](https://www.conventionalcommits.org/zh-hans/v1.0.0/)——feat / fix 驱动版本号。发布动作与验证锚点见各 [release](https://github.com/yu-cn/wdc/releases)。
 
 ## [Unreleased]
+### Changed
+- **破坏性**：语言管理器 vp 退役、mise 升正（联动 [LDC ADR-0016](https://github.com/yu-cn/ldc/blob/main/docs/adr/0016-vp-retire-mise-takeover.md)、工单39）——`install-languages.ps1` 重写为 mise 默认环境（`mise use -g node@lts`）；`configs/cli-tools.winget` 声明 mise（jdx.mise，useLatest 域内惯例免钉）；remove-leftovers 增 vp 退役迁移项（迁移冲突通道，ADR-0007 宪章内——三种布局目录 + 用户 PATH 注入清除）；`configs/vp-version` 钉子退役（两仓同值钉子消失，dev-standard §6 钉子同值标注「当前无实例」——LDC 主笔同步拷贝）；`configs/vscode-extensions.txt` 去 vite-plus 扩展包；common.ps1 vp 助手、verify/inventory/bootstrap-main/install-wsl-env 换面；README 五处措辞同步；.gitattributes 相应行退役
+### Added
+- dotfiles/windows：pwsh profile 挂 `mise activate pwsh`、Git Bash bashrc 挂 shims PATH + activate（Node 等语言工具链按目录切换，与 LDC 侧同款）
 
 ## [0.8.0] – 2026-10-27
 

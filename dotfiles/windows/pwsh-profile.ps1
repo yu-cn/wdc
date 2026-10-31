@@ -1,8 +1,9 @@
 # Microsoft.PowerShell_profile.ps1 — WDC 统一 pwsh 配置（仓库 dotfiles 管理）
 # 原则：所有初始化均带存在性守卫——未完成 bootstrap 的机器上打开终端不报错
 
-# --- vp 的 Node 环境（vp 由 languages 域安装；env.ps1 由 vp 安装器生成）---
-if (Test-Path "$env:APPDATA\vite-plus\env.ps1") { . "$env:APPDATA\vite-plus\env.ps1" }
+# --- mise 的语言环境（mise 由 cli-tools 域 winget 安装；activate 供按目录切换，全局 node 经 shims 解析）---
+$miseCmd = Get-Command mise -ErrorAction SilentlyContinue
+if ($miseCmd) { (& $miseCmd.Source activate pwsh) | Out-String | Invoke-Expression }
 
 # --- PSReadLine：历史去重 + 预测式补全（输出重定向等场景下静默跳过）---
 try {

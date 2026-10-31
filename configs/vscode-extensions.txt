@@ -36,7 +36,6 @@ ms-ceintl.vscode-language-pack-zh-hans
 # --- 仓库工程（ASUS 盘点吸收 2026-10-20，环境主人点名全收）---
 ms-vscode.powershell
 davidanson.vscode-markdownlint
-voidzero.vite-plus-extension-pack
 vitest.explorer
 oxc.oxc-vscode
 ms-vscode.makefile-tools

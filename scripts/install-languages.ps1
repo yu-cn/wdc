@@ -1,65 +1,31 @@
 #Requires -Version 7
-# install-languages.ps1 — 编排层：语言版本管理器（vp）安装与 Node 默认版本设定
-# 用户级操作，无需提权。uv 本体由 cli-tools 域声明安装（winget），此脚本只管 vp 与其默认值。
+# install-languages.ps1 — 编排层：语言默认环境（mise · node@lts）
+# 用户级操作，无需提权。mise 本体由 cli-tools 域声明安装（winget jdx.mise，useLatest 免钉），
+# 此脚本只管默认环境——对齐 LDC 侧同款（LDC ADR-0016；vp 已退役，存量机清除走 remove-leftovers 迁移通道）。
 [CmdletBinding()]
 param()
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'lib/common.ps1')
 
-# vp 版本钉子的唯一来源：configs/vp-version（WSL 侧与 verify 共读同一份；升级时改那一个文件并在吸收账本记一笔）
-$vpVersion = Get-VpPin
-
-Write-Phase 'Languages - vp 安装（钉版本）'
-# 用绝对路径探测与调用：新装的会话 PATH 可能尚未包含 vite-plus\bin，不能依赖 Get-Command
-$vpExe = Get-VpWinExe
-if ($vpExe) {
-    $installed = (& $vpExe --version) 2>$null
-    if ($installed -match [regex]::Escape($vpVersion)) {
-        Write-Step 'vp' 'OK' "已安装 $installed（与钉子一致）"
-    } else {
-        Write-Step 'vp' 'CHANGED' "已装 $installed，钉子为 $vpVersion —— 重跑官方安装器升级到钉子版本"
-        $env:VP_VERSION = $vpVersion
-        Invoke-RestMethod https://vite.plus/ps1 | Invoke-Expression
-    }
-} else {
-    $env:VP_VERSION = $vpVersion
-    # 官方安装方式（用户指定）：irm 管道。安装器未签名，全新机器首次可能遇 SmartScreen 需放行。
-    Invoke-RestMethod https://vite.plus/ps1 | Invoke-Expression
-    $vpExe = Get-VpWinExe
-    if ($vpExe) {
-        Write-Step 'vp' 'CHANGED' "已安装 $((& $vpExe --version) 2>$null)（VP_VERSION=$vpVersion）"
-    } else {
-        Write-Step 'vp' 'FAIL' "安装脚本执行后仍找不到 $vpExe"
-        exit 1
-    }
-}
-
-Write-Phase 'Languages - Node 默认版本（vp env default）'
-# 默认跟随 LTS：零维护。需要按项目钉版时用 .node-version / .nvmrc / vp env pin，两侧通吃。
-& $vpExe env default lts
-if ($LASTEXITCODE -ne 0) {
-    Write-Step 'vp env default lts' 'FAIL' "退出码 $LASTEXITCODE"
+Write-Phase 'Languages - 默认环境（mise node@lts）'
+$miseCmd = Get-Command mise -ErrorAction SilentlyContinue
+if (-not $miseCmd) {
+    Write-Step 'mise' 'FAIL' '未找到——cli-tools 域应已 winget 安装（jdx.mise），重跑 bootstrap'
     exit 1
 }
-
-# 安装解析出的环境（显式 lts：裸 `vp env install` 在无项目钉版的目录会拒绝）
-# ensure 型步骤报 OK 不报 CHANGED（对齐 LDC install-user-tools.sh 同款）：vp env install 对已装环境是
-# 幂等快操作、CLI 不区分装没装过——首装的变更信号由上面 vp 本体安装的 CHANGED 行承担
-# （fresh-machine 幂等重跑腿以 [CHANGED] 为零变更依据，run 40361634404 实录本行每轮误报）
-& $vpExe env install lts
+$mise = $miseCmd.Source
+# ensure 型（幂等重发即随最新 LTS，零维护口径）：报 OK 不报 CHANGED——
+# 首装变更信号由 winget 域安装记账承担（幂等重跑零 [CHANGED] 基线，对齐 LDC 同款）
+& $mise use -g 'node@lts' | Out-Null
 if ($LASTEXITCODE -ne 0) {
-    Write-Step 'vp env install' 'FAIL' "退出码 $LASTEXITCODE"
+    Write-Step 'mise use -g node@lts' 'FAIL' "退出码 $LASTEXITCODE"
     exit 1
 }
-Write-Step 'vp env install' 'OK' '已确保解析环境就位（LTS Node 进 vp 商店）'
-
-# 启用托管模式（node/npm/pnpm 等经 vp shims 解析；system node 若在由 PATH 优先级裁决——移除清单不再卸语言栈，ADR-0007）
-& $vpExe env on
-if ($LASTEXITCODE -eq 0) {
-    $cur = (& $vpExe env current) 2>$null
-    Write-Step 'vp env on' 'OK' "托管模式已启用；当前解析：$((($cur | Select-String 'Version|Mode') -join ' '))"
+$nodeV = (& $mise exec node -- node -v) 2>$null
+if ($LASTEXITCODE -eq 0 -and $nodeV) {
+    Write-Step 'node 默认环境' 'OK' "已确保就位（$nodeV，经 mise 解析）"
 } else {
-    Write-Step 'vp env on' 'FAIL' "退出码 $LASTEXITCODE"
+    Write-Step 'node 默认环境' 'FAIL' 'mise exec node 解析失败——重跑本脚本'
     exit 1
 }
 exit 0
