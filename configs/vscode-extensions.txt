@@ -38,6 +38,12 @@ ms-vscode.powershell
 davidanson.vscode-markdownlint
 vitest.explorer
 oxc.oxc-vscode
+# fss/ZCode 上游对齐（上游仓 .vscode/extensions.json 推荐，工单39）：vite-plus 扩展包
+# 退役时核实其仅捆绑 vitest.explorer + oxc.oxc-vscode（本清单均已单独声明，摘包零损失）；
+# 上游另行推荐的三件在此补齐
+aaron-bond.better-comments
+vstirbu.vscode-mermaid-preview
+bradlc.vscode-tailwindcss
 ms-vscode.makefile-tools
 github.remotehub
 ms-vscode.remote-repositories
