@@ -49,6 +49,10 @@ _Avoid_: RunOnce、自启项（指代不同的机制）
 所有开发机地位平等、无主从：每台 clone 后 bootstrap 即得完整环境，工单与决策经仓库（`.scratch/` + git）流转，由环境主人定夺、任一机器会话可执行。
 _Avoid_: 主机、主开发机、第二台机
 
+**双边最优化**:
+WDC 与 LDC 是两个独立项目（2026-11-01 环境主人定夺，工单41），各自面向对应环境达到最优：Windows 侧用 Windows 母语（如 pwsh 侧 fzf 走 PSReadLine 处理器），Linux/WSL 侧用 Linux 母语；不刻意追求形式统一，双仓实现允许各自演化。统一仅在其服务于委托实质处保留最小面：退出码语义 + `LDC_TODO` 机器标记（LDC-0007 契约）。
+_Avoid_: 形式统一、原样移植、双仓同款实现（对齐的是目标，不是实现）
+
 **身份文件**:
 每台机器本地保存 git user.name/email 的文件（`~/.gitidentity`），bootstrap 首次生成占位、永不入仓库；gitconfig 模板通过 include 引用它。
 _Avoid_: git 凭据（指代不同的东西）

@@ -1,6 +1,6 @@
 # 41: WDC/LDC 边界最小核心化——保留职责三件移交，终结形式统一
 
-**What to build:** 环境主人定夺（2026-11-01 ASUS 会话）：WDC 与 LDC 是两个独立项目，各自面向对应环境优化，不刻意追求形式统一；WDC 的 WSL 内部工作全量委托 LDC。本单把工单32 建立的委托路线（LDC-0007「发行版内一切收敛走 LDC 单一实现」）走完——委托已完成约九成，`setup-ubuntu.sh` 薄委托 wrapper 还剩 5 件 WDC 保留职责，逐件归类后：3 件移交 LDC，3 件半必须留在 WDC（编排者身份决定），契约最小面永久保留。
+**What to build:** 环境主人定夺（2026-11-01 ASUS 会话，词条化于 GLOSSARY「双边最优化」）：WDC 与 LDC 是两个独立项目，目标函数是**双边各自最优化**——Windows 侧用 Windows 母语、Linux/WSL 侧用 Linux 母语，统一不是目标而是工具，仅在服务委托实质处保留最小面；WDC 的 WSL 内部工作全量委托 LDC。本单把工单32 建立的委托路线（LDC-0007「发行版内一切收敛走 LDC 单一实现」）走完——委托已完成约九成，`setup-ubuntu.sh` 薄委托 wrapper 还剩 5 件 WDC 保留职责，逐件归类后：3 件移交 LDC，3 件半必须留在 WDC（编排者身份决定），契约最小面永久保留。
 
 **保留职责分类（本单的核心决策记录）：**
 
@@ -31,3 +31,4 @@
 ## Comments
 
 - 2026-11-01（ASUS 会话）：立单。边界决策出自与环境主人的架构讨论——直接起因是本会话 fzf 修复中暴露的实现统一反例（pwsh 侧模仿 bash 侧 fzf 集成从未生效）。环境主人同期明确「LDC 侧 agent 不用管，专注 WDC 侧」，故本单 WDC 侧条目可执行、LDC 侧两条列为联动前置由主人另行安排。Status 取 needs-triage：WDC 侧规格已完整但整体被 LDC 承接阻塞，排期由主人定。
+- 2026-11-01（ASUS 会话）：主人重申并强化原则为「尽可能达到 Windows 和 Linux（含 WSL）双边最优化」——本单 What-to-build 已按目标函数口径改写，原则词条化进 GLOSSARY「双边最优化」（紧邻「机器对等」）。WDC 侧按此口径的存量扫描：已母语化=fzf（PSReadLine）、渲染拷贝、VSCode/gitconfig 双份各自裁剪；形式统一残留候选=lazygit（去留等实测）、make（ezwinports，无 Makefile 场景即残留，无害可留）；starship.toml 双份按新原则允许各自演化（漂了不修）。
