@@ -5,6 +5,9 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)（显著变更人为记录、分类归档、每个版本可跳转）；版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)（v0.x 阶段破坏性变更走 MINOR）；提交信息遵循 [Conventional Commits](https://www.conventionalcommits.org/zh-hans/v1.0.0/)——feat / fix 驱动版本号。发布动作与验证锚点见各 [release](https://github.com/yu-cn/wdc/releases)。
 
 ## [Unreleased]
+
+## [0.10.0] – 2026-11-01
+
 ### Added
 - `configs/chrome.winget` 独立域（工单40 主人定夺方案 b）——Chrome 自 cli-tools 拆出（下载体积大、CI runner 禁 DO 服务三连败实录，工单26）：失败只红自己、不拖累其余声明；`Get-WdcDomains` 顺序清单与提权表同步，verify 遍历走单一来源自动纳入
 
@@ -94,6 +97,7 @@
 - 开源基线（[v0.1.0](https://github.com/yu-cn/wdc/releases/tag/v0.1.0)）：MIT、README 门面化、CONTRIBUTING、fork 跟随指南；裸机入口降门槛（PowerShell 5.1 自举 PowerShell 7）；WSL 侧 Docker Engine 纳入默认；pre-commit 钩子接线 + verify 断言 + dotfiles 漂移即时提示；fresh-machine 手动冒烟工作流
 
 [Unreleased]: https://github.com/yu-cn/wdc/compare/v0.8.0...HEAD
+[0.10.0]: https://github.com/yu-cn/wdc/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/yu-cn/wdc/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/yu-cn/wdc/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/yu-cn/wdc/compare/v0.6.0...v0.7.0
