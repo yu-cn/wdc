@@ -6,6 +6,12 @@
 
 ## [Unreleased]
 
+### Fixed
+- pwsh 侧 fzf 键位自上线以来从未生效（cc46108）——fzf 官方集成仅 `--bash`/`--zsh`/`--fish`/`--nushell`（0.74.5 实测无 `--powershell`），旧实现靠空输出守卫静默跳过；改 PSReadLine 键位处理器手工接线（Ctrl-R 历史模糊搜索 / Ctrl-T fd 搜索源 + bat 预览多选 / Alt-C 目录跳转），零新依赖、与 LDC bash 侧同语义，fd/bat 缺席对应键位不绑定
+
+### Changed
+- 三 shell 各自最优化批次（5651803，GLOSSARY「双边最优化」首个完整应用）：pwsh 加 `PredictionViewStyle ListView` 可视预测 + gh/uv 原生参数补全（存在性守卫；git 补全生态是 bash 系、docker 不在 Windows——均刻意不补留据）；Git Bash 的 fzf 路径补全曾顶掉 git 原生补全（实测 69 命令被绑）——fzf 块后重挂 `git-completion.bash`（ucrt64/mingw64 双探测防坑17 迁名复发）+ gh 补全；漂移检查加 `[[ $- == *i* ]]` 交互守卫——agent 宿主 shell（bash -lc）每工具调用 0.337s 的 pwsh 子进程会话税归零，真终端提醒不变
+
 ## [0.10.0] – 2026-11-01
 
 ### Added
