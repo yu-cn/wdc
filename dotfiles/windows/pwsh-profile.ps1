@@ -15,11 +15,54 @@ if (Get-Command zoxide -ErrorAction SilentlyContinue) {
     Invoke-Expression (& { (zoxide init powershell | Out-String) })
 }
 
-# --- fzf：Ctrl-R 搜历史 / Ctrl-T 选文件 / Alt-C 跳目录（与 bash 侧同款）---
-# 老版本 fzf 不支持 --powershell：输出为空则跳过，不报错（机器无关的防御）
+# --- fzf：Ctrl-R 搜历史 / Ctrl-T 选文件 / Alt-C 跳目录（与 bash 侧同款语义）---
+# fzf 官方集成只有 --bash/--zsh/--fish/--nushell（2026-11-01 实测 0.74.5 无 --powershell）——
+# 旧实现靠「输出为空则静默跳过」的守卫，键位实际从未生效过。PS 侧无官方集成，
+# 改用 PSReadLine 处理器手工接线，零新依赖；fd/bat 缺席时对应键位不绑定（存在性守卫）
 if (Get-Command fzf -ErrorAction SilentlyContinue) {
-    $__fzfInit = (& fzf --powershell 2>$null) -join "`n"
-    if ($__fzfInit) { Invoke-Expression $__fzfInit }
+    try {
+        # Ctrl-T：fd 搜索源（自动忽略 .git/node_modules），bat 右侧实时预览；空格多选、回车插入光标处
+        if (Get-Command fd -ErrorAction SilentlyContinue) {
+            Set-PSReadLineKeyHandler -Chord 'Ctrl+t' -ScriptBlock {
+                param($key, $arg)
+                $previewArgs = @()
+                if (Get-Command bat -ErrorAction SilentlyContinue) {
+                    $previewArgs = @('--preview', 'bat --color=always {}', '--preview-window', 'right:60%')
+                }
+                $picked = @(& fd --type f --hidden --follow --exclude .git --exclude node_modules 2>$null |
+                    & fzf --multi --height 40% --layout=reverse --border @previewArgs 2>$null)
+                if ($LASTEXITCODE -eq 0 -and $picked) {
+                    $quoted = ($picked | ForEach-Object { "'" + $_.Replace("'", "''") + "'" }) -join ' '
+                    [Microsoft.PowerShell.PSConsoleReadLine]::Insert($quoted)
+                }
+            }
+        }
+        # Ctrl-R：交互式搜历史（当前缓冲区作预填 query；选中整行替换缓冲区）
+        Set-PSReadLineKeyHandler -Chord 'Ctrl+r' -ScriptBlock {
+            param($key, $arg)
+            $line = $null; $cursor = $null
+            [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
+            $picked = Get-History | ForEach-Object CommandLine | Select-Object -Unique -Last 500 |
+                & fzf --query "$line" --height 40% --layout=reverse --border 2>$null
+            if ($LASTEXITCODE -eq 0 -and $picked) {
+                [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $line.Length, $picked)
+            }
+        }
+        # Alt-C：fd 搜目录即跳（选中即 cd，命令入历史）
+        if (Get-Command fd -ErrorAction SilentlyContinue) {
+            Set-PSReadLineKeyHandler -Chord 'Alt+c' -ScriptBlock {
+                param($key, $arg)
+                $dir = & fd --type d --hidden --follow --exclude .git --exclude node_modules 2>$null |
+                    & fzf --height 40% --layout=reverse --border 2>$null
+                if ($LASTEXITCODE -eq 0 -and $dir) {
+                    Set-Location $dir
+                    [Microsoft.PowerShell.PSConsoleReadLine]::RevertLine()
+                    [Microsoft.PowerShell.PSConsoleReadLine]::Insert("cd '$($dir.Replace("'", "''"))'")
+                    [Microsoft.PowerShell.PSConsoleReadLine]::AcceptLine()
+                }
+            }
+        }
+    } catch { }   # 非交互宿主（脚本/agent 会话）无 PSReadLine 控制台——静默跳过
 }
 
 # --- starship 提示符（最后初始化；三 shell 共用 ~/.config/starship.toml）---
