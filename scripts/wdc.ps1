@@ -6,7 +6,8 @@
 #   裸命令不触发同步——长操作/改状态一律显式子命令；裸 wdc 给只读快照并提示下一步。
 # 用法：
 #   wdc | wdc status    只读快照（秒级）：与 origin/main 差距 / dotfiles 落点漂移 / 身份与 WSL 首跑状态 / 最近 bootstrap 结果
-#   wdc sync            全量同步：fetch → 落后则 pull（--ff-only）→ bootstrap → verify -Quick 收尾（会请求一次 UAC）
+#   wdc sync [-Full]    同步收敛：fetch → 落后则 pull（--ff-only）→ bootstrap → verify -Quick 收尾（会请求一次 UAC）；
+#                       已收敛且声明未变走快速路径跳过 bootstrap（秒级）；-Full 强制全量
 #   wdc verify [-Full]  机器断言；默认 -Quick 秒级，-Full 含三域漂移（约 3 分钟）
 #   wdc triage          dotfiles 落点漂移分流（工单 17 工具入口，交互式；ADR-0015 口径）
 #   wdc log [-Lines N]  最近一次 bootstrap 日志尾部（默认 40 行，连带提权子回合日志）
@@ -73,7 +74,8 @@ $helpOverview = @'
 wdc — WDC 开发环境一键工具（裸命令只读快照；仓库在 ~/.wdc 指向的路径）
 
   wdc | wdc status     只读快照（秒级）：远端差距 / dotfiles 漂移 / 身份与 WSL / 最近 bootstrap
-  wdc sync             全量同步：fetch → pull → bootstrap → verify -Quick 收尾（会请求一次 UAC）
+  wdc sync [-Full]     同步收敛：fetch → pull → bootstrap → verify -Quick（会请求一次 UAC）；
+                       已收敛且声明未变走快速路径跳过 bootstrap（秒级），-Full 强制全量
   wdc verify [-Full]   机器断言（默认 -Quick；-Full 含三域漂移约 3 分钟）
   wdc triage           dotfiles 落点漂移分流（逐文件 吸收/还原，交互式）
   wdc audit            winget 清单准入对账（只读恒 exit 0：已声明未装 / 自装未声明）
@@ -92,10 +94,12 @@ wdc status — 只读快照（秒级，不改任何状态）
   裸 wdc 等价于 wdc status。
 '@
     'sync' = @'
-wdc sync — 全量同步（日常一键收敛；会请求一次 UAC）
-  顺序：fetch → 落后则 pull --ff-only（本地领先/分叉一律中止交人工）→
-  bootstrap 七阶段（提权子回合一回合跑完；validate 由 CI 兜底降级 SKIP、收尾 verify -Quick 秒级，
-  工单02 瘦身）→ 汇总。三域漂移详查：wdc verify -Full。
+wdc sync [-Full] — 同步收敛（日常一键；会请求一次 UAC）
+  顺序：fetch → 落后则 pull --ff-only（本地领先/分叉一律中止交人工）→ bootstrap → verify -Quick 收尾。
+  快速路径（工单42）：收敛账本（%LOCALAPPDATA%\wdc\converged.json，bootstrap 全量成功尾部写入）的
+  commit == 当前 HEAD 且工作区干净 → 跳过 bootstrap 只跑 verify -Quick，秒级完成；
+  有新 pull、工作区有未提交改动、账本缺失/损坏/解析失败 → 全量 bootstrap 照旧
+  （宁可慢不可假绿）。-Full 强制全量收敛。三域漂移详查：wdc verify -Full。
   任一段失败即非零退出，并自动贴出 bootstrap 与提权日志尾部。
 '@
     'verify' = @'
@@ -264,26 +268,44 @@ switch ($Command) {
             Write-Step '仓库' 'CHANGED' "已拉取 $($ab[1]) 个提交"
         } else { Write-Step '仓库' 'OK' '已与 origin/main 一致' }
 
-        Write-Step '提示' 'INFO' 'bootstrap 即将开始，会请求一次 UAC 提权'
+        # 快速路径判定（工单42）：收敛账本 commit == 当前 HEAD 且工作区干净 → 声明未变，跳过 bootstrap。
+        # 任一不成立 → 全量照旧（宁可慢不可假绿）：-Full 强制 / 账本缺失损坏解析失败（Get-WdcConvergenceLedger
+        # 返回 $null）/ 有新 pull（HEAD 已变）/ 工作区有未提交改动（未提交的声明编辑不改 HEAD，
+        # 只判账本会漏——脏树守卫一并兜住脚本侧未提交改动）。
+        $fast = $false
+        if (-not $Full) {
+            $head = [string](git -C $repo rev-parse HEAD)
+            $ledger = Get-WdcConvergenceLedger
+            if ($LASTEXITCODE -eq 0 -and $ledger -and $ledger -eq $head) {
+                $dirty = @(git -C $repo status --porcelain)
+                if ($dirty.Count -eq 0) { $fast = $true }
+            }
+        }
+
         Write-Phase 'wdc sync · bootstrap'
-        # -SkipValidate：sync 走到 bootstrap 时必然 HEAD==origin/main（领先/分叉已退出）——
-        # 同一 commit 的 validate 在 push 时 CI 已把关（dev-standard「CI 兜底」），本地 Stage 2 降级 SKIP（工单02）
-        & pwsh -NoProfile -File (Join-Path $repo 'bootstrap.ps1') -SkipValidate
-        if ($LASTEXITCODE -ne 0) {
-            if ($LASTEXITCODE -eq 3) {
-                Write-Step 'bootstrap' 'FAIL' '已有一次收敛在跑（运行锁占用）——等当前收敛结束再 wdc sync'
+        if ($fast) {
+            Write-Step 'bootstrap' 'SKIP' '声明未变（收敛账本=HEAD、工作区干净）——快速路径跳过 bootstrap（-Full 可强制全量）'
+        } else {
+            Write-Step '提示' 'INFO' 'bootstrap 即将开始，会请求一次 UAC 提权'
+            # -SkipValidate：sync 走到 bootstrap 时必然 HEAD==origin/main（领先/分叉已退出）——
+            # 同一 commit 的 validate 在 push 时 CI 已把关（dev-standard「CI 兜底」），本地 Stage 2 降级 SKIP（工单02）
+            & pwsh -NoProfile -File (Join-Path $repo 'bootstrap.ps1') -SkipValidate
+            if ($LASTEXITCODE -ne 0) {
+                if ($LASTEXITCODE -eq 3) {
+                    Write-Step 'bootstrap' 'FAIL' '已有一次收敛在跑（运行锁占用）——等当前收敛结束再 wdc sync'
+                    exit 1
+                }
+                Write-Step 'bootstrap' 'FAIL' '未全绿——最近日志尾部（完整见 logs/）'
+                $log = Get-LastBootstrapLog
+                if ($log) { Get-Content $log.FullName -Tail 30 | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray } }
+                $elog = Get-LastElevatedLog
+                if ($elog) {
+                    Write-Host ''
+                    Write-Step '提权子回合尾部' 'INFO' $elog.FullName
+                    Get-Content $elog.FullName -Tail 20 | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray }
+                }
                 exit 1
             }
-            Write-Step 'bootstrap' 'FAIL' '未全绿——最近日志尾部（完整见 logs/）'
-            $log = Get-LastBootstrapLog
-            if ($log) { Get-Content $log.FullName -Tail 30 | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray } }
-            $elog = Get-LastElevatedLog
-            if ($elog) {
-                Write-Host ''
-                Write-Step '提权子回合尾部' 'INFO' $elog.FullName
-                Get-Content $elog.FullName -Tail 20 | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray }
-            }
-            exit 1
         }
 
         Write-Phase 'wdc sync · verify（-Quick 收尾，工单02）'

@@ -258,3 +258,38 @@ function Remove-WdcResumeTask {
         Write-Step '续跑任务' 'INFO' "自动清除未成（$($_.Exception.Message)）——手工：schtasks /Delete /TN $script:WdcResumeTaskName /F"
     }
 }
+
+# ---------------------------------------------------------------------------
+# 收敛账本（工单42）：记「上次全量收敛成功时的 HEAD」——wdc sync 快速路径的判定依据。
+# 与渲染账本（dotfiles-map.ps1 的 rendered.sha256，管「落点↔模板」）同目录同模式各管各的：
+# 渲染账本管落点指纹，本账本管 bootstrap 事实。机器本地状态，不入仓库（ADR-0004 模式）。
+# ---------------------------------------------------------------------------
+function Get-WdcConvergenceLedgerFile {
+    Join-Path $env:LOCALAPPDATA 'wdc\converged.json'
+}
+
+function Set-WdcConvergenceLedger {
+    # 记账 { "commit": "<40位sha>", "at": "<ISO8601>" }（tmp+mv 原子落盘，对齐渲染账本 Set-RenderedState）
+    param([Parameter(Mandatory)][string]$Commit)
+    $f = Get-WdcConvergenceLedgerFile
+    $dir = Split-Path $f -Parent
+    if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+    $json = @{ commit = $Commit; at = (Get-Date -Format 'o') } | ConvertTo-Json -Compress
+    $tmp = "$f.tmp"
+    Set-Content -LiteralPath $tmp -Value $json -Encoding utf8
+    Move-Item -LiteralPath $tmp -Destination $f -Force
+}
+
+function Get-WdcConvergenceLedger {
+    # 读账本 commit；缺失/损坏/JSON 解析失败一律返回 $null——调用方按「账本无效」回退全量
+    # （工单42 fail-safe：宁可慢不可假绿），绝不把可疑账本当命中。
+    $f = Get-WdcConvergenceLedgerFile
+    if (-not (Test-Path -LiteralPath $f)) { return $null }
+    try {
+        $j = Get-Content -LiteralPath $f -Raw | ConvertFrom-Json
+        $c = $j.commit
+        # 严格 40 位小写 hex（写入方 git rev-parse HEAD 的原生形态）——任何别的形态都按损坏处理
+        if ($c -is [string] -and $c -match '^[0-9a-f]{40}$') { return $c }
+    } catch { }
+    return $null
+}

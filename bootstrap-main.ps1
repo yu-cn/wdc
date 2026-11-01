@@ -232,6 +232,24 @@ if (-not $ValidateOnly -and -not (Test-GitIdentityEffective)) {
 Write-Step '耗时' 'INFO' "$([int]$sw.Elapsed.TotalSeconds)s"
 if ($failed.Count -eq 0) {
     Write-Step 'bootstrap' 'OK' '收敛完成（幂等：重跑应零变更）'
+    # 收敛账本（工单42）：全量收敛成功尾部记账，wdc sync 快速路径据此跳过 bootstrap。
+    # 只在提权上下文写（-ElevatedPass 子回合 / 管理员直跑 / 管理员终端 -NoElevate——三者
+    # Stage 3 Apply 都真实执行过）：-ValidateOnly 无副作用不写；非提权 -NoElevate 半量
+    # （Apply SKIP）不写——假账本会让后续 sync 假绿，宁可慢不可假绿；中途失败不写。
+    # 写在本处（而非 wdc.ps1）：wdc sync 与直接跑 bootstrap 两条路径同点记账，单一来源。
+    if ($elevated) {
+        try {
+            $head = [string](git -C $PSScriptRoot rev-parse HEAD 2>$null)
+            if ($LASTEXITCODE -eq 0 -and $head) {
+                Set-WdcConvergenceLedger -Commit $head
+                Write-Step '收敛账本' 'OK' "converged.json 已记账（commit $($head.Substring(0, 7))）"
+            } else {
+                Write-Step '收敛账本' 'INFO' 'HEAD 取值未成——不记账（下次 sync 回退全量，安全侧）'
+            }
+        } catch {
+            Write-Step '收敛账本' 'INFO' "记账未成（$($_.Exception.Message)）——下次 sync 回退全量，安全侧"
+        }
+    }
     if ($script:RunLock) { Exit-WdcRunLock $script:RunLock }
     try { Stop-Transcript | Out-Null } catch { }
     exit 0

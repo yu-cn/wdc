@@ -84,7 +84,7 @@ gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL b
 | 命令 | 用途 |
 |---|---|
 | `wdc` | 只读快照（裸命令默认，秒级）：远端差距 / dotfiles 漂移 / 身份与 WSL / 最近 bootstrap |
-| `wdc sync` | 日常一键同步（fetch → pull → bootstrap → verify -Quick 收尾；会请求一次 UAC） |
+| `wdc sync` | 日常一键同步（fetch → pull → bootstrap → verify -Quick 收尾；会请求一次 UAC）。已收敛且声明未变（收敛账本=HEAD、工作区干净）走快速路径跳过 bootstrap，秒级完成；账本缺失/损坏或有新 pull 一律回退全量（宁可慢不可假绿），`-Full` 强制全量 |
 | `wdc verify [-Full]` / `wdc triage` / `wdc log` / `wdc help` | 机器断言（默认 -Quick）/ dotfiles 落点漂移分流 / 最近日志尾部 / 帮助与版本 |
 | `pwsh bootstrap.ps1` | 完整收敛（日常改了配置后重跑） |
 | `pwsh bootstrap.ps1 -ValidateOnly` | 只做无副作用校验（配置 schema + 脚本静态检查） |
