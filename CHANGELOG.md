@@ -10,6 +10,7 @@
 - pwsh 侧 fzf 键位自上线以来从未生效（cc46108）——fzf 官方集成仅 `--bash`/`--zsh`/`--fish`/`--nushell`（0.74.5 实测无 `--powershell`），旧实现靠空输出守卫静默跳过；改 PSReadLine 键位处理器手工接线（Ctrl-R 历史模糊搜索 / Ctrl-T fd 搜索源 + bat 预览多选 / Alt-C 目录跳转），零新依赖、与 LDC bash 侧同语义，fd/bat 缺席对应键位不绑定
 
 ### Changed
+- WDC/LDC 边界最小核心化（e8bb745，工单41，GLOSSARY「双边最优化」完整应用；联动 [LDC 工单12](https://github.com/yu-cn/ldc)）——`setup-ubuntu.sh` 撤除最后三件「WDC opinion」（默认 shell / wsl.conf systemd / docker 组，LDC install-packages.sh 机器形态段承接，root 直调缺 SUDO_USER 由 LDC_USER 契约补）；`probe.sh` 退役，shell/systemd 两键断言移交 LDC verify（verify 第 5 组只余「LDC verify 退出码透传」验收面）；`LDC_SKIP_DOCKER` 透传退役改 LDC `docker_skipped()` 自判定（env 保留外部覆盖语义）。dev-standard §46 补澄清句：同号同日仅限联动变更（v0.10.0 锚点回看：双仓零契约联动仍同号同日属过度执行）
 - `wdc sync` 收敛账本快速路径（336d9ad，工单42）：已收敛且声明未变时跳过 bootstrap，424s → 8s 真机实测——bootstrap 全量成功尾部写 `%LOCALAPPDATA%\wdc\converged.json`（账本=HEAD，仅提权上下文记账，ValidateOnly / 非提权 -NoElevate 半量 / 中途失败不写）；sync 读账本 commit==HEAD 且工作区干净 → SKIP bootstrap 仅 verify -Quick；账本缺失/损坏/解析失败、有新 pull、工作区有未提交改动一律回退全量（宁可慢不可假绿）；`wdc sync -Full` 强制全量，help/README 同步
 - 三 shell 各自最优化批次（5651803，GLOSSARY「双边最优化」首个完整应用）：pwsh 加 `PredictionViewStyle ListView` 可视预测 + gh/uv 原生参数补全（存在性守卫；git 补全生态是 bash 系、docker 不在 Windows——均刻意不补留据）；Git Bash 的 fzf 路径补全曾顶掉 git 原生补全（实测 69 命令被绑）——fzf 块后重挂 `git-completion.bash`（ucrt64/mingw64 双探测防坑17 迁名复发）+ gh 补全；漂移检查加 `[[ $- == *i* ]]` 交互守卫——agent 宿主 shell（bash -lc）每工具调用 0.337s 的 pwsh 子进程会话税归零，真终端提醒不变
 
