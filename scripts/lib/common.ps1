@@ -52,8 +52,9 @@ function Invoke-Subscript {
 function Get-WdcDomains {
     # winget 域的单一事实源：应用顺序在此声明，并与 configs/*.winget 目录做一致性校验——
     # 目录里的域不在此清单即抛错（防「校验✓ 应用✗」的静默半接入）。顺序承载依赖：
-    # base-windows 的字体/注册表须先于 editors 的软件（工单04）
-    $ordered = @('base-windows', 'cli-tools', 'editors')
+    # base-windows 的字体/注册表须先于 editors 的软件（工单04）；chrome 独立域在 cli-tools 后
+    # （失败爆炸半径隔离，工单40，顺序上无依赖仅聚合软件域）
+    $ordered = @('base-windows', 'cli-tools', 'chrome', 'editors')
     $configDir = Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) 'configs'
     $onDisk = @(Get-ChildItem $configDir -Filter '*.winget' -ErrorAction SilentlyContinue | ForEach-Object { $_.BaseName })
     $missing = @($ordered | Where-Object { $onDisk -notcontains $_ })
@@ -67,10 +68,10 @@ function Get-WdcDomains {
 function Test-WdcDomainNeedsElevation {
     # 域的提权需求单一来源（工单01 方案A）：verify 漂移段在未提权会话对含 HKLM/机器级单元的域评估不可靠
     # （评估失败被记为「未处于」，整域假警报）——相关域须降级 SKIP，故按域显式声明：
-    # base-windows 含 7 个 HKLM 键（混合域）；cli-tools 包单元均机器级安装（winget 默认 machine scope）；
+    # base-windows 含 7 个 HKLM 键（混合域）；cli-tools 与 chrome 包单元均机器级安装（winget 默认 machine scope）；
     # editors 纯用户级单包（VSCode user setup），未提权可正常评估。新域或单元 scope 变更须同步此表。
-    param([Parameter(Mandatory)][ValidateSet('base-windows', 'cli-tools', 'editors')][string]$Domain)
-    return @{ 'base-windows' = $true; 'cli-tools' = $true; 'editors' = $false }[$Domain]
+    param([Parameter(Mandatory)][ValidateSet('base-windows', 'cli-tools', 'chrome', 'editors')][string]$Domain)
+    return @{ 'base-windows' = $true; 'cli-tools' = $true; 'chrome' = $true; 'editors' = $false }[$Domain]
 }
 
 function Test-WingetExitCode {

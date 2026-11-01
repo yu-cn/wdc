@@ -150,9 +150,11 @@ $null = Invoke-Stage 'Stage 3/7 - Apply 应用声明配置' {
     foreach ($domain in $domainOrder) {
         $file = Join-Path $PSScriptRoot "configs/$domain.winget"
         if (-not (Test-Path $file)) { Write-Step $domain 'SKIP' '尚未创建（后续工单）'; continue }
-        $out = & winget configure --file $file --accept-configuration-agreements --disable-interactivity 2>&1
+        $units = @(Select-String -Path $file -Pattern '^- type: ').Count
+        Write-Step $domain 'INFO' "winget configure 应用中（$units 单元，长域可达 5–10 分钟）——逐单元流式输出见下（工单40：原整域收完回放致 base-windows 后长静默）"
+        & winget configure --file $file --accept-configuration-agreements --disable-interactivity 2>&1 |
+            ForEach-Object { Write-Host $_ }
         $code = $LASTEXITCODE
-        $out | ForEach-Object { Write-Host $_ }
         if (Test-WingetExitCode -ExitCode $code -Operation 'configure') { Write-Step $domain 'OK' }
         else { Write-Step $domain 'FAIL' "winget configure 退出码 $code"; $allOk = $false }
     }

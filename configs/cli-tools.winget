@@ -177,12 +177,5 @@ resources:
   metadata:
     description: PowerToys（注意：依赖 .NET Desktop 运行时——故移除清单明确保留之）
 
-# --- 浏览器（开发主力）---
-- type: Microsoft.WinGet/Package
-  name: Chrome
-  properties:
-    id: Google.Chrome
-    source: winget
-    useLatest: true
-  metadata:
-    description: Chrome（开发主力浏览器；Edge 为系统自带，不声明）
+# 浏览器（Chrome）不在此域：拆独立域 chrome.winget（工单40）——Chrome 下载体积大、CI runner
+# 禁 DO 服务环境三连败实录（工单26），独立成域使失败只红自己、不拖累本域其余声明。

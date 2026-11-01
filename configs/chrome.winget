@@ -1,0 +1,20 @@
+# chrome 域 - Chrome 独立域（工单40，主人定夺方案 b）
+# 从 cli-tools 拆出：Chrome 下载体积大、CI runner 禁 DO 服务环境三连败实录（工单26）——
+# 独立成域使失败只红自己、不拖累 cli-tools 其余声明（爆炸半径隔离）。
+# 主人兜底方向：Windows 10/11 预装 Edge（LDC 侧常规 Linux 桌面发行版预装 Firefox），
+# 基本需求可覆盖；若失败可自行 `winget install Google.Chrome` 收敛，不阻塞其余域。
+$schema: https://raw.githubusercontent.com/PowerShell/DSC/main/schemas/2023/08/config/document.json
+metadata:
+  winget:
+    processor:
+      identifier: dscv3
+resources:
+
+- type: Microsoft.WinGet/Package
+  name: Chrome
+  properties:
+    id: Google.Chrome
+    source: winget
+    useLatest: true
+  metadata:
+    description: Chrome（开发主力浏览器；Edge 为系统自带，不声明；失败不拖累其余域——独立域语义见头注释）

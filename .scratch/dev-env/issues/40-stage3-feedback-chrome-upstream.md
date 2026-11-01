@@ -4,8 +4,15 @@
 
 **Blocked by:** None
 
-**Status:** needs-triage
+**Status:** todo
 
-- [ ] ① Stage 3 流式输出修复（bootstrap-main.ps1 一处 + 各域发起 INFO 行；可选 stopwatch 心跳）
-- [ ] ② Chrome 处置（方案 a/b/c 待主人定夺，票内推荐 b：隔离爆炸半径且不弃真机声明收敛）
-- [ ] ③ 上游超越点立项（候选 a/b/c/d 待主人挑；推荐 a 重启续跑——真装机体验差异最大的一处）
+- [x] ① Stage 3 流式输出修复（2026-11-01 LETH 落地：bootstrap-main.ps1 流式管道 + 各域发起 INFO 行写单元数；stopwatch 心跳评估为不必要——逐单元输出已实时可见，源更新窗口 <60s 可接受）
+- [x] ② Chrome 拆独立域 chrome.winget（2026-11-01 主人定夺方案 b；Get-WdcDomains 顺序清单 + 提权表同步，verify 遍历走单一来源自动纳入）
+- [ ] ③a 重启续跑（主人 2026-11-01 全选立项——装机遇 reboot 后 scheduled task 自动续跑，坑14 schtasks 基础设施可复用）
+- [ ] ③b Workloads 工具链子集（同上立项；设计面：哪些工具链、入口命令形态）
+- [ ] ③c AI/GPU 工具链（同上立项；GPU 检测装 PyTorch + Ollama 等，DGX 形态真机验证）
+- [ ] ③d manifest 单一来源驱动（同上立项；工程重构，规模大，建议最后做）
+
+## Comments
+
+- 2026-11-01（LETH 会话，①② 落地与真机验证）：主人批次定夺——Chrome=方案 b 拆独立域、超越点四项全立项。改动四处：`bootstrap-main.ps1` Stage 3 改流式管道（`& winget configure ... 2>&1 | ForEach-Object { Write-Host $_ }`，pwsh7 原生管道逐行流）+ 每域发起前 INFO 行（单元数 + 长域预期）；`cli-tools.winget` 删 Chrome 段（尾段 8 行）+ 注释指向新域；新建 `configs/chrome.winget`（头注释写独立域语义与 Edge/Firefox 兜底）；`common.ps1` Get-WdcDomains 顺序清单加 `chrome`（cli-tools 后）+ Test-WdcDomainNeedsElevation ValidateSet/哈希表加 chrome=$true（机器级包安装）。引用面核查：域清单三件套仅 common.ps1 两处（verify-machine 遍历走 Get-WdcDomains 自动纳入，无漏改）。轻量验证：Get-WdcDomains 返回四域一致 + chrome.winget `configure test` 无漂移。真机验证（`wdc sync` 幂等腿，367s 全绿 exit 0）：INFO 行随发起即时出现（原形态要等域跑完才有下一行）、cli-tools 逐单元流式回显（Zoxide/Bat 等中间输出实时可见）、chrome 域独立亮相 [OK]（Chrome 满足态）、cli-tools 18 单元全绿（Git 2.56.0.windows.4 补装后本域首次不被拖累）、Stage 3 四域全绿 → bootstrap「收敛完成（幂等）」→ sync 退出码 0。③ 四项留票内分批（建议序：③a 续跑 → ③c AI/GPU → ③b Workloads → ③d manifest）。
