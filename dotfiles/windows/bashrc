@@ -48,6 +48,19 @@ export FZF_ALT_C_COMMAND='fd --type d --hidden --follow --exclude .git --exclude
 export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border rounded --info=inline'
 command -v fzf >/dev/null 2>&1 && eval "$(fzf --bash)"
 
+# --- git 原生补全恢复 + gh 补全（限交互 shell——agent 的 bash -lc 会话零税）---
+# fzf 的路径补全顶掉了 git 的子命令/分支补全（实测 complete -p git = _fzf_path_completion，
+# 69 个命令被绑）——在 fzf 之后重挂 git 原生补全，`git co<TAB>` 出分支名；Ctrl-R/T/Alt-C 不受影响。
+# 路径动态探测 ucrt64/mingw64 双形态——Git 2.56 目录迁名（坑17 同族）免疫。
+# gh 补全同段接线（deb 包随 bash-completion 自动，Windows 侧需手动 eval）。
+if [[ $- == *i* ]]; then
+    for _gc in /ucrt64/share/git/completion/git-completion.bash /mingw64/share/git/completion/git-completion.bash; do
+        [ -f "$_gc" ] && . "$_gc" && break
+    done
+    unset _gc
+    command -v gh >/dev/null 2>&1 && eval "$(gh completion -s bash)"
+fi
+
 # --- zoxide: z 命令智能跳目录 ---
 command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init bash)"
 
@@ -66,9 +79,12 @@ wdc() {
 
 # --- dotfiles 漂移即时提示（工单24，ADR-0015 口径）：开新终端即见，零漂移静默（与 pwsh profile 同款）---
 # 信号一「落点漂移」：落点内容 ≠ 模板——bash 无法 dot-source ps1，经一次性 pwsh -NoProfile 读
-#   单一来源映射逐项 hash 比对（~300ms 启动换单源，可接受）；WSL 侧无 pwsh 时静默跳过
+#   单一来源映射逐项 hash 比对（~350ms 启动换单源）；WSL 侧无 pwsh 时静默跳过
 # 信号二「未提交模板编辑」：git porcelain——「改完记得 commit」红线提醒，非误报（工单24 Comments 定性）
-if [ -f "$HOME/.wdc" ]; then
+# 交互守卫 [[ $- == *i* ]]：ZCode 等 agent 会话的宿主 shell 是 Git Bash（bash -lc，非交互）——
+#   每个工具调用孵化一次 pwsh 子进程=0.35s/次的会话税（2026-11-01 实测），banner 对 agent 无用；
+#   真终端打开时照常提醒，agent 侧需要时显式跑 wdc status
+if [[ $- == *i* ]] && [ -f "$HOME/.wdc" ]; then
     _wdc_repo=$(head -n 1 "$HOME/.wdc")
     if [ -f "$_wdc_repo/scripts/lib/dotfiles-map.ps1" ]; then
         if command -v pwsh >/dev/null 2>&1; then

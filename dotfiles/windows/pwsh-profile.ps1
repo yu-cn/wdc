@@ -5,9 +5,9 @@
 $miseCmd = Get-Command mise -ErrorAction SilentlyContinue
 if ($miseCmd) { (& $miseCmd.Source activate pwsh) | Out-String | Invoke-Expression }
 
-# --- PSReadLine：历史去重 + 预测式补全（输出重定向等场景下静默跳过）---
+# --- PSReadLine：历史去重 + 预测式补全 + ListView 可视预测（输出重定向等场景下静默跳过）---
 try {
-    Set-PSReadLineOption -HistoryNoDuplicates -PredictionSource History -EditMode Windows -ErrorAction SilentlyContinue
+    Set-PSReadLineOption -HistoryNoDuplicates -PredictionSource History -PredictionViewStyle ListView -EditMode Windows -ErrorAction SilentlyContinue
 } catch { }
 
 # --- zoxide：z 智能跳目录（与 bash 侧同款）---
@@ -64,6 +64,12 @@ if (Get-Command fzf -ErrorAction SilentlyContinue) {
         }
     } catch { }   # 非交互宿主（脚本/agent 会话）无 PSReadLine 控制台——静默跳过
 }
+
+# --- 原生参数补全（gh/uv 各自发行生成器；存在性守卫 + try/catch 静默降级）---
+# pwsh 无 git 原生补全生态（补全脚本是 bash 系）——PSReadLine 预测已覆盖大头，刻意不补；
+# docker 不在 Windows（家在 WSL，bash-completion 侧已齐）——刻意不补（GLOSSARY「双边最优化」）
+if (Get-Command gh -ErrorAction SilentlyContinue) { try { Invoke-Expression (& gh completion -s powershell | Out-String) } catch { } }
+if (Get-Command uv -ErrorAction SilentlyContinue) { try { Invoke-Expression (& uv generate-shell-completion powershell | Out-String) } catch { } }
 
 # --- starship 提示符（最后初始化；三 shell 共用 ~/.config/starship.toml）---
 if (Get-Command starship -ErrorAction SilentlyContinue) {
