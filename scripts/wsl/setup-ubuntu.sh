@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # setup-ubuntu.sh — WSL 侧薄委托（工单32；LDC-0007 统筹：发行版内一切收敛走 LDC 单一实现）
-# 本脚本只剩 WDC 保留职责的包装层：WSL 生命周期引导（apt 引导依赖 / wsl.conf systemd / 默认 shell）
-# + 身份带过。包/语言栈/dotfiles/验收全部委托姊妹仓库 LDC
-# （clone 到 ~/dev/ldc，仓库步与 ldc sync 同语义）。由 install-wsl-env.ps1 调用，两种角色各跑一次：
-#   root: LDC 引导依赖 → LDC 定位（以默认用户身份）→ 委托 install-packages.sh → WDC opinion
+# 工单41 边界最小核心化后只剩编排者最小面：apt 引导依赖（鸡生蛋：LDC 未 clone 时只有编排者
+# 能装 git）+ LDC 定位 + 身份带过。包/语言栈/dotfiles/机器形态（默认 shell/wsl.conf/docker 组）
+# /验收全部归 LDC 单一实现（clone 到 ~/dev/ldc，仓库步与 ldc sync 同语义）。
+# 由 install-wsl-env.ps1 调用，两种角色各跑一次：
+#   root: apt 引导依赖 → LDC 定位（以默认用户身份）→ 委托 install-packages.sh（LDC_USER 传默认用户，ADR-0007）
 #   user: 身份带过 → LDC 定位 → 委托 bootstrap.sh（root 阶段已核销自动跳过）
 set -euo pipefail
 
@@ -15,15 +16,13 @@ IDENT_SRC="${3:-}"
 # WSL 发行版不继承宿主 env（仅 WSLENV 声明的跨界），CI 判定只能显式传参，不能在发行版内探测
 LDC_SMOKE_REQ="${4:-}"
 # CI 冒烟交界面化开关（工单 02，Windows 侧同路传参）：LDC 本体安装验证让位给 LDC 容器冒烟——
-# 只跑 WDC 保留职责面（wsl.conf systemd / 默认 shell / 身份带过），不 clone LDC、不委托安装/bootstrap
+# 只跑 WDC 最小面（身份带过），不 clone LDC、不委托安装/bootstrap
 SKIP_LDC="${5:-}"
 LDC_URL="https://github.com/yu-cn/ldc.git"
 
 log() { printf '[setup-ubuntu] %s\n' "$*"; }
 
 user_home() { getent passwd "$WDC_USER" | cut -d: -f6; }
-
-systemd_ready() { [ -d /run/systemd/system ]; }
 
 ensure_ldc() {
     # LDC 定位（ADR-0007 契约1；$HOME 必须已是目标用户的 home）：~/dev/ldc 不存在则 clone；
@@ -74,7 +73,7 @@ fi
 
 if [ "$ROLE" = "root" ]; then
     if [ "$SKIP_LDC" = "1" ]; then
-        log "CI 冒烟交界面化（工单 02）：LDC 本体安装验证让位给 LDC 容器冒烟——只跑 WDC 保留职责面"
+        log "CI 冒烟交界面化（工单 02）：LDC 本体安装验证让位给 LDC 容器冒烟——root 最小面无发行版内动作"
     else
         log "LDC 引导依赖（git curl ca-certificates gnupg——clone 与 LDC 厂商 apt 源的前置）"
         export DEBIAN_FRONTEND=noninteractive
@@ -83,33 +82,12 @@ if [ "$ROLE" = "root" ]; then
 
         log "LDC 定位（以 $WDC_USER 身份落 ~/dev/ldc）"
         su -l "$WDC_USER" -c "bash '$0' __ensure_ldc '$WDC_USER'"
-    fi
 
-    log "systemd 自启确保（WDC 保留职责：Docker 守护进程依赖）"
-    if ! grep -q '^systemd=true' /etc/wsl.conf 2>/dev/null; then
-        printf '\n[boot]\nsystemd=true\n' >> /etc/wsl.conf
-        log "已写入 [boot] systemd=true——wsl --shutdown 后下次进入生效"
-    fi
-
-    if [ "$SKIP_LDC" != "1" ]; then
-        # 无 systemd 的中间态（wsl.conf 刚写入未重启）里 systemctl 不可用——透传 LDC_SKIP_DOCKER=1
-        #（LDC 的 root 完成度核销同读此变量，与安装面对齐）；生效后重跑自动补装（幂等）
-        if ! systemd_ready; then
-            log "systemd 未生效（wsl.conf 刚写入的中间态）——透传 LDC_SKIP_DOCKER=1，docker 域待重启后重跑补装"
-            export LDC_SKIP_DOCKER=1
-        fi
-
-        log "root 委托 LDC install-packages.sh（apt 清单/gh/Docker/桌面应用域按机器形态自动 SKIP）"
-        bash "$(user_home)/dev/ldc/scripts/install-packages.sh"
-    fi
-
-    log "WDC opinion · 默认 shell = bash（LDC 未接管 chsh 前保留在包装层；root 改免 PAM）"
-    current_shell=$(getent passwd "$WDC_USER" | cut -d: -f7)
-    [ "$current_shell" = "/bin/bash" ] || chsh -s /bin/bash "$WDC_USER"
-
-    log "WDC opinion · docker 组（LDC 的 usermod 依赖 SUDO_USER，root 直调无此变量——包装层补，幂等）"
-    if getent group docker >/dev/null 2>&1 && ! getent group docker | grep -qw "$WDC_USER"; then
-        usermod -aG docker "$WDC_USER"   # 免 sudo 需重新登录 WSL 生效（工单22）
+        # 工单41：机器形态三件（默认 shell/wsl.conf systemd/docker 组）已随 LDC 工单12 归位
+        # install-packages.sh——root 直调缺 SUDO_USER 由 LDC_USER 契约补（ADR-0007 补记 2026-11-01）；
+        # docker 域的无 systemd 中间态跳过由 LDC docker_skipped() 自判定（本 wrapper 不再透传 env）
+        log "root 委托 LDC install-packages.sh（apt 清单/gh/Docker/桌面应用域/机器形态三件按机器形态自动 SKIP）"
+        LDC_USER="$WDC_USER" bash "$(user_home)/dev/ldc/scripts/install-packages.sh"
     fi
 
     log "root 阶段完成"
@@ -125,10 +103,6 @@ fi
 if [ "$SKIP_LDC" = "1" ]; then
     log "CI 冒烟交界面化（工单 02）：身份带过即止——LDC bootstrap 委托跳过（LDC 本体收敛归 LDC 容器冒烟）"
     exit 0
-fi
-
-if ! systemd_ready; then
-    export LDC_SKIP_DOCKER=1   # 与 root 阶段同判定：bootstrap 的 root 完成度核销才不误报 docker
 fi
 
 # CI 冒烟语境（fresh-machine workflow）：身份刻意占位、永无桌面会话——LDC_SMOKE=1 让 LDC bootstrap

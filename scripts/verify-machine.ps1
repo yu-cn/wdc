@@ -69,16 +69,9 @@ Assert 'uv 就位' { Get-Command uv -ErrorAction SilentlyContinue }
 # WSL 默认用户自动探测（Get-WslDefaultUser；硬编码用户名会误伤默认用户名不同的机器，工单12族）
 $wslUser = Get-WslDefaultUser
 Write-Phase '5/6 · WSL 侧（LDC 委托，工单32/LDC-0007）'
-# WSL 特有项走 scripts/wsl/probe.sh（与安装期 install-wsl-env.ps1 同源，工单05）：默认 shell、systemd——
-# WDC 保留职责（LDC-0007 契约），不随委托移交
-$probeSh = ConvertTo-WslPath (Join-Path $repo 'scripts\wsl\probe.sh')
-$probe = Invoke-WslScript -Distro 'Ubuntu' -User $wslUser -Script $probeSh
-$probeMap = @{}
-foreach ($line in ($probe.Lines | Where-Object { $_ })) { $k, $v = $line -split ':', 2; $probeMap[$k] = $v }
-Write-Step 'WSL 探测' 'INFO' (($probe.Lines | Where-Object { $_ }) -join ' ')
-Assert 'WSL bash 默认' { $probeMap['shell'] -eq '/bin/bash' } 'root 阶段重跑（setup-ubuntu.sh 的 WDC opinion chsh）'
-Assert 'WSL systemd 开启' { $probeMap['systemd'] -eq 'yes' } '/etc/wsl.conf 已写入但未生效——wsl --shutdown 后下次进入生效'
-# 发行版内一切（包/语言栈/dotfiles/身份/docker）委托 LDC verify —— 断言面即 LDC 单一实现（工单32）；
+# 发行版内一切（包/语言栈/dotfiles/身份/docker/机器形态两键）委托 LDC verify —— 断言面即 LDC 单一
+# 实现（工单32）；工单41 边界最小核心化后 WDC 只保留「退出码透传」验收面——probe.sh 的 shell/systemd
+# 两键已随移交转 LDC verify（LDC 工单12，verify-machine.sh 第 6 组），probe.sh 退役
 # CI 冒烟交界面化（工单02）下发行版内 LDC 本体未安装——其收敛验证归 LDC 容器冒烟，此处降级 SKIP
 if ($env:GITHUB_ACTIONS) {
     Write-Step 'WSL LDC verify --quick' 'SKIP' 'CI 交界面化——发行版内 LDC 本体未装，收敛验证归 LDC 容器冒烟（工单02）'
