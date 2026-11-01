@@ -48,4 +48,5 @@
 - 条目由实施会话收口时写入 `[Unreleased]`——**agent 起草、人策展**（2.0.0 自动化指引）；发布（tag + release + Unreleased 摘录成版本节）由主人 explicit 指令触发。
 - 双仓联动变更两仓 CHANGELOG 同批各记一条并互引锚点；**同号同日仅限联动变更**（dev-standard §5）。
 - release notes 四段（本批内容 / 已知事项 / 验证锚点 / 升级方式）由 CHANGELOG 派生——**changelog 是正典记录**，平台生成的 release notes 不回填本文件。
+- **release notes 写读者效果，不写实现考古**（v0.11.0 LDC 版主人批注「写得不好」定夺）：开头一句效果口径的「本批做了什么」；可感变化置顶；存量机影响正面回答——无收敛动作也要明说（v0.10.0 先例）；新出现的行为变化（如默认 shell 收敛）必须进已知事项。函数名/判定细节属 ADR 与工单，笔记只留入口链接。
 - 本文件随 dev-standard 统筹：先改 LDC 侧提交，再同步 WDC 拷贝；漂移由每周 dev-standard-guard 拦截。
