@@ -9,6 +9,8 @@
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-11-01
+
 ### Changed
 - WDC/LDC 边界最小核心化（e8bb745，工单41，GLOSSARY「双边最优化」完整应用；联动 [LDC 工单12](https://github.com/yu-cn/ldc)）——`setup-ubuntu.sh` 撤除最后三件「WDC opinion」（默认 shell / wsl.conf systemd / docker 组，LDC install-packages.sh 机器形态段承接，root 直调缺 SUDO_USER 由 LDC_USER 契约补）；`probe.sh` 退役，shell/systemd 两键断言移交 LDC verify（verify 第 5 组只余「LDC verify 退出码透传」验收面）；`LDC_SKIP_DOCKER` 透传退役改 LDC `docker_skipped()` 自判定（env 保留外部覆盖语义）。dev-standard §46 补澄清句：同号同日仅限联动变更（v0.10.0 锚点回看：双仓零契约联动仍同号同日属过度执行）
 - `wdc sync` 收敛账本快速路径（336d9ad，工单42）：已收敛且声明未变时跳过 bootstrap，424s → 8s 真机实测——bootstrap 全量成功尾部写 `%LOCALAPPDATA%\wdc\converged.json`（账本=HEAD，仅提权上下文记账，ValidateOnly / 非提权 -NoElevate 半量 / 中途失败不写）；sync 读账本 commit==HEAD 且工作区干净 → SKIP bootstrap 仅 verify -Quick；账本缺失/损坏/解析失败、有新 pull、工作区有未提交改动一律回退全量（宁可慢不可假绿）；`wdc sync -Full` 强制全量，help/README 同步
@@ -108,7 +110,8 @@
 ### Added
 - 开源基线（[v0.1.0](https://github.com/yu-cn/wdc/releases/tag/v0.1.0)）：MIT、README 门面化、CONTRIBUTING、fork 跟随指南；裸机入口降门槛（PowerShell 5.1 自举 PowerShell 7）；WSL 侧 Docker Engine 纳入默认；pre-commit 钩子接线 + verify 断言 + dotfiles 漂移即时提示；fresh-machine 手动冒烟工作流
 
-[Unreleased]: https://github.com/yu-cn/wdc/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/yu-cn/wdc/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/yu-cn/wdc/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/yu-cn/wdc/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/yu-cn/wdc/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/yu-cn/wdc/compare/v0.7.0...v0.8.0
