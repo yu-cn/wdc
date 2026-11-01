@@ -14,7 +14,7 @@
 
 ## 开发规范（dev standard）
 
-内部开发规范：`docs/dev-standard.md`（双仓同源拷贝，主作者位在 LDC，LDC 侧 ADR-0012）——分支提交 / 工单 / ADR / 质量关卡 / 版本发布 / 双仓统筹 / 供应链以它为准。
+内部开发规范：`docs/dev-standard.md`（双仓同源拷贝，主作者位在 LDC，LDC 侧 ADR-0012）——分支提交 / 工单 / ADR / 质量关卡 / 版本发布 / 双仓统筹 / 供应链以它为准。CHANGELOG 格式规范：`docs/changelog-standard.md`（Keep a Changelog 2.0.0 中文化改造版，双仓同源拷贝，同批守护）。
 
 ## 协作规矩与已知坑
 

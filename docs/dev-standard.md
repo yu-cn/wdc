@@ -42,7 +42,7 @@
 - semver；v0.x 破坏性变更走 MINOR（semver §4：主版本为零一切皆可变）。
 - **tag 语义 = 发布时验证全绿**：push → CI 全绿（validate 必绿；冒烟面手动触发）→ annotated tag（信息含验证锚点）→ release。
 - release notes 固定四段：**本批内容**（按特性分组、引 ADR）/ **已知事项** / **验证锚点**（本机形态 + CI run id + 跨仓锚点）/ **升级方式**。
-- **CHANGELOG 同步**：release 发布后，将 CHANGELOG.md（Keep a Changelog 2.0.0 格式，规范源钉[英文版](https://keepachangelog.com/en/2.0.0/)——官方简体中文译本尚无 2.0）的 `[Unreleased]` 节摘录为对应版本节（六类型分类、`Breaking:` 标记、compare 链接随发布续写）——面向使用者的要点视图，与 release notes 四段互补（changelog 为正典记录、release notes 由它派生）；条目由实施会话收口时记账，发布由主人定夺（2.0.0 自动化指引：agent 起草、人策展）。
+- **CHANGELOG 同步**：release 发布后，将 CHANGELOG.md（格式规范见 [changelog-standard.md](changelog-standard.md)——Keep a Changelog 2.0.0 中文化改造版）的 `[Unreleased]` 节摘录为对应版本节（六类型分类、`Breaking:` 标记、compare 链接随发布续写）——面向使用者的要点视图，与 release notes 四段互补（changelog 为正典记录、release notes 由它派生）；条目由实施会话收口时记账，发布由主人定夺（2.0.0 自动化指引：agent 起草、人策展）。
 - **双仓版本对齐**：双仓联动变更（委托契约 / 同源规范 / 同值钉子）发版时两仓版本号对齐收口——`[Unreleased]` 同批积压联动变更时，下一版本号取两仓一致，避免同一契约散落在两仓不同版本号（2026-10-26 LDC_TODO 契约实录定规矩）。同号同日仅限联动变更——无契约联动的批次不追齐版本号、各发各的（v0.10.0 锚点回看实录：WDC 功能批 × LDC 治理批零交集仍同号同日，属对齐惯例的过度执行；工单41 定澄清，2026-11-01）。
 - 发布由主人明确指令触发（「发布 vX.Y.Z」）——agent 不得自行 tag / release。
 
