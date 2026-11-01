@@ -5,6 +5,9 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)（显著变更人为记录、分类归档、每个版本可跳转）；版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)（v0.x 阶段破坏性变更走 MINOR）；提交信息遵循 [Conventional Commits](https://www.conventionalcommits.org/zh-hans/v1.0.0/)——feat / fix 驱动版本号。发布动作与验证锚点见各 [release](https://github.com/yu-cn/wdc/releases)。
 
 ## [Unreleased]
+### Changed
+- install-languages 补「mise shims → 用户 PATH」确保步（ensure 型）——vp 安装器对等动作的声明化守卫：非 shell 进程（IDE/agent 的 MCP 插件按裸 node 拉起）依赖全局 node 解析，会话残留 PATH 曾把裸 node 先解析进 vp shim 链致 vp 目录无法清除（ZCode 上下文插件实录）；实测 mise winget 安装器已写入 shims，本步为幂等守卫
+
 
 ## [0.9.0] – 2026-10-31
 

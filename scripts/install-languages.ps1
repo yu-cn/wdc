@@ -46,4 +46,17 @@ if ($LASTEXITCODE -eq 0 -and $nodeV) {
     Write-Step 'node 默认环境' 'FAIL' 'mise exec node 解析失败——重跑本脚本'
     exit 1
 }
+
+# 用户 PATH 注册表确保 mise shims（vp 安装器的对等动作，vp→mise 迁移补齐）：非 shell 进程
+# （如 IDE/agent 的 MCP 插件按裸 node 拉起）依赖全局 node 解析——vp 时代由其安装器写入
+# ~/.vite-plus\bin，mise 无此动作须补（实录：ZCode 上下文插件经会话残留 PATH 解析进 vp
+# shim 链，vp 目录因此无法清除——run 后实录见工单39）
+$shims = Join-Path $env:LOCALAPPDATA 'mise\shims'
+$userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+if (($userPath -split ';') -notcontains $shims) {
+    [Environment]::SetEnvironmentVariable('Path', ($userPath.TrimEnd(';') + ';' + $shims), 'User')
+    Write-Step 'mise shims → 用户 PATH' 'CHANGED' "已写入 $shims"
+} else {
+    Write-Step 'mise shims → 用户 PATH' 'OK' "已在位（$shims）"
+}
 exit 0
