@@ -4,17 +4,17 @@
 
 **Blocked by:** None
 
-**Status:** todo
+**Status:** done
 
-- [ ] ① cli-tools.winget：mise 声明 + 头注释退役
-- [ ] ② install-languages.ps1 重写（mise + node@lts 默认）
-- [ ] ③ lib/common.ps1 vp 助手退役
-- [ ] ④ verify / inventory / install-wsl-env / bootstrap-main 换面
-- [ ] ⑤ pwsh-profile.ps1 换 mise activate
-- [ ] ⑥ vp-version 删除 + .gitattributes 核对
-- [ ] ⑦ VSCode 清单去 vite-plus 扩展包
-- [ ] ⑧ remove-leftovers 增 vp 卸载（迁移冲突通道）
-- [ ] ⑨ dev-standard 拷贝同步（词表去 vp、§6 标注无实例）
+- [x] ① cli-tools.winget：mise 声明 + 头注释退役
+- [x] ② install-languages.ps1 重写（mise + node@lts 默认）
+- [x] ③ lib/common.ps1 vp 助手退役
+- [x] ④ verify / inventory / install-wsl-env / bootstrap-main 换面
+- [x] ⑤ pwsh-profile.ps1 换 mise activate
+- [x] ⑥ vp-version 删除 + .gitattributes 核对
+- [x] ⑦ VSCode 清单去 vite-plus 扩展包
+- [x] ⑧ remove-leftovers 增 vp 卸载（迁移冲突通道）
+- [x] ⑨ dev-standard 拷贝同步（词表去 vp、§6 标注无实例）
 - [x] ⑩ README / demo 重录 / CHANGELOG
 - [x] ⑪ 冒烟幂等基线复核
 - [x] 真机验收（ASUS）+ CI 绿 + v0.9.0 同日发版（联动 LDC 工单10）——release https://github.com/yu-cn/wdc/releases/tag/v0.9.0
@@ -34,3 +34,4 @@
 - 2026-11-01（LETH 会话，v0.9.0 应用）：开工预查发现 vp 布局变体第四种——LETH 双落点 `%LOCALAPPDATA%\vite-plus` + `%APPDATA%\vite-plus`（非 ASUS 的 `~/.vite-plus`），用户 PATH 2 条注入、mise 未装。网络开场即波动：github.com 直连灭 + 代理 26561 无监听（api/codeload 白名单侧通，LETH 形态记忆一致），45s 周期探测 47s 后直连复活，拉 main（落后 17 → v0.9.0）。`wdc sync` 一跑（640s，UAC 经 sudo 内联通过）：Stage 3 [FAIL] Git 升级（`winget configure` 0x8A150006 ShellExecute installer failed: 1——坑 14 会话 bash 占用现场重演，agent 会话宿主即 Git Bash）；Stage 4-7 [OK]——**mise 成功应用**、`AppData\Roaming\vite-plus` 由 bootstrap 直接 [CHANGED] 已删、用户 PATH 2 条注入 [CHANGED] 已清、`AppData\Local\vite-plus` [FAIL] 占用未删（zcode-context 插件 node 进程持 `bin\node.exe`，预期摩擦，优雅降级未炸阶段）；WT settings 等 2 项落点漂移由 Stage 7 重渲染一并收敛。占用处置（任务配方）：Get-CimInstance 圈定 3 进程（bin\node.exe 22444 / vp.exe 43288 / js_runtime node 32384）→ Stop-Process 停树 → `Remove-Item %LOCALAPPDATA%\vite-plus` 即删成功。**与 ASUS 实录差异：LETH 停树删目录后用户 PATH 未再现 vp 写回**（v0.9.0 的 mise shims 确保 + WM_SETTINGCHANGE 广播或已断自愈链，留观察）。`wdc sync` 二跑幂等腿（403s）：Stage 4（1.6s）/ Stage 5（0.8s）零变更，Stage 5 证据——vp 三目录（`~` / Local / Roaming）全 [OK] 不存在 + PATH 无注入；Stage 3 仅剩 Git 单元 [FAIL]（预期）。
 - 2026-11-01（LETH 会话，Git 补装 + 收口自验全绿）：Git 2.56.0.windows.3 → 2.56.0.4 差一档，主人定夺「现在补装」——按坑 14 配方（schtasks ONCE 脱离会话进程树）真机执行，新增两处现场注脚：① Git Bash 发起 schtasks 再遇 MSYS 路径转换吃 `/Create`（`MSYS_NO_PATHCONV=1` 前缀，坑 2 同族）；② 普通 shell 建 /RL HIGHEST 任务报「拒绝访问」→ `sudo schtasks` 内联通过（LETH sudo Enabled=3，UAC 主人放行）。任务脚本内轮询 bash/sh 清零 + 连续 3 个 5s 采样静默后发起 `winget install --id Git.Git --silent --force`：**静默 10s 达成 → winget exit 0 → git 2.56.0.windows.4 实证**。坑 14 第③坎复核：`~/.gitconfig` 在 LETH 为实体文件（ADR-0015 渲染拷贝非符号链接），`git config --system --list` 在位完整——③ 的符号链接触发条件已不存在。收口自验全绿：`wdc verify`（mise=钉子 2026.10.25、uv=钉子 0.13.6，断言面已换 mise）+ WSL 内 `ldc verify --quick` 独立跑全绿 + 新开 bash/pwsh 双 shell `node -v` 均经 `%LOCALAPPDATA%\mise\installs\node\24.22.2` 解析（node@lts）+ 用户 PATH 零 vite-plus 条目。本会话 zcode-context 插件进程随停树停止（预期代价）；观察点：下次 ZCode 启动插件应经 mise shims 解析 node。fss 项目本机无副本（钉版不受影响由 mise 原生保证）。
 - 2026-11-01（LETH 会话，观察点实证收口）：主人重启 ZCode 后核验——zcode-context 插件链 node 进程（2 个）均经 `mise\shims\node.exe` → `installs\node\24.22.2` 解析，vp 三目录零复活、用户 PATH 零条目——**vp 自愈写回链确认已断**（LETH 与 ASUS 实录差异坐实：mise shims 确保步 + WM_SETTINGCHANGE 广播足以断根，无需每次停树），本单在 LETH 侧全项闭环。
+- 2026-11-07（ASUS 会话，补勾账归档）：票面滞后于实收口（§2 纪律残留批）——①–⑨ 随实现提交 6578fef 已全部落地、双机（ASUS/LETH）均已收口（CHANGELOG v0.9.0 逐项对应），本批补勾 + 置终态 + 归档。

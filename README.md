@@ -62,7 +62,7 @@ Node 归 **mise**（默认 `node@lts` 随收敛更新）、Python 归 **uv**—�
 **WSL 侧**（Ubuntu，发行版内一切委托姊妹仓库 [LDC](https://github.com/yu-cn/ldc)——[setup-ubuntu.sh](scripts/wsl/setup-ubuntu.sh) 薄包装，LDC-0007）
 LDC 接管 apt 包 / gh / Docker Engine / uv / mise / Starship / Linux dotfiles（单一实现）；WDC 保留 WSL 生命周期引导（wsl.conf systemd、默认 shell=bash）
 
-**dotfiles**（[dotfiles/](dotfiles/)，渲染拷贝安装（ADR-0015），旧文件备份 `*.bak`）
+**dotfiles**（[dotfiles/](dotfiles/)，渲染拷贝安装（[LDC ADR-0015](https://github.com/yu-cn/ldc/blob/main/docs/adr/0015-copy-render-not-symlink.md)），旧文件备份 `*.bak`）
 gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL bash 三 shell 统一提示符）· Windows Terminal · VS Code settings / keybindings · bashrc（Windows 侧；Linux bashrc 归姊妹仓库 LDC，工单32 起委托接管）
 
 </details>

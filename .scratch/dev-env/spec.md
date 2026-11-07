@@ -1,7 +1,6 @@
 # Spec: WDC 通用开发环境（dev-env）
 
-Status: ready-for-agent
-Date: 2026-10-19
+Date: 2026-10-19（历史快照——主线已随工单 01–40 整体落地并多轮超越，vp/symlink dotfiles/Docker 不默认装/不引入 CI 等多处已随后续 ADR 演进；现行状态以 issues/ 工单流、docs/adr/ 与 README 为准）
 Sources: grill-with-docs 访谈（2026-10-19）· GLOSSARY.md · docs/adr/0001~0003 · docs/research/windowsdeveloperconfig.md
 
 ## Problem Statement

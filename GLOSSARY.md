@@ -58,11 +58,11 @@ _Avoid_: 形式统一、原样移植、双仓同款实现（对齐的是目标�
 _Avoid_: git 凭据（指代不同的东西）
 
 **渲染（render）**:
-bootstrap 把模板内容拷贝到落点的安装方式（ADR-0015）：覆盖前轮转备份 `.bak`/`.bak.N`、同内容幂等跳过、符号链接残形直接替换不备份；模板仍是唯一声明源。渲染账本（`%LOCALAPPDATA%\wdc\rendered.sha256`）判定漂移方向——纯模板更新免 `.bak` 直接重渲染（ADR-0015 补注）。
+bootstrap 把模板内容拷贝到落点的安装方式（[LDC ADR-0015](https://github.com/yu-cn/ldc/blob/main/docs/adr/0015-copy-render-not-symlink.md)）：覆盖前轮转备份 `.bak`/`.bak.N`、同内容幂等跳过、符号链接残形直接替换不备份；模板仍是唯一声明源。渲染账本（`%LOCALAPPDATA%\wdc\rendered.sha256`）判定漂移方向——纯模板更新免 `.bak` 直接重渲染（LDC ADR-0015 补注）。
 _Avoid_: 符号链接安装（旧模型）
 
 **落点内容断言**:
-verify/status 的「落点与模板一致」逐项 hash 比对——断效果不断实现（坑11 教训）；取代旧「dotfiles 与 HEAD 一致（防写穿）」断言（ADR-0015 后退役）。
+verify/status 的「落点与模板一致」逐项 hash 比对——断效果不断实现（坑11 教训）；取代旧「dotfiles 与 HEAD 一致（防写穿）」断言（LDC ADR-0015 后退役）。
 _Avoid_: readlink 断言、防写穿断言（旧模型语义）
 
 **写穿**:

@@ -4,7 +4,7 @@
 
 **Blocked by:** None
 
-**Status:** todo
+**Status:** done
 
 - [x] ① Stage 3 流式输出修复（2026-11-01 LETH 落地：bootstrap-main.ps1 流式管道 + 各域发起 INFO 行写单元数；stopwatch 心跳评估为不必要——逐单元输出已实时可见，源更新窗口 <60s 可接受）
 - [x] ② Chrome 拆独立域 chrome.winget（2026-11-01 主人定夺方案 b；Get-WdcDomains 顺序清单 + 提权表同步，verify 遍历走单一来源自动纳入）
@@ -21,3 +21,4 @@
 - 2026-11-01（LETH 会话，LDC 治理收口批 + 双仓 0.10.0 同步定向）：主人定夺 0.10.0 双仓同步发版——LDC 巡检四候选中 flock/上游跟进/get.sh 钉版/CI 幂等重跑**经核实均已实现**（票未归档致误判，upstream-borrow 还有漏网 04 号票），真实可收面=治理收口批：14 票补 `Status: done` 归档 `done/`（dev-env 01–10、upstream-borrow 01–04、git-free-quickstart 01）+ check-upstream 核销（上游 HEAD fb564611 与基线一致、包无差异）+ dev-standard §2 补「收口即时置终态」纪律（LDC 主笔 a22aeb7、WDC 同源拷贝 5363e81 同批）。本批两连误判教训已随纪律句入档。双仓 0.10.0 内容格局：WDC=功能批（①②③a 核验+shims）、LDC=治理批（工单面统一+上游核销）——同号同日第三次执行。
 - 2026-11-01（LETH 会话，终端错误提示双收口）：主人报 WSL/Windows 两侧终端错误——① Windows 侧 pwsh wrapper 的 gitconfig 漂移提示为重渲染修复前旧终端快照，现状 status 全绿无需动作；② WSL 侧 `-bash: /usr/share/im-config/initializer: No such file or directory` 为实伤：im-config 包卸载后 conffiles 残留（dpkg rc 状态）使 profile.d 钩子 source 不存在文件，登录 shell 必报——`apt purge` 清 im-config 并顺手清同源 rc 残留 6 包（code/google-chrome-stable/ibus/libwrap0/zsh-common，即工单 32「WSL 不装 Linux 桌面软件」裁定清理时的 conffiles 残留），`dpkg -l ^rc` 归零、新开 Ubuntu tab 模拟验证无报错。注：rc 残留清理由机器侧卫生承担，不进 LDC 声明面（错误仅在 conffiles 含 profile.d 钩子时显现，扩展机制属过度工程）。
 - 2026-11-01（LETH 会话，v0.10.0 双仓同号同日发版收口）：主人指令「发布」——WDC 功能批：fresh-machine 冒烟 41267237723 全绿（18 分钟，幂等重跑腿「第二遍零变更」在四域新结构下成立）→ CHANGELOG 收节 99467c0 → validate 41268522615 绿 → tag v0.10.0（锚定 99467c0）→ [release](https://github.com/yu-cn/wdc/releases/tag/v0.10.0)（--latest，四段按版式）。LDC 治理批先行：CHANGELOG 收节 55e6098（WSL 内 commit 钩子全绿 + UNC push——UNC 下 pre-commit 假红实证，commit/push 分离姿势入档）→ validate 41267434881 绿 → tag v0.10.0 → [release](https://github.com/yu-cn/ldc/releases/tag/v0.10.0)。**双仓同号同日第三次执行**。本单全项收口；③b/c/d 排期后移出近期批次（价值分析见上）。
+- 2026-11-07（ASUS 会话，补置终态归档）：票面滞后于实收口（§2 纪律残留批）——①②③a 已随 v0.10.0 发版、上条 Comments 已记「本单全项收口」，本批补置终态 + 归档。③b/c/d 保持未勾（结局已在 Comments：2026-11-01 主人定夺排期后移、立项不撤销——待真实场景出现另立新票，不占 frontier）。
