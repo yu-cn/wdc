@@ -9,6 +9,8 @@
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-11-07
+
 ### Added
 - `wdc upgrade-git` 子命令（工单43，坑14 剧本常态化）——Git.Git useLatest 下 agent 会话（宿主即 Git Bash）内升级必被安装器 in-use 检查拦（四起实录，最近一次 ASUS 11-02 起 5 天收敛滞留）；命令按提权态选形态（未提权经 sudo 登记、UAC 放行）创建 HIGHEST 一次性计划任务跑升级剧本（等会话静默 → winget 升级 → 校验 gitconfig），登记后输出坑14 三件事纪律；bootstrap Stage 3 域失败且含 Git 单元时定向指路该通道。真机首跑即收滞留：2.56.0.windows.3 → .4（任务全程 89 秒，gitconfig 完好）
 
@@ -119,7 +121,8 @@
 ### Added
 - 开源基线（[v0.1.0](https://github.com/yu-cn/wdc/releases/tag/v0.1.0)）：MIT、README 门面化、CONTRIBUTING、fork 跟随指南；裸机入口降门槛（PowerShell 5.1 自举 PowerShell 7）；WSL 侧 Docker Engine 纳入默认；pre-commit 钩子接线 + verify 断言 + dotfiles 漂移即时提示；fresh-machine 手动冒烟工作流
 
-[Unreleased]: https://github.com/yu-cn/wdc/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/yu-cn/wdc/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/yu-cn/wdc/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/yu-cn/wdc/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/yu-cn/wdc/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/yu-cn/wdc/compare/v0.8.0...v0.9.0
