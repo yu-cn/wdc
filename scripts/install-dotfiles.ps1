@@ -3,6 +3,8 @@
 # 职责：身份文件（迁移或占位）+ Windows 侧渲染拷贝。WSL 侧由 WSL 阶段负责（LDC 接管）。
 # 渲染语义（ADR-0015）：落点 = 安装期 Copy-Item，模板仍是唯一声明源——
 #   同内容（hash 相等）幂等跳过；不同内容轮转备份 .bak 后拷贝（机器侧内容绝不静默丢弃）；
+#   备份轮转上限 3 份（.bak 本体 + .bak.1/.bak.2，工单44）——本体永不清，编号系列超出删
+#   mtime 最老并逐项报告（删除可见，不静默）；
 #   落点为符号链接（现役机器的旧安装形态/外来链接）直接 -Force 移除不备份——链接本体可再造，指向内容不受影响。
 # 施工红线（LDC 实录教训，run 40211476066）：「仅首次」类判据一律以产物存在性（Test-Path）为准，
 #   绝不以「落点是不是链接」为判据——渲染后落点恒为实体文件，形态判据会把自家渲染物误当待接管原始文件。
@@ -60,6 +62,15 @@ function Install-Dotfile {
             $bak = Get-BackupPath $Target
             Copy-Item -LiteralPath $Target -Destination $bak
             Write-Step $leaf 'CHANGED' "落点与模板不一致——旧内容已备份 $(Split-Path $bak -Leaf)（可 triage 吸收）"
+            # 备份轮转上限（工单44）：编号系列至多 2 份（连 .bak 本体共 3）——超出删 mtime 最老并报告。
+            # .bak 本体永不清；删除动作可见（ADR-0015「绝不静默丢弃」精神——报告在、行号可查）。
+            $numbered = @(Get-ChildItem -Path "$Target.bak.*" -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime)
+            if ($numbered.Count -gt 2) {
+                $numbered | Select-Object -First ($numbered.Count - 2) | ForEach-Object {
+                    Remove-Item -LiteralPath $_.FullName
+                    Write-Step $leaf 'INFO' "备份轮转上限——已清最老编号备份 $($_.Name)"
+                }
+            }
         }
     }
     Copy-Item -LiteralPath $Source -Destination $Target -Force

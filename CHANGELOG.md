@@ -12,6 +12,9 @@
 ### Added
 - `wdc upgrade-git` 子命令（工单43，坑14 剧本常态化）——Git.Git useLatest 下 agent 会话（宿主即 Git Bash）内升级必被安装器 in-use 检查拦（四起实录，最近一次 ASUS 11-02 起 5 天收敛滞留）；命令按提权态选形态（未提权经 sudo 登记、UAC 放行）创建 HIGHEST 一次性计划任务跑升级剧本（等会话静默 → winget 升级 → 校验 gitconfig），登记后输出坑14 三件事纪律；bootstrap Stage 3 域失败且含 Git 单元时定向指路该通道。真机首跑即收滞留：2.56.0.windows.3 → .4（任务全程 89 秒，gitconfig 完好）
 
+### Changed
+- dotfiles 备份轮转设上限（工单44）：`.bak` 本体 + 编号系列至多 3 份——本体永不清，编号系列超出删 mtime 最老并逐项报告（删除动作可见；ADR-0015「机器侧内容绝不静默丢弃」以「报告在」的形态保持）——此前无限递增，双机长跑攒档
+
 ### Removed
 - 「上游检查」机制退役（主人定夺：wdc 无严格意义上的上游——microsoft/WindowsDeveloperConfig 只是初始构建的参考资源之一，吸收账本 4 条中 3 条出自初始当日、此后零吸收；[ADR-0001 修订标注](docs/adr/0001-own-tree-not-fork-upstream.md)）——`wdc status` 的「距上次检查 >30 天提示补课」提醒撤除；`check-upstream.ps1` 与基线移 `scripts/adhoc/` 留作历史工具；[docs/upstream-ledger.md](docs/upstream-ledger.md) 封卷为血统档案。README/forking.md 的「上游」所指 yu-cn/wdc 本仓（fork 用户视角的真实 fork 关系）不受影响，仓内「上游」词义归一
 
