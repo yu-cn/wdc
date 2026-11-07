@@ -90,14 +90,13 @@ gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL b
 | `pwsh bootstrap.ps1 -ValidateOnly` | 只做无副作用校验（配置 schema + 脚本静态检查） |
 | `pwsh validate.ps1` | 同上的校验入口，独立可用 |
 | `winget configure test --file configs/<域>.winget` | 单域漂移检查（不动机器） |
-| `pwsh scripts/check-upstream.ps1` | 上游 [WindowsDeveloperConfig](https://github.com/microsoft/WindowsDeveloperConfig) 差异报告（吸收与否人工定夺） |
 | `pwsh scripts/install-dotfiles.ps1` | 只重装 dotfiles 渲染拷贝 |
 
 ## 各层职责（ADR-0002）
 
 ```
 configs/    声明式层：按域拆分的 winget configuration（base-windows / cli-tools / editors + 扩展清单）
-scripts/    编排层：bootstrap 入口、语言默认环境（mise）、VSCode 扩展、移除清单、WSL 委托包装、上游检查
+scripts/    编排层：bootstrap 入口、语言默认环境（mise）、VSCode 扩展、移除清单、WSL 委托包装
 dotfiles/   dotfiles 层：windows / shared（wsl 已冻结，Linux 模板归姊妹仓库 LDC），渲染拷贝安装（旧文件备份 *.bak）
 ```
 
@@ -114,12 +113,12 @@ Docker Engine 由 WSL 阶段委托 LDC 从官方源安装（免 sudo 需重新�
 
 1. **协作者授权**：仓库 owner 在 GitHub → Settings → Collaborators 添加该机的 GitHub 账号（或 `gh api repos/<owner>/wdc/collaborators/<用户名> -X PUT`）
 2. **该机上**：`gh auth login` → 按上文「快速开始」走 bootstrap（五步）→ **验收**：`pwsh scripts/verify-machine.ps1`（全绿即与声明一致）
-3. **反向吸收**：该机上跑 `pwsh scripts/inventory-machine.ps1 > .scratch/inventory-<机器名>-<日期>.md`，commit + push 回仓库——环境主人按 ADR-0003 通用核心判据逐项定夺是否吸收进 configs/dotfiles，吸收后在 [docs/upstream-ledger.md](docs/upstream-ledger.md) 记一笔
+3. **反向吸收**：该机上跑 `pwsh scripts/inventory-machine.ps1 > .scratch/inventory-<机器名>-<日期>.md`，commit + push 回仓库——环境主人按 ADR-0003 通用核心判据逐项定夺是否吸收进 configs/dotfiles，吸收后在 [CHANGELOG.md](CHANGELOG.md) 记账
 4. 任何机器的改进直接 push `main`（pre-commit 钩子把关）；工单与决策经 `.scratch/` 在仓库内流转，**机器之间无主从**；个性需求走机器自留地，不进仓库
 
 ## 文档
 
-- 词汇表：[GLOSSARY.md](GLOSSARY.md) · 决策：[docs/adr/](docs/adr/) · 上游调研：[docs/research/](docs/research/) · 吸收账本：[docs/upstream-ledger.md](docs/upstream-ledger.md) · 变更记录：[CHANGELOG.md](CHANGELOG.md)
+- 词汇表：[GLOSSARY.md](GLOSSARY.md) · 决策：[docs/adr/](docs/adr/) · 调研档案：[docs/research/](docs/research/) · 吸收账本（已封卷）：[docs/upstream-ledger.md](docs/upstream-ledger.md) · 变更记录：[CHANGELOG.md](CHANGELOG.md)
 - Fork 跟随：[docs/forking.md](docs/forking.md)（改造成自己环境后如何跟上游演进）
 - 贡献指南：[CONTRIBUTING.md](CONTRIBUTING.md)（fork 自用为主，通用核心改进欢迎 PR）
 - 工单与规格：`.scratch/`（作者的本地 markdown 工单流；外部贡献请走 GitHub Issues/PR）

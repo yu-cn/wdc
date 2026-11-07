@@ -90,7 +90,7 @@ wdc status — 只读快照（秒级，不改任何状态）
   远端差距（fetch 后与 origin/main 的领先/落后）、dotfiles 落点漂移（逐项内容比对，ADR-0015；
   >0 提示 wdc triage，落点缺失则重跑 bootstrap）、
   身份文件是否生效（占位未填则 git 拒绝提交护栏仍在）、WSL/Ubuntu 首跑状态、
-  距上次上游检查天数（>30 天提示补课）、最近一次 bootstrap 判定行。
+  最近一次 bootstrap 判定行。
   裸 wdc 等价于 wdc status。
 '@
     'sync' = @'
@@ -194,17 +194,7 @@ switch ($Command) {
         elseif (-not (Test-WslEnabled)) { Write-Step 'WSL' 'FAIL' '未启用——管理员终端 wsl --install 并重启，然后重跑 bootstrap' }
         elseif ((Get-WslDistros) -notcontains 'Ubuntu') { Write-Step 'WSL' 'FAIL' 'Ubuntu 未装——管理员终端 wsl --install -d Ubuntu，然后重跑 bootstrap' }
         else { Write-Step 'WSL' 'OK' 'Ubuntu 已就位' }
-        # 上游 watch 提醒（工单20）：距上次 check-upstream 超过 30 天提示补课（工单18 定了不做定时巡检，只提醒）
-        $ledger = Join-Path $repo 'docs\upstream-ledger.md'
-        if (Test-Path $ledger) {
-            $last = Select-String -Path $ledger -Pattern '\| (\d{4}-\d{2}-\d{2}) \|' |
-                ForEach-Object { $_.Matches[0].Groups[1].Value } | Sort-Object -Descending | Select-Object -First 1
-            if ($last) {
-                $days = [int]((Get-Date) - [datetime]$last).TotalDays
-                if ($days -gt 30) { Write-Step '上游检查' 'INFO' "距上次 $days 天——跑 scripts/check-upstream.ps1 并记账 docs/upstream-ledger.md" }
-                else { Write-Step '上游检查' 'OK' "距上次 $days 天" }
-            }
-        }
+        # 上游检查提醒已撤（2026-11-07 主人定夺：wdc 无严格意义上的上游，ADR-0001 修订标注；账本封卷）
         $log = Get-LastBootstrapLog
         if ($log) {
             # 判定行落点随流程而异：提权委托流的七阶段汇总在 elevated-*.log 收尾（工单19），-NoElevate 流在主日志

@@ -9,6 +9,9 @@
 
 ## [Unreleased]
 
+### Removed
+- 「上游检查」机制退役（主人定夺：wdc 无严格意义上的上游——microsoft/WindowsDeveloperConfig 只是初始构建的参考资源之一，吸收账本 4 条中 3 条出自初始当日、此后零吸收；[ADR-0001 修订标注](docs/adr/0001-own-tree-not-fork-upstream.md)）——`wdc status` 的「距上次检查 >30 天提示补课」提醒撤除；`check-upstream.ps1` 与基线移 `scripts/adhoc/` 留作历史工具；[docs/upstream-ledger.md](docs/upstream-ledger.md) 封卷为血统档案。README/forking.md 的「上游」所指 yu-cn/wdc 本仓（fork 用户视角的真实 fork 关系）不受影响，仓内「上游」词义归一
+
 ## [0.11.0] - 2026-11-01
 
 ### Changed

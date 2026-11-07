@@ -20,7 +20,6 @@ git merge wdc/main          # 或收敛到已知好点：git merge wdc/v0.1.0
 
 - `scripts/` 机制层：基本不冲突；上游改 bug/行为时倾向收上游
 - `configs/` 与 `dotfiles/` 偏好层：冲突即你们的喜好分叉，倾向保留你的
-- `wdc status` 的「上游检查」提醒读的是上游作者的吸收账本，fork 用户可无视
 
 ## 版本锚点
 
