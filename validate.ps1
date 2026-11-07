@@ -91,6 +91,21 @@ foreach ($f in $scriptFiles) {
     }
 }
 
+# --- 2.5 CLI parity 契约断言（cli-ux 工单07）：实现命令表 == docs/cli-parity.md 契约注释行 ---
+# 双仓同源契约（主作者位 LDC）由 dev-standard-guard 周检文件一致性；本断言把「改实现忘改契约」提前到提交时
+$wdcScriptPath = Join-Path $PSScriptRoot 'scripts\wdc.ps1'
+$parityDocPath = Join-Path $PSScriptRoot 'docs\cli-parity.md'
+$mImpl = [regex]::Match((Get-Content $wdcScriptPath -Raw), '(?m)^\s*\$wdcCommands\s*=\s*(.+?)\s*$')
+$implCmds = @([regex]::Matches($mImpl.Groups[1].Value, "'([^']+)'") | ForEach-Object { $_.Groups[1].Value })
+$mContract = [regex]::Match((Get-Content $parityDocPath -Raw), '(?m)^<!-- wdc-commands: (.+?) -->\s*$')
+$contractCmds = @($mContract.Groups[1].Value -split '\s+' | Where-Object { $_ })
+if ($mImpl.Success -and $mContract.Success -and ($implCmds -join ' ') -eq ($contractCmds -join ' ')) {
+    Write-Step 'CLI parity 契约（wdc 命令表）' 'OK' ($implCmds -join ' ')
+} else {
+    Write-Step 'CLI parity 契约（wdc 命令表）' 'FAIL' ("实现「$($implCmds -join ' ')」≠ 契约「$($contractCmds -join ' ')」——改实现须同批改 docs/cli-parity.md（主作者位 LDC，双仓同源拷贝）")
+    $failCount++
+}
+
 # --- 3. bash 脚本静态检查（WSL shellcheck，工单34）---
 # bash -n 只保语法，shellcheck 才抓语义坑（工单32 实录：rev-list 输出 TAB 分隔被按空格切分，bash -n 全绿放行）。
 # 关卡设在 WSL 侧（shellcheck 由 LDC cli-tools.pkg 装进发行版）：无 WSL/Ubuntu（CI runner）或

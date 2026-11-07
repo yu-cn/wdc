@@ -1,5 +1,5 @@
 name: dev-standard-guard
-# 双仓同源拷贝守护（工单38 起；dev-standard 与 changelog-standard 均主作者位在 LDC）：每周拉姊妹仓 LDC 的同源文件，去 CR 归一后
+# 双仓同源拷贝守护（工单38 起；dev-standard、changelog-standard 与 cli-parity 均主作者位在 LDC）：每周拉姊妹仓 LDC 的同源文件，去 CR 归一后
 # 逐字比对——漂移即红（典型成因：改了 LDC 侧规范忘了同步 WDC 拷贝）。刻意不挂 push 触发：双仓协同编辑
 # 必有先后，push 时触发必产瞬时红污染 badge；漂移窗口 ≤7 天足够（成因是忘同步，非紧急事故）。手动 dispatch 随时可用。
 on:
@@ -15,7 +15,7 @@ jobs:
       - name: 拉姊妹仓同源文件归一比对
         run: |
           fail=0
-          for f in docs/dev-standard.md docs/changelog-standard.md; do
+          for f in docs/dev-standard.md docs/changelog-standard.md docs/cli-parity.md; do
             curl -fsSL -o /tmp/sibling.md "https://raw.githubusercontent.com/yu-cn/ldc/main/$f"
             if diff <(tr -d '\r' < "$f") <(tr -d '\r' < /tmp/sibling.md) >/tmp/diff.out; then
               echo "同源拷贝一致：$f（与 yu-cn/ldc main）"

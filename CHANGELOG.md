@@ -9,6 +9,19 @@
 
 ## [Unreleased]
 
+### Added
+- `wdc status -Json` 机器可读出口（cli-ux 工单02，联动 LDC 同批 `--json`）：单行紧凑 JSON（`repo/dotfiles/identity/wsl/last_bootstrap/hints`，键口径与 ldc 对齐）；status 分支重构为先算后印，人读输出与 JSON 出口共用同一批判定。pwsh 绑定器把 `--json` 当未知参数拒绝（实测）——正典旗标 `-Json`，pwsh/Git Bash 包装层把 `--json` 归一转发，人机两面等价
+- `wdc plan` 干跑预演（cli-ux 工单03，对齐 ldc plan）：只读零变更投影重跑 wdc sync 会做什么——仓库三态（将拉取 N 提交 / 将中止交人工 / 一致）、bootstrap 走全量还是快速路径（=会不会弹 UAC、分钟级还是秒级）及原因、verify 收尾口径；恒 exit 0（预演不是断言）。安装面逐项投影为后续票
+- wdc 子命令 Tab 补全（cli-ux 工单05，联动 LDC 同批）：pwsh `Register-ArgumentCompleter` + Git Bash `complete -F`，词表解析自 wdc.ps1 的 `$wdcCommands` 行单一来源（纯文本解析零子进程）——改词表一处生效，shell 配置不抄列表
+- `docs/cli-parity.md` 双仓 CLI parity 契约（cli-ux 工单07，主作者位 LDC，双仓同源拷贝）：命令表（含旗标与退出码）+ 共用 UX 约定；dev-standard-guard 周检循环纳入本文件，validate 加「实现命令表 == 契约注释行」断言——改实现忘改契约提交即红
+
+### Changed
+- wdc 的 `git fetch` 有界禁交互（cli-ux 工单01，对齐 ldc 既有防护）：status 5s / sync 10s 进程级硬超时 + `GIT_TERMINAL_PROMPT=0` + `GCM_INTERACTIVE=never`——坏网络不再挂起「秒级快照」，凭据过期 GCM 弹 GUI 在 agent 会话无提示挂死的面封死；status 未达降级按缓存判读，sync fetch 失败即中止不盲同步
+- 子命令后接 `-h/--help` 出该命令详解（cli-ux 工单04）：原显示总览；裸 `wdc -h` 仍出总览（PSBoundParameters 守卫缺省值）
+- 子命令表单一来源化（cli-ux 工单04）：未知命令与「没有单独的帮助」报错文案由 `$wdcCommands` 动态拼（原手抄四处、两处互不一致）；`$wdcCommands` 词序对齐契约文件
+- `wdc sync` 收尾 BEL 提示（cli-ux 工单06，联动 LDC 同批）：bootstrap 失败与最终汇总两路收尾都响——分钟级长操作切走窗口结束有感知
+- Write-Step 状态词表补 `PLAN`（Magenta）——plan 投影的「将变更」口径，对齐 ldc pstep
+
 ## [0.12.0] - 2026-11-07
 
 ### Added
