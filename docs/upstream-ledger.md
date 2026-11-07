@@ -1,6 +1,6 @@
 # 上游吸收账本（ADR-0001 补充）
 
-> **封卷（2026-11-07，[ADR-0001 修订标注](./adr/0001-own-tree-not-fork-upstream.md)）**：主人定夺 wdc 无严格意义上的上游——WindowsDeveloperConfig 只是初始构建的参考资源之一，无持续关注/移植的跟随义务。本账本转为血统档案（下表历史记录保留），不再续记；check-upstream 移 `scripts/adhoc/` 留作历史工具。
+> **封卷（2026-11-07，[ADR-0001 修订标注](./adr/0001-own-tree-not-fork-upstream.md)）**：主人定夺 wdc 无严格意义上的上游——WindowsDeveloperConfig 只是初始构建的参考资源之一，无持续关注/移植的跟随义务。本账本转为血统档案（下表历史记录保留），不再续记；check-upstream 移 `scripts/adhoc/` 留作历史工具。封卷当日封口实证：上游 11-06 演进（e4921dde）唯一包差异为新增 PHP.PHP.8.5——与本仓声明面无关，「无跟随义务」即时得到现实验证（基线保持 fb564611 原样存档）。
 
 记录每次对 microsoft/WindowsDeveloperConfig 的检查与吸收。基线的机器可读版本在 [upstream-baseline.json](./upstream-baseline.json)，由 `scripts/adhoc/check-upstream.ps1 -UpdateBaseline` 维护。
 
