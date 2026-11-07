@@ -31,7 +31,7 @@ try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { }
 . (Join-Path $PSScriptRoot 'lib/common.ps1')
 . (Join-Path $PSScriptRoot 'lib/dotfiles-map.ps1')
 
-$wdcCommands = 'sync', 'status', 'verify', 'triage', 'audit', 'log', 'help', 'version'
+$wdcCommands = 'sync', 'status', 'verify', 'triage', 'audit', 'upgrade-git', 'log', 'help', 'version'
 
 # --- 子命令校验在仓库定位之前（工单29）：help/version 与友好报错不依赖 ~/.wdc 指针 ---
 $script:SelfRepo = Split-Path $PSScriptRoot -Parent
@@ -79,6 +79,7 @@ wdc — WDC 开发环境一键工具（裸命令只读快照；仓库在 ~/.wdc 
   wdc verify [-Full]   机器断言（默认 -Quick；-Full 含三域漂移约 3 分钟）
   wdc triage           dotfiles 落点漂移分流（逐文件 吸收/还原，交互式）
   wdc audit            winget 清单准入对账（只读恒 exit 0：已声明未装 / 自装未声明）
+  wdc upgrade-git      Git for Windows 升级专用通道（坑14：会话内必被 in-use 拦——计划任务脱离进程树）
   wdc log [-Lines N]   最近一次 bootstrap 日志尾部（默认 40 行）
   wdc help [命令]      本总览或单命令详解（-h/--help 同义）
   wdc version          版本（-v/--version 同义）
@@ -118,6 +119,15 @@ wdc audit — winget 清单准入对账（只读恒 exit 0）
 ② 自装未声明（清单准入候选，Windows 侧噪声大——首版 INFO 计数 + 头部样例）。
 这是对账报告不是断言——机器自装面属机器自留地（ADR-0003），只报不裁。
 '@
+    'upgrade-git' = @'
+wdc upgrade-git — Git for Windows 升级专用通道（坑14，工单43）
+  Git.Git 声明 useLatest：出新版后全量收敛即试图升级，而 agent 会话宿主即 Git Bash，
+  安装器 in-use 检查必拦（/FORCECLOSEAPPLICATIONS 无效）→ Stage 3 cli-tools 域 FAIL。
+  本命令登记 HIGHEST 一次性计划任务（2 分钟后起跑）执行 scripts/adhoc/git-upgrade-task.ps1：
+  先等本会话 bash/sh 清零且连续 3×5s 静默 → winget 升级 → 校验/还原 etc\gitconfig（坑14③）。
+  未提权会话经 sudo 登记（UAC 弹窗请放行）；完成后 git --version 验证、wdc sync 恢复收敛；
+  进度/排障日志：scripts/adhoc/git-upgrade-schtasks.log。
+'@
     'log' = @'
 wdc log [-Lines N] — 最近一次 bootstrap 日志尾部（默认 40 行）
   正常汇总在 logs/bootstrap-*.log，提权子回合七阶段明细在 logs/elevated-*.log——两条一起展示。
@@ -128,7 +138,7 @@ function Show-WdcHelp([string]$topic) {
     if ($topic -and $helpDetail.ContainsKey($topic)) {
         Write-Host $helpDetail[$topic]
     } elseif ($topic) {
-        Write-Host "wdc: 「$topic」没有单独的帮助（可用：sync / status / verify / triage / audit / log）" -ForegroundColor Yellow
+        Write-Host "wdc: 「$topic」没有单独的帮助（可用：sync / status / verify / triage / audit / upgrade-git / log）" -ForegroundColor Yellow
         Write-Host $helpOverview
     } else {
         Write-Host $helpOverview
@@ -145,7 +155,7 @@ if ($Help -or $Command -in 'help', '-h', '--help') {
 }
 if ($Command -notin $wdcCommands) {
     $sug = Get-WdcCommandSuggestion $Command
-    Write-Host "wdc: 未知子命令「$Command」（可用：sync / status / verify / triage / audit / log / help / version）" -ForegroundColor Yellow
+    Write-Host "wdc: 未知子命令「$Command」（可用：sync / status / verify / triage / audit / upgrade-git / log / help / version）" -ForegroundColor Yellow
     if ($sug) { Write-Host "wdc: 你是想输「$sug」吗？" -ForegroundColor Yellow }
     Write-Host $helpOverview
     exit 1
@@ -226,6 +236,25 @@ switch ($Command) {
     'audit' {
         & pwsh -NoProfile -File (Join-Path $repo 'scripts\audit-machine.ps1')
         exit $LASTEXITCODE
+    }
+
+    'upgrade-git' {
+        # 坑14 通道（工单43）：agent 会话宿主即 Git Bash——安装器 in-use 检查必拦直接升级，
+        # 走 HIGHEST 一次性计划任务脱离会话进程树；剧本本体 scripts/adhoc/git-upgrade-task.ps1
+        Write-Phase 'wdc upgrade-git · Git for Windows 升级（坑14 计划任务通道）'
+        $creator = Join-Path $repo 'scripts\adhoc\git-upgrade-task-creator.ps1'
+        if (-not (Test-Path $creator)) { Write-Step '创建器' 'FAIL' "未找到 $creator"; exit 1 }
+        $viaSudo = -not (Test-IsElevated)
+        if ($viaSudo) { Write-Step '提权' 'INFO' '本会话未提权——经 sudo 登记任务，UAC 弹窗请放行' }
+        $cArgs = @(); if ($viaSudo) { $cArgs += '-ViaSudo' }
+        & pwsh -NoProfile -File $creator @cArgs
+        if ($LASTEXITCODE -ne 0) { Write-Step '登记' 'FAIL' '任务登记未成（见上）'; exit 1 }
+        Write-Step '登记' 'OK' '任务已建（2 分钟后起跑）——接下来三件事：'
+        Write-Host '  1. 本会话/终端停手：任务先等 bash/sh 进程清零且连续 3×5s 静默才发起升级（发起即无需再守）'
+        Write-Host '  2. UAC 与安装器弹窗由你放行（--silent 仍可能弹交互向导，点 OK 即可——坑14 附注）'
+        Write-Host '  3. 完成后验证：git --version 出新版本号；wdc sync 恢复收敛（cli-tools 域回绿）'
+        Write-Step '日志' 'INFO' (Join-Path $repo 'scripts\adhoc\git-upgrade-schtasks.log')
+        exit 0
     }
 
     'log' {

@@ -152,11 +152,18 @@ $null = Invoke-Stage 'Stage 3/7 - Apply 应用声明配置' {
         if (-not (Test-Path $file)) { Write-Step $domain 'SKIP' '尚未创建（后续工单）'; continue }
         $units = @(Select-String -Path $file -Pattern '^- type: ').Count
         Write-Step $domain 'INFO' "winget configure 应用中（$units 单元，长域可达 5–10 分钟）——逐单元流式输出见下（工单40：原整域收完回放致 base-windows 后长静默）"
+        $unitOut = [System.Collections.Generic.List[string]]::new()
         & winget configure --file $file --accept-configuration-agreements --disable-interactivity 2>&1 |
-            ForEach-Object { Write-Host $_ }
+            ForEach-Object { Write-Host $_; $unitOut.Add([string]$_) }
         $code = $LASTEXITCODE
         if (Test-WingetExitCode -ExitCode $code -Operation 'configure') { Write-Step $domain 'OK' }
-        else { Write-Step $domain 'FAIL' "winget configure 退出码 $code"; $allOk = $false }
+        else {
+            Write-Step $domain 'FAIL' "winget configure 退出码 $code"; $allOk = $false
+            # Git 单元定向提示（工单43）：agent 会话宿主即 Git Bash，安装器 in-use 检查必拦（坑14）——指路专用通道
+            if (($unitOut -join "`n") -match '\[Git\]') {
+                Write-Step $domain 'INFO' '失败含 Git 单元——会话内直接升级必被 in-use 检查拦（坑14）；专用通道：wdc upgrade-git（计划任务脱离会话进程树）'
+            }
+        }
     }
     return $allOk
 }
