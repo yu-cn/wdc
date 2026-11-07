@@ -4,11 +4,12 @@
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** ready-for-human
 
-- [ ] ① LETH 会话跑 inventory 存档 + commit + push
+- [x] ① LETH 会话跑 inventory 存档 + commit + push
 - [ ] ② 主人对账定夺（audit 自装面 vs ADR-0003 判据）；吸收项进 configs/dotfiles 并 CHANGELOG 记账
 
 ## Comments
 
 - 2026-11-07（ASUS 会话，开单）：同批刷新了 ASUS 存档（inventory-ASUS-20261107.md，149 行，Git 2.56.0.4 后状态）+ audit 对账：已声明未装零项（声明面全核销）、自装未声明 53 项候选已报主人（倾向全部维持机器自留地：Typora 系红线自留、Lark/PotPlayer/ExpressVPN 属个人软件、7zip/eza/FFmpeg 等非「新机 bootstrap 即必备」）。
+- 2026-11-07（LETH 会话，① 完成）：`pwsh scripts/inventory-machine.ps1` 清点 153 行存档 `.scratch/inventory-LETH-20261107.md`（UTF-8，Git 2.56.0.4 后状态），commit 3e2157b 已 push（pre-commit validate 全绿）。当日背景：LETH 同会话完成 v0.13.0 双仓更新+验证（详见会话实录；mise winget 单元受 agent shim 锁结构性欠账、uv 双装 `.local/bin` 遮蔽 winget 版为已知 triage 候选——对账 ② 时可并入考量）。
