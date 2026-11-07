@@ -6,13 +6,16 @@
 #   裸命令不触发同步——长操作/改状态一律显式子命令；裸 wdc 给只读快照并提示下一步。
 # 用法：
 #   wdc | wdc status    只读快照（秒级）：与 origin/main 差距 / dotfiles 落点漂移 / 身份与 WSL 首跑状态 / 最近 bootstrap 结果
+#                       -Json 出单行机器可读出口（包装层把 --json 归一为 -Json）
+#   wdc plan            干跑预演（只读零变更）：重跑 wdc sync 会做什么——UAC/重跑前先看一眼
 #   wdc sync [-Full]    同步收敛：fetch → 落后则 pull（--ff-only）→ bootstrap → verify -Quick 收尾（会请求一次 UAC）；
 #                       已收敛且声明未变走快速路径跳过 bootstrap（秒级）；-Full 强制全量
 #   wdc verify [-Full]  机器断言；默认 -Quick 秒级，-Full 含三域漂移（约 3 分钟）
 #   wdc triage          dotfiles 落点漂移分流（工单 17 工具入口，交互式；ADR-0015 口径）
 #   wdc log [-Lines N]  最近一次 bootstrap 日志尾部（默认 40 行，连带提权子回合日志）
-#   wdc help [命令]     总览或单命令详解；-h/--help 同义
+#   wdc help [命令]     总览或单命令详解；-h/--help 同义；子命令后接 -h 出该命令详解
 #   wdc version         版本（git describe）；-v/--version 同义
+# 退出码：0 成功 · 1 失败 · 3 收敛锁占用（sync）
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
@@ -24,6 +27,7 @@ param(
     [Alias('v')]
     [switch]$Version,
     [switch]$Full,
+    [switch]$Json,
     [int]$Lines = 40
 )
 $ErrorActionPreference = 'Stop'
@@ -31,7 +35,9 @@ try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { }
 . (Join-Path $PSScriptRoot 'lib/common.ps1')
 . (Join-Path $PSScriptRoot 'lib/dotfiles-map.ps1')
 
-$wdcCommands = 'sync', 'status', 'verify', 'triage', 'audit', 'upgrade-git', 'log', 'help', 'version'
+$wdcCommands = 'status', 'sync', 'verify', 'plan', 'triage', 'audit', 'upgrade-git', 'log', 'help', 'version'
+# 报错/提示文案的命令列表一律由 $wdcCommands 动态拼（cli-ux 工单04：加命令只改这一处）
+$wdcCommandsDetail = @($wdcCommands | Where-Object { $_ -notin 'help', 'version' })
 
 # --- 子命令校验在仓库定位之前（工单29）：help/version 与友好报错不依赖 ~/.wdc 指针 ---
 $script:SelfRepo = Split-Path $PSScriptRoot -Parent
@@ -70,10 +76,35 @@ function Get-WdcCommandSuggestion {
     return $best
 }
 
+function Invoke-WdcFetchBounded {
+    # 有界、禁交互的 git fetch（cli-ux 工单01，对齐 ldc 的 timeout+GIT_TERMINAL_PROMPT 口径）：
+    # 进程级硬超时——pwsh 无 timeout(1)，Wait-WdcProcess 是轮询壳，这里直接 WaitForExit(ms)；
+    # 子进程环境注入 GIT_TERMINAL_PROMPT=0 + GCM_INTERACTIVE=never：凭据过期时 GCM 弹 GUI 等待，
+    # 在 agent 会话里即无提示挂死。fetch 只读可安全 kill；Kill($true) 连 gcm 子进程一起收
+    param(
+        [Parameter(Mandatory)][string]$Repo,
+        [Parameter(Mandatory)][ValidateRange(1, 600)][int]$TimeoutSec
+    )
+    $psi = [System.Diagnostics.ProcessStartInfo]::new()
+    $psi.FileName = 'git'
+    $psi.Arguments = "-C `"$Repo`" fetch --quiet"
+    $psi.UseShellExecute = $false
+    $psi.EnvironmentVariables['GIT_TERMINAL_PROMPT'] = '0'
+    $psi.EnvironmentVariables['GCM_INTERACTIVE'] = 'never'
+    $p = [System.Diagnostics.Process]::Start($psi)
+    if (-not $p.WaitForExit($TimeoutSec * 1000)) {
+        try { $p.Kill($true) } catch { try { $p.Kill() } catch { } }
+        return $false
+    }
+    return ($p.ExitCode -eq 0)
+}
+
 $helpOverview = @'
 wdc — WDC 开发环境一键工具（裸命令只读快照；仓库在 ~/.wdc 指向的路径）
 
-  wdc | wdc status     只读快照（秒级）：远端差距 / dotfiles 漂移 / 身份与 WSL / 最近 bootstrap
+  wdc | wdc status     只读快照（秒级）：远端差距 / dotfiles 漂移 / 身份与 WSL / 最近 bootstrap；
+                       -Json 出单行机器可读出口（包装层把 --json 归一为 -Json）
+  wdc plan             干跑预演（只读零变更）：重跑 wdc sync 会做什么——UAC/重跑前先看一眼
   wdc sync [-Full]     同步收敛：fetch → pull → bootstrap → verify -Quick（会请求一次 UAC）；
                        已收敛且声明未变走快速路径跳过 bootstrap（秒级），-Full 强制全量
   wdc verify [-Full]   机器断言（默认 -Quick；-Full 含三域漂移约 3 分钟）
@@ -81,8 +112,10 @@ wdc — WDC 开发环境一键工具（裸命令只读快照；仓库在 ~/.wdc 
   wdc audit            winget 清单准入对账（只读恒 exit 0：已声明未装 / 自装未声明）
   wdc upgrade-git      Git for Windows 升级专用通道（坑14：会话内必被 in-use 拦——计划任务脱离进程树）
   wdc log [-Lines N]   最近一次 bootstrap 日志尾部（默认 40 行）
-  wdc help [命令]      本总览或单命令详解（-h/--help 同义）
+  wdc help [命令]      本总览或单命令详解（-h/--help 同义；子命令后接 -h 出该命令详解）
   wdc version          版本（-v/--version 同义）
+
+  退出码：0 成功 · 1 失败 · 3 收敛锁占用（sync）
 '@
 
 $helpDetail = @{
@@ -92,7 +125,15 @@ wdc status — 只读快照（秒级，不改任何状态）
   >0 提示 wdc triage，落点缺失则重跑 bootstrap）、
   身份文件是否生效（占位未填则 git 拒绝提交护栏仍在）、WSL/Ubuntu 首跑状态、
   最近一次 bootstrap 判定行。
-  裸 wdc 等价于 wdc status。
+  裸 wdc 等价于 wdc status。-Json 出单行机器可读出口（agent 判定不 scrape 颜色文本；
+  包装层把 --json 归一为 -Json——pwsh 绑定器不收 --json）。
+'@
+    'plan' = @'
+wdc plan — 干跑预演（只读，零变更）
+  投影重跑 wdc sync 会做什么：仓库三态（一致 OK / 落后将拉取 N 提交 / 领先或分叉将中止交人工）、
+  bootstrap 走全量还是快速路径（=会不会弹 UAC、约分钟级还是秒级）及原因、verify 收尾口径。
+  UAC/重跑前先看一眼再决定。安装面逐项投影（ldc plan-machine 同款）为后续票——
+  三域漂移详查 wdc verify -Full，dotfiles 漂移分流 wdc triage。恒 exit 0（预演不是断言）。
 '@
     'sync' = @'
 wdc sync [-Full] — 同步收敛（日常一键；会请求一次 UAC）
@@ -138,7 +179,7 @@ function Show-WdcHelp([string]$topic) {
     if ($topic -and $helpDetail.ContainsKey($topic)) {
         Write-Host $helpDetail[$topic]
     } elseif ($topic) {
-        Write-Host "wdc: 「$topic」没有单独的帮助（可用：sync / status / verify / triage / audit / upgrade-git / log）" -ForegroundColor Yellow
+        Write-Host ("wdc: 「$topic」没有单独的帮助（可用：" + ($wdcCommandsDetail -join ' / ') + '）') -ForegroundColor Yellow
         Write-Host $helpOverview
     } else {
         Write-Host $helpOverview
@@ -150,12 +191,16 @@ if ($Version -or $Command -in 'version', '-v', '--version') {
     exit 0
 }
 if ($Help -or $Command -in 'help', '-h', '--help') {
-    Show-WdcHelp $Topic
+    # 子命令 + -h 落单命令详解（cli-ux 工单04）：显式传了子命令且未给 topic → 按该子命令出详解；
+    # 裸 `wdc -h` 的 $Command 是缺省值 status（非用户输入，PSBoundParameters 守卫）→ 仍出总览
+    $topic = $Topic
+    if (-not $topic -and $PSBoundParameters.ContainsKey('Command') -and $Command -notin 'help', '-h', '--help') { $topic = $Command }
+    Show-WdcHelp $topic
     exit 0
 }
 if ($Command -notin $wdcCommands) {
     $sug = Get-WdcCommandSuggestion $Command
-    Write-Host "wdc: 未知子命令「$Command」（可用：sync / status / verify / triage / audit / upgrade-git / log / help / version）" -ForegroundColor Yellow
+    Write-Host ("wdc: 未知子命令「$Command」（可用：" + ($wdcCommands -join ' / ') + '）') -ForegroundColor Yellow
     if ($sug) { Write-Host "wdc: 你是想输「$sug」吗？" -ForegroundColor Yellow }
     Write-Host $helpOverview
     exit 1
@@ -189,22 +234,29 @@ function Get-AheadBehind {
 
 switch ($Command) {
     'status' {
-        Write-Phase 'wdc status · 只读快照'
-        git -C $repo fetch --quiet
+        # 先算后印（cli-ux 工单02）：人读 step 序列与 -Json 单行出口共用同一批判定，防两路口径漂移
+        $repoState = 'ok'
+        if (-not (Invoke-WdcFetchBounded -Repo $repo -TimeoutSec 5)) {
+            # fetch 未达（超时/断网/禁交互拒绝）：按本地缓存的 origin/main 判读（对齐 ldc 口径）
+            $repoState = 'fetch-unreachable'
+        }
         $ab = Get-AheadBehind
-        if ($ab[0] -eq 0 -and $ab[1] -eq 0) { Write-Step '仓库' 'OK' '与 origin/main 一致' }
-        else { Write-Step '仓库' 'INFO' "领先 $($ab[0]) / 落后 $($ab[1])——wdc sync 同步之" }
+        $ahead = $ab[0]; $behind = $ab[1]
+        if ($repoState -eq 'ok') {
+            if ($ahead -gt 0 -and $behind -gt 0) { $repoState = 'diverged' }
+            elseif ($ahead -gt 0) { $repoState = 'ahead' }
+            elseif ($behind -gt 0) { $repoState = 'behind' }
+        }
         $drift = @(Get-DotfilesMap | Where-Object { (Test-DotfileInSync -Source (Join-Path (Join-Path $repo 'dotfiles') $_.Source) -Target $_.Target) -ne 'ok' })
-        if ($drift.Count -eq 0) { Write-Step 'dotfiles 漂移' 'OK' '全部落点与模板一致' }
-        else { Write-Step 'dotfiles 漂移' 'FAIL' "$($drift.Count) 项落点与模板不一致——wdc triage 分流（缺失落点重跑 bootstrap）" }
+        $driftNames = @($drift | ForEach-Object { $_.Source })
         # 首跑两件手工事的状态可见（工单29）：身份占位未填则「拒提交」护栏仍在；WSL 未启用/Ubuntu 未装则收敛未完成
-        if (Test-GitIdentityEffective) { Write-Step '身份文件' 'OK' 'name/email 经 include 生效' }
-        else { Write-Step '身份文件' 'FAIL' '未填写——编辑 ~/.gitidentity（占位已生成）；不填则 git 拒绝提交' }
-        if (Test-IsElevated) { Write-Step 'WSL' 'SKIP' '提权上下文保守跳过探测（坑①）——普通终端再跑 wdc status' }
-        elseif (-not (Test-WslEnabled)) { Write-Step 'WSL' 'FAIL' '未启用——管理员终端 wsl --install 并重启，然后重跑 bootstrap' }
-        elseif ((Get-WslDistros) -notcontains 'Ubuntu') { Write-Step 'WSL' 'FAIL' 'Ubuntu 未装——管理员终端 wsl --install -d Ubuntu，然后重跑 bootstrap' }
-        else { Write-Step 'WSL' 'OK' 'Ubuntu 已就位' }
+        $identityOk = Test-GitIdentityEffective
+        $wslState = 'ok'
+        if (Test-IsElevated) { $wslState = 'skipped-elevated' }
+        elseif (-not (Test-WslEnabled)) { $wslState = 'not-enabled' }
+        elseif ((Get-WslDistros) -notcontains 'Ubuntu') { $wslState = 'no-ubuntu' }
         # 上游检查提醒已撤（2026-11-07 主人定夺：wdc 无严格意义上的上游，ADR-0001 修订标注；账本封卷）
+        $lastLog = $null; $lastName = ''; $lastVerdict = ''
         $log = Get-LastBootstrapLog
         if ($log) {
             # 判定行落点随流程而异：提权委托流的七阶段汇总在 elevated-*.log 收尾（工单19），-NoElevate 流在主日志
@@ -214,12 +266,96 @@ switch ($Command) {
             if ($elog -and $elog.LastWriteTime -gt $log.LastWriteTime) { $verdictLog = $elog }
             $m = Select-String -Path $verdictLog.FullName -Pattern '^\[(OK|FAIL)\] bootstrap' | Select-Object -Last 1
             if (-not $m) { $m = Select-String -Path $verdictLog.FullName -Pattern '^\[(OK|FAIL)\] ' | Select-Object -Last 1 }
-            $verdict = if ($m) { $m.Line } else { '（无判定行）' }
-            Write-Step '最近 bootstrap' 'INFO' "$($verdictLog.Name) → $verdict"
-        } else { Write-Step '最近 bootstrap' 'INFO' 'logs/ 尚无日志' }
+            $lastLog = $verdictLog
+            $lastName = $verdictLog.Name
+            $lastVerdict = if ($m) { $m.Line } else { '（无判定行）' }
+        }
+        if ($Json) {
+            # 单行紧凑 JSON（工单02）：键口径与 ldc status --json 对齐（docs/cli-parity.md）
+            $hints = @()
+            if ($repoState -in 'ahead', 'behind', 'diverged') { $hints += 'wdc sync' }
+            if ($repoState -eq 'fetch-unreachable') { $hints += '远端 fetch 未达——按缓存判读；wdc sync 会先验 fetch 再动' }
+            if ($drift.Count -gt 0) { $hints += 'wdc triage' }
+            if (-not $identityOk) { $hints += '编辑 ~/.gitidentity' }
+            if ($wslState -eq 'not-enabled') { $hints += '管理员终端 wsl --install 并重启' }
+            if ($wslState -eq 'no-ubuntu') { $hints += '管理员终端 wsl --install -d Ubuntu' }
+            $out = [ordered]@{
+                tool     = 'wdc'
+                version  = Get-WdcVersion
+                command  = 'status'
+                repo     = [ordered]@{ state = $repoState; ahead = $ahead; behind = $behind }
+                dotfiles = [ordered]@{ drift_count = $drift.Count; drift_items = $driftNames }
+                identity = [ordered]@{ ok = [bool]$identityOk }
+                wsl      = [ordered]@{ state = $wslState }
+                last_bootstrap = if ($lastLog) { [ordered]@{ log = $lastName; verdict = $lastVerdict } } else { $null }
+                hints    = $hints
+            }
+            Write-Host (ConvertTo-Json $out -Compress)
+            exit 0
+        }
+        Write-Phase 'wdc status · 只读快照'
+        switch ($repoState) {
+            'fetch-unreachable' { Write-Step '仓库' 'INFO' "领先 $ahead / 落后 $behind（远端 fetch 未达：5s 超时/断网）——按上次 fetch 缓存判读；wdc sync 会先验 fetch 再动" }
+            'ok' { Write-Step '仓库' 'OK' '与 origin/main 一致' }
+            default { Write-Step '仓库' 'INFO' "领先 $ahead / 落后 $behind——wdc sync 同步之" }
+        }
+        if ($drift.Count -eq 0) { Write-Step 'dotfiles 漂移' 'OK' '全部落点与模板一致' }
+        else { Write-Step 'dotfiles 漂移' 'FAIL' "$($drift.Count) 项落点与模板不一致——wdc triage 分流（缺失落点重跑 bootstrap）" }
+        if ($identityOk) { Write-Step '身份文件' 'OK' 'name/email 经 include 生效' }
+        else { Write-Step '身份文件' 'FAIL' '未填写——编辑 ~/.gitidentity（占位已生成）；不填则 git 拒绝提交' }
+        switch ($wslState) {
+            'ok' { Write-Step 'WSL' 'OK' 'Ubuntu 已就位' }
+            'skipped-elevated' { Write-Step 'WSL' 'SKIP' '提权上下文保守跳过探测（坑①）——普通终端再跑 wdc status' }
+            'not-enabled' { Write-Step 'WSL' 'FAIL' '未启用——管理员终端 wsl --install 并重启，然后重跑 bootstrap' }
+            'no-ubuntu' { Write-Step 'WSL' 'FAIL' 'Ubuntu 未装——管理员终端 wsl --install -d Ubuntu，然后重跑 bootstrap' }
+        }
+        if ($log) { Write-Step '最近 bootstrap' 'INFO' "$lastName → $lastVerdict" }
+        else { Write-Step '最近 bootstrap' 'INFO' 'logs/ 尚无日志' }
         if ($bare) {
             Write-Step '提示' 'INFO' '裸 wdc 即本快照（只读）。同步收敛：wdc sync；全部命令：wdc help'
         }
+    }
+
+    'plan' {
+        # 干跑预演 v1（cli-ux 工单03）：sync 流决策投影——「重跑 wdc sync 会做什么」先看一眼再决定。
+        # 只读零变更、恒 exit 0（预演不是断言，对齐 ldc plan）。安装面逐项投影（ldc plan-machine 同款）
+        # 需逐域解析 winget configure test，另立后续票——本版回答三件事：会拉几个提交 /
+        # bootstrap 走全量还是快速路径（=会不会弹 UAC、分钟级还是秒级）/ verify 收尾口径
+        Write-Phase 'wdc plan · 干跑预演（只读，零变更）'
+        $fetchOk = Invoke-WdcFetchBounded -Repo $repo -TimeoutSec 5
+        $ab = Get-AheadBehind
+        $ahead = $ab[0]; $behind = $ab[1]
+        if (-not $fetchOk) {
+            Write-Step '仓库' 'INFO' "领先 $ahead / 落后 $behind（远端 fetch 未达：5s 超时/断网）——按缓存判读；wdc sync 会先验 fetch 再动"
+        } elseif ($ahead -gt 0 -and $behind -gt 0) {
+            Write-Step '仓库' 'FAIL' "sync 将在此中止：本地与远端分叉（领先 $ahead / 落后 $behind）——人工处理后再同步"
+        } elseif ($ahead -gt 0) {
+            Write-Step '仓库' 'FAIL' "sync 将在此中止：本地领先 $ahead 个提交未推送——先 push 再 wdc"
+        } elseif ($behind -gt 0) {
+            Write-Step '仓库' 'PLAN' "将拉取 $behind 个提交（pull --ff-only）"
+        } else {
+            Write-Step '仓库' 'OK' '已与 origin/main 一致（sync 无拉取）'
+        }
+        # 快速路径判定（与 sync 同条件只读投影，工单42）：账本 == HEAD 且工作区干净 → 跳过 bootstrap
+        $fast = $false; $reasons = @()
+        $head = [string](git -C $repo rev-parse HEAD 2>$null)
+        $ledger = Get-WdcConvergenceLedger
+        if ($LASTEXITCODE -eq 0 -and $ledger -and $ledger -eq $head) {
+            $dirty = @(git -C $repo status --porcelain)
+            if ($dirty.Count -eq 0) { $fast = $true } else { $reasons += '工作区有未提交改动' }
+        } elseif (-not $ledger) {
+            $reasons += '收敛账本缺失/无效'
+        } else {
+            $reasons += 'HEAD 已前移（有新提交未收敛）'
+        }
+        if ($fast) {
+            Write-Step 'bootstrap' 'SKIP' '将走快速路径（账本 == HEAD 且工作区干净）——秒级，不弹 UAC（-Full 强制全量）'
+        } else {
+            Write-Step 'bootstrap' 'PLAN' ('将全量 bootstrap（约分钟级，将请求一次 UAC）——原因：' + ($reasons -join '；'))
+        }
+        Write-Step 'verify' 'INFO' 'sync 收尾恒跑 verify -Quick（秒级）；三域漂移详查 wdc verify -Full；dotfiles 漂移分流 wdc triage'
+        Write-Step '提示' 'INFO' '本投影只读零变更；实际收敛 wdc sync'
+        exit 0
     }
 
     'verify' {
@@ -273,7 +409,11 @@ switch ($Command) {
     'sync' {
         $sw = [System.Diagnostics.Stopwatch]::StartNew()
         Write-Phase 'wdc sync · 仓库'
-        git -C $repo fetch --quiet
+        # fetch 有界禁交互（cli-ux 工单01）：失败/超时即中止——不盲按陈旧 origin/main 判「一致」漏拉（对齐 ldc）
+        if (-not (Invoke-WdcFetchBounded -Repo $repo -TimeoutSec 10)) {
+            Write-Step '仓库' 'FAIL' '远端 fetch 失败（网络/超时/禁交互拒绝）——中止，不做盲同步'
+            exit 1
+        }
         $ab = Get-AheadBehind
         if ($ab[0] -gt 0 -and $ab[1] -gt 0) {
             Write-Step '仓库' 'FAIL' "本地与远端分叉（领先 $($ab[0]) / 落后 $($ab[1])）——人工处理后再同步"; exit 1
@@ -323,6 +463,8 @@ switch ($Command) {
                     Write-Step '提权子回合尾部' 'INFO' $elog.FullName
                     Get-Content $elog.FullName -Tail 20 | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray }
                 }
+                # 完成 BEL（工单06）：bootstrap 分钟级长操作失败更需要注意力回收
+                [Console]::Write([char]7)
                 exit 1
             }
         }
@@ -333,6 +475,8 @@ switch ($Command) {
         Write-Phase 'wdc sync · 汇总'
         if ($code -eq 0) { Write-Step 'wdc' 'OK' "同步完成，机器与声明一致（$([int]$sw.Elapsed.TotalSeconds)s；-Quick 收尾，三域漂移详查 wdc verify -Full）" }
         else { Write-Step 'wdc' 'FAIL' 'verify 未全绿——排障后 wdc verify 复查' }
+        # 完成 BEL（cli-ux 工单06）：分钟级长操作收尾，切走窗口结束有感知（OK/FAIL 两路都响）
+        [Console]::Write([char]7)
         exit $code
     }
 }

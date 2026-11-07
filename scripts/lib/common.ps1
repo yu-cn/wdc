@@ -16,7 +16,7 @@ function Write-Phase {
 function Write-Step {
     param(
         [Parameter(Mandatory)][string]$Label,
-        [Parameter(Mandatory)][ValidateSet('OK', 'SKIP', 'FAIL', 'CHANGED', 'INFO')][string]$State,
+        [Parameter(Mandatory)][ValidateSet('OK', 'SKIP', 'FAIL', 'CHANGED', 'PLAN', 'INFO')][string]$State,
         [string]$Detail = ''
     )
     $color = switch ($State) {
@@ -24,6 +24,7 @@ function Write-Step {
         'SKIP'    { 'DarkGray' }
         'FAIL'    { 'Red' }
         'CHANGED' { 'Yellow' }
+        'PLAN'    { 'Magenta' }
         default   { 'White' }
     }
     $line = "[$State] $Label"

@@ -74,8 +74,24 @@ wdc() {
     if [ -z "$repo" ] || [ ! -f "$repo/scripts/wdc.ps1" ]; then
         echo "wdc: 未配置仓库路径——先在仓库跑一次 bootstrap（会自动写 ~/.wdc）"; return 1
     fi
-    pwsh -NoProfile -File "$repo/scripts/wdc.ps1" "$@"
+    # --json 归一为 -Json（cli-ux 工单02）：pwsh 绑定器把 --json 当未知参数拒绝；UX 与 ldc --json 对齐
+    local a=() x
+    for x in "$@"; do
+        if [ "$x" = "--json" ]; then a+=("-Json"); else a+=("$x"); fi
+    done
+    pwsh -NoProfile -File "$repo/scripts/wdc.ps1" "${a[@]}"
 }
+
+# --- wdc 子命令 Tab 补全（cli-ux 工单05）：词表解析自 wdc.ps1 的 $wdcCommands 行单一来源，不抄列表 ---
+_wdc_completions() {
+    local repo cmds
+    repo=$(head -n 1 "$HOME/.wdc" 2>/dev/null) || return
+    [ -f "$repo/scripts/wdc.ps1" ] || return
+    cmds=$(sed -n "s/^\$wdcCommands = \(.*\)$/\1/p" "$repo/scripts/wdc.ps1" | tr -d "'" | tr ',' ' ')
+    [ -n "$cmds" ] || return
+    COMPREPLY=($(compgen -W "$cmds" -- "$2"))
+}
+complete -F _wdc_completions wdc
 
 # --- dotfiles 漂移即时提示（工单24，ADR-0015 口径）：开新终端即见，零漂移静默（与 pwsh profile 同款）---
 # 信号一「落点漂移」：落点内容 ≠ 模板——bash 无法 dot-source ps1，经一次性 pwsh -NoProfile 读

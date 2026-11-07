@@ -89,7 +89,22 @@ function wdc {
         Write-Host 'wdc: 未配置仓库路径——先在仓库跑一次 bootstrap（会自动写 ~/.wdc）' -ForegroundColor Yellow
         return
     }
-    & pwsh -NoProfile -File (Join-Path $repo 'scripts\wdc.ps1') @args
+    # --json 归一为 -Json（cli-ux 工单02）：pwsh 绑定器把 --json 当未知参数拒绝；UX 与 ldc --json 对齐
+    $fwdArgs = @($args | ForEach-Object { if ($_ -eq '--json') { '-Json' } else { $_ } })
+    & pwsh -NoProfile -File (Join-Path $repo 'scripts\wdc.ps1') @fwdArgs
+}
+
+# --- wdc Tab 补全（cli-ux 工单05）：词表解析自 wdc.ps1 的 $wdcCommands 行单一来源，不抄列表 ---
+# 纯文本解析零子进程——每次 Tab 不付 pwsh 启动成本；解析失败静默返回空，不干扰补全框架
+Register-ArgumentCompleter -CommandName wdc -ScriptBlock {
+    param($wordToComplete)
+    $repo = Get-Content "$HOME\.wdc" -ErrorAction SilentlyContinue | Select-Object -First 1
+    $wdcScript = if ($repo) { Join-Path $repo 'scripts\wdc.ps1' } else { $null }
+    if (-not $wdcScript -or -not (Test-Path $wdcScript)) { return @() }
+    $m = [regex]::Match((Get-Content $wdcScript -Raw), '(?m)^\s*\$wdcCommands\s*=\s*(.+?)\s*$')
+    if (-not $m.Success) { return @() }
+    [regex]::Matches($m.Groups[1].Value, "'([^']+)'") | ForEach-Object { $_.Groups[1].Value } |
+        Where-Object { $_ -like "$wordToComplete*" }
 }
 
 # --- dotfiles 漂移即时提示（工单24，ADR-0015 口径）：开新终端即见，零漂移静默 ---
