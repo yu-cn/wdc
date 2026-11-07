@@ -9,6 +9,8 @@
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-11-07
+
 ### Added
 - `wdc status -Json` 机器可读出口（cli-ux 工单02，联动 LDC 同批 `--json`）：单行紧凑 JSON（`repo/dotfiles/identity/wsl/last_bootstrap/hints`，键口径与 ldc 对齐）；status 分支重构为先算后印，人读输出与 JSON 出口共用同一批判定。pwsh 绑定器把 `--json` 当未知参数拒绝（实测）——正典旗标 `-Json`，pwsh/Git Bash 包装层把 `--json` 归一转发，人机两面等价
 - `wdc plan` 干跑预演（cli-ux 工单03，对齐 ldc plan）：只读零变更投影重跑 wdc sync 会做什么——仓库三态（将拉取 N 提交 / 将中止交人工 / 一致）、bootstrap 走全量还是快速路径（=会不会弹 UAC、分钟级还是秒级）及原因、verify 收尾口径；恒 exit 0（预演不是断言）。安装面逐项投影为后续票
@@ -135,6 +137,7 @@
 - 开源基线（[v0.1.0](https://github.com/yu-cn/wdc/releases/tag/v0.1.0)）：MIT、README 门面化、CONTRIBUTING、fork 跟随指南；裸机入口降门槛（PowerShell 5.1 自举 PowerShell 7）；WSL 侧 Docker Engine 纳入默认；pre-commit 钩子接线 + verify 断言 + dotfiles 漂移即时提示；fresh-machine 手动冒烟工作流
 
 [Unreleased]: https://github.com/yu-cn/wdc/compare/v0.12.0...HEAD
+[0.13.0]: https://github.com/yu-cn/wdc/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/yu-cn/wdc/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/yu-cn/wdc/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/yu-cn/wdc/compare/v0.9.0...v0.10.0
