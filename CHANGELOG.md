@@ -9,6 +9,8 @@
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-11-14
+
 ### Added
 - `.wslconfig` 入声明（wsl-tuning 工单01，[ADR-0008](docs/adr/0008-wsl-platform-config-declared.md)）——WSL 平台配置 Windows 侧半边：`dotfiles/windows/wslconfig` 模板 + `scripts/lib/wslconfig.ps1` 渲染单一来源（install-wsl / install-dotfiles / verify / inventory 四方共读）；机器派生值安装期公式渲染（processors=逻辑核−6 下限 4、memory=物理内存半数向上取整夹 8–16GB，锚定主人手调值 22 核/31GB 机 → 16/16GB），功能旗标（mirrored / dnsTunneling / autoMemoryReclaim / sparseVhd / virtiofs）为通用核心——新机器不再全默认缺位；install-wsl 在任何 wsl.exe 动作前预渲染（全新机器 VM 首启即读声明形态）；幂等（内容一致跳过）、变更备份 `.bak` 并提示 `wsl --shutdown` 生效
 - inventory WSL 节补录平台配置现状（wsl-tuning 工单03）：`.wslconfig` 渲染事实与一致性、`wsl.conf` 全文、DNS 姿态探测（dnscrypt-proxy / resolved drop-in——自留地现状非断言，跨机差异靠盘点呈现）
@@ -146,6 +148,7 @@
 - 开源基线（[v0.1.0](https://github.com/yu-cn/wdc/releases/tag/v0.1.0)）：MIT、README 门面化、CONTRIBUTING、fork 跟随指南；裸机入口降门槛（PowerShell 5.1 自举 PowerShell 7）；WSL 侧 Docker Engine 纳入默认；pre-commit 钩子接线 + verify 断言 + dotfiles 漂移即时提示；fresh-machine 手动冒烟工作流
 
 [Unreleased]: https://github.com/yu-cn/wdc/compare/v0.12.0...HEAD
+[0.14.0]: https://github.com/yu-cn/wdc/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/yu-cn/wdc/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/yu-cn/wdc/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/yu-cn/wdc/compare/v0.10.0...v0.11.0
