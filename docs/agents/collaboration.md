@@ -38,3 +38,5 @@
 17. **Git for Windows 2.56 `mingw64`→`ucrt64` 迁名连坐一切照旧版抄写的绝对路径**（坑14③ sslcainfo 之后的第二发：2026-10-30 ASUS 实录，LETH 同日同症状确认——多机共性，非单机偶发）：WT Git Bash profile 的 `icon` 照旧版抄 `C:/Program Files/Git/mingw64/share/git/git-for-windows.ico`，2.56 起该路径不存在 → 图标静默回退默认，无任何报错，靠肉眼发现。处置：icon 改指 `C:/Program Files/Git/git-bash.exe`（WT 支持从 exe 提取首图标；`git-bash.exe` 在安装顶层、路径不随内部目录布局变，升级免疫），模板与落点同改收口。规矩：写进模板/脚本里指向 Git 安装目录内部的绝对路径，机器升 2.56 时逐一核对是否已迁 `ucrt64`；能指 `git-bash.exe` 这类顶层稳定入口的，别指内部深路径。
 
 - **禁 `git add -A`**：永远按显式路径 add——triage 吸收走显式 pathspec commit；全量 add 会把非目标改动无声带进 commit，提交前 `git status` 核对。
+
+18. **根目录临时日志被 `*.log` 盲吞，垃圾永存不可见**（2026-11-14 实录：`tmpwebapp-node-modulesprepare.log`——video2code 插件 web-replicate 会话失败调用的 stderr，Windows 路径反斜杠经 bash 转发被吃掉当场报错，重定向落在仓库根三个月无人见；同坑扫出 `scripts/adhoc/git-upgrade-schtasks.log` 运行残渣，均已清）。根源：插件/agent 会话以 cwd 落临时文件不讲武德 + `.gitignore` 的 `*.log` 有意盲吞一切散落日志。处置（主人 2026-11-14 定夺，方案 A）：规则不动（插件会话常态复发——`.v2c` 活跃中，显形=慢性 status 噪声；否决 B 收窄 `logs/` 与 C 根目录反转显形），巡检走 `git status --ignored`——见非 `logs/`、非插件目录（`.v2c/`、`.video_agent/`）的 `*.log` 即残渣，看一眼内容无取证价值即删。
