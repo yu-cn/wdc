@@ -33,12 +33,12 @@ bootstrap 先确保 PowerShell 7 就位（裸机自动安装），再依次跑�
 > **直接在自己机器上跑之前先知道**：bootstrap 是作者的日常环境收敛——会应用注册表系统设置（含关远程桌面等 opinion），并执行一份显式移除清单（[ADR-0007](docs/adr/0007-removal-list-converge-only.md)：卸载商店版 VSCode 换 winget 版、清理退役终端片段；**不卸载任何语言栈与已装软件**）。想用自己的偏好，建议先 fork 按下文「使用与改造」裁剪再跑。
 
 <details>
-<summary><strong>首次运行你需要配合的五件事</strong>（UAC 提权 · SmartScreen 放行 · 重启续跑 · 填写身份 · 关 VSCode 设置同步）</summary>
+<summary><strong>首次运行你需要配合的四件事</strong>（UAC 提权 · 重启续跑 · 填写身份 · 关 VSCode 设置同步）</summary>
 
 1. **UAC 提权**——未提权启动会自动请求，点一次确认
-3. **重启**——全新机器 bootstrap 会在提权回合内自动启用 WSL 并提示重启；重启登录后由一次性续跑任务**自动重跑** bootstrap 安装 Ubuntu 并收尾（GLOSSARY「续跑任务」：任意一次 bootstrap 启动即清除、绝不循环；自动登记未成时手工路径：重启后重跑 `bootstrap.ps1`，或管理员终端 `wsl --install`，流程相同）
-4. **填写身份**——bootstrap 生成 `~/.gitidentity` 占位后，填上**本机**的 git name/email（各机身份不同；不填则 git 拒绝提交，这是防错护栏）
-5. **关闭 VSCode 设置同步**——首次启动 VSCode 若已登录账号（齿轮/账户图标 → 设置同步 → 关闭）。设置同步是账号级开关、配置文件管不到它；不关的话云端会与仓库 dotfiles 打架（仓库是唯一主人）
+2. **重启**——全新机器 bootstrap 会在提权回合内自动启用 WSL 并提示重启；重启登录后由一次性续跑任务**自动重跑** bootstrap 安装 Ubuntu 并收尾（GLOSSARY「续跑任务」：任意一次 bootstrap 启动即清除、绝不循环；自动登记未成时手工路径：重启后重跑 `bootstrap.ps1`，或管理员终端 `wsl --install`，流程相同）
+3. **填写身份**——bootstrap 生成 `~/.gitidentity` 占位后，填上**本机**的 git name/email（各机身份不同；不填则 git 拒绝提交，这是防错护栏）
+4. **关闭 VSCode 设置同步**——首次启动 VSCode 若已登录账号（齿轮/账户图标 → 设置同步 → 关闭）。设置同步是账号级开关、配置文件管不到它；不关的话云端会与仓库 dotfiles 打架（仓库是唯一主人）
 
 </details>
 
