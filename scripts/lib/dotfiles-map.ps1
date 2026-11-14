@@ -23,11 +23,50 @@ function Get-DotfilesMap {
     )
 }
 
+function Test-JsonSemanticEqual {
+    # JSON 语义等价递归比对（Test-DotfileInSync 的 JSON 层专用）：对象键序不计、数组序保持语义（数组有序是
+    # JSON 语义，不可比掉）、标量严格——字符串大小写敏感（Ordinal）、类型不混（"1" ≠ 1、true ≠ 1）、
+    # 数值语义等（1 -eq 1.0）。入参须为 ConvertFrom-Json -AsHashtable 产物（pwsh 7+）；解析异常由调用方
+    # 兜底回字节判定，本函数不碰文件 IO。纯函数：不依赖 common.ps1。
+    param([AllowNull()]$A, [AllowNull()]$B)
+    if ($null -eq $A -or $null -eq $B) { return ($null -eq $A -and $null -eq $B) }
+    if ($A -is [System.Collections.IDictionary] -or $B -is [System.Collections.IDictionary]) {
+        if ($A -isnot [System.Collections.IDictionary] -or $B -isnot [System.Collections.IDictionary]) { return $false }
+        if ($A.Count -ne $B.Count) { return $false }
+        foreach ($k in $A.Keys) {
+            if (-not $B.ContainsKey($k)) { return $false }
+            if (-not (Test-JsonSemanticEqual $A[$k] $B[$k])) { return $false }
+        }
+        return $true
+    }
+    if ($A -is [System.Collections.IList] -or $B -is [System.Collections.IList]) {
+        if ($A -isnot [System.Collections.IList] -or $B -isnot [System.Collections.IList]) { return $false }
+        if ($A.Count -ne $B.Count) { return $false }
+        for ($i = 0; $i -lt $A.Count; $i++) {
+            if (-not (Test-JsonSemanticEqual $A[$i] $B[$i])) { return $false }
+        }
+        return $true
+    }
+    if ($A -is [string] -or $B -is [string]) {
+        if ($A -isnot [string] -or $B -isnot [string]) { return $false }
+        return [string]::Equals($A, $B, [System.StringComparison]::Ordinal)
+    }
+    if ($A -is [bool] -or $B -is [bool]) {
+        if ($A -isnot [bool] -or $B -isnot [bool]) { return $false }
+        return ($A -eq $B)
+    }
+    return ($A -eq $B)
+}
+
 function Test-DotfileInSync {
     # 落点状态三态（ADR-0015 渲染拷贝模型的单一判定，install/verify/triage/status/profile 六方共读）：
-    #   ok     = 实体文件且内容与模板一致（Get-FileHash 比对）
+    #   ok     = 实体文件且内容与模板一致（Get-FileHash 比对；JSON 族字节不符时降一层语义等价——见下）
     #   absent = 落点不存在（未安装——重跑 bootstrap 渲染即收敛）
     #   drift  = 内容不符；落点是符号链接/其它链接（旧安装形态或外来链接——迁移信号，残形可再造不备份）
+    # JSON 语义层（json-semantic-sync 工单01）：字节不符且模板为 *.json 时，双方 ConvertFrom-Json 后按
+    # 语义等价比对——VSCode 设置 UI 触碰任意一项即把该键重排到文件尾（2026-11-14 LETH 实录），键序差异
+    # 内容零差异判 drift 属假阳性打地鼠面（吸收固化无语义键序、还原下回复发）。解析失败（非 JSON、极端
+    # 形态、pwsh 5.1 无 -AsHashtable）一律兜底回字节判定 drift——宁严勿松，不可假绿。
     # 纯函数：不依赖 common.ps1；缺失文件走分支兜住（Get-FileHash 对缺失路径抛错，断言面不可炸异常栈）
     param(
         [Parameter(Mandatory)][string]$Source,
@@ -38,6 +77,13 @@ function Test-DotfileInSync {
     if (-not $item) { return 'absent' }
     if ($item.LinkType -or $item.PSIsContainer) { return 'drift' }
     if ((Get-FileHash -LiteralPath $Target).Hash -eq (Get-FileHash -LiteralPath $Source).Hash) { return 'ok' }
+    if ($Source -like '*.json') {
+        try {
+            $tpl = Get-Content -LiteralPath $Source -Raw | ConvertFrom-Json -AsHashtable
+            $point = Get-Content -LiteralPath $Target -Raw | ConvertFrom-Json -AsHashtable
+            if (Test-JsonSemanticEqual $tpl $point) { return 'ok' }
+        } catch { }
+    }
     return 'drift'
 }
 
