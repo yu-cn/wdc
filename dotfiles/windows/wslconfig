@@ -1,0 +1,18 @@
+[wsl2]
+# 逻辑核留 6 个给 Windows，避免 WSL 内编译时前台卡顿（渲染公式：核数−6，下限 4，ADR-0008）
+processors={{WDC_WSL_PROCESSORS}}
+# WSL 内存配额（渲染公式：物理内存半数向上取整，夹 8–16GB，ADR-0008）
+memory={{WDC_WSL_MEMORY_GB}}GB
+virtiofs=true
+networkingMode=mirrored
+ipv6=true
+dnsTunneling=true
+
+[experimental]
+# vmmemWSL 内存只增不减：gradual 让 WSL 逐步归还空闲内存给 Windows
+autoMemoryReclaim=gradual
+# vhdx 虚拟磁盘支持自动收缩（对之后新建/转换的发行版生效）
+sparseVhd=true
+
+bestEffortDnsParsing=true
+hostAddressLoopback=true

@@ -59,11 +59,11 @@ VS Code + 32 个扩展（Python / Jupyter 全家、Remote-WSL / SSH / Containers
 **语言运行时**
 Node 归 **mise**（默认 `node@lts` 随收敛更新）、Python 归 **uv**——Windows / WSL 两侧同工具同习惯
 
-**WSL 侧**（Ubuntu，发行版内一切委托姊妹仓库 [LDC](https://github.com/yu-cn/ldc)——[setup-ubuntu.sh](scripts/wsl/setup-ubuntu.sh) 薄包装，LDC-0007）
-LDC 接管 apt 包 / gh / Docker Engine / uv / mise / Starship / Linux dotfiles（单一实现）；WDC 保留 WSL 生命周期引导（wsl.conf systemd、默认 shell=bash）
+**WSL 侧**（Ubuntu——[setup-ubuntu.sh](scripts/wsl/setup-ubuntu.sh) 薄包装）
+平台配置归 WDC（[ADR-0008](docs/adr/0008-wsl-platform-config-declared.md)）：`.wslconfig`（VM 形态——mirrored 网络 / dnsTunneling / 内存回收 / 稀疏 vhdx / virtiofs，核数与内存配额按机器事实公式渲染）+ `/etc/wsl.conf`（保护合并 `[boot]` systemd / `[user]` default，未管理段保护不碰）；发行版内环境委托姊妹仓库 [LDC](https://github.com/yu-cn/ldc)——apt 包 / gh / Docker Engine / uv / mise / Starship / Linux dotfiles / 默认 shell（单一实现，LDC-0007/0021）
 
 **dotfiles**（[dotfiles/](dotfiles/)，渲染拷贝安装（[LDC ADR-0015](https://github.com/yu-cn/ldc/blob/main/docs/adr/0015-copy-render-not-symlink.md)），旧文件备份 `*.bak`）
-gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL bash 三 shell 统一提示符）· Windows Terminal · VS Code settings / keybindings · bashrc（Windows 侧；Linux bashrc 归姊妹仓库 LDC，工单32 起委托接管）
+gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL bash 三 shell 统一提示符）· Windows Terminal · VS Code settings / keybindings · bashrc（Windows 侧；Linux bashrc 归姊妹仓库 LDC，工单32 起委托接管）· .wslconfig（模板在 dotfiles，机器派生值公式渲染归 lib/wslconfig.ps1，ADR-0008）
 
 </details>
 
@@ -98,7 +98,7 @@ gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL b
 ```
 configs/    声明式层：按域拆分的 winget configuration（base-windows / cli-tools / editors + 扩展清单）
 scripts/    编排层：bootstrap 入口、语言默认环境（mise）、VSCode 扩展、移除清单、WSL 委托包装
-dotfiles/   dotfiles 层：windows / shared（wsl 已冻结，Linux 模板归姊妹仓库 LDC），渲染拷贝安装（旧文件备份 *.bak）
+dotfiles/   dotfiles 层：windows / shared（wsl 已冻结，Linux 模板归姊妹仓库 LDC），渲染拷贝安装（旧文件备份 *.bak；.wslconfig 例外走机器派生值公式渲染，ADR-0008）
 ```
 
 - git 身份不入仓库：模板 include 每机本地的 `~/.gitidentity`

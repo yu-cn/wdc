@@ -9,6 +9,7 @@ $ErrorActionPreference = 'Stop'
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { }
 . (Join-Path $PSScriptRoot 'lib/common.ps1')
 . (Join-Path $PSScriptRoot 'lib/dotfiles-map.ps1')
+. (Join-Path $PSScriptRoot 'lib/wslconfig.ps1')
 
 $repo = Split-Path $PSScriptRoot -Parent
 $script:Fail = 0
@@ -68,10 +69,29 @@ Assert 'uv 就位' { Get-Command uv -ErrorAction SilentlyContinue }
 
 # WSL 默认用户自动探测（Get-WslDefaultUser；硬编码用户名会误伤默认用户名不同的机器，工单12族）
 $wslUser = Get-WslDefaultUser
-Write-Phase '5/6 · WSL 侧（LDC 委托，工单32/LDC-0007）'
-# 发行版内一切（包/语言栈/dotfiles/身份/docker/机器形态两键）委托 LDC verify —— 断言面即 LDC 单一
-# 实现（工单32）；工单41 边界最小核心化后 WDC 只保留「退出码透传」验收面——probe.sh 的 shell/systemd
-# 两键已随移交转 LDC verify（LDC 工单12，verify-machine.sh 第 6 组），probe.sh 退役
+Write-Phase '5/6 · WSL 侧（平台配置断言 + LDC 委托）'
+# .wslconfig（ADR-0008 Windows 侧半边）：断「落点 == 自当前机器事实的公式渲染」——断效果；
+# 有意手调值改模板或公式吸收（ADR-0008），否则重跑 bootstrap 收敛
+Assert 'WSL .wslconfig 与声明渲染一致' {
+    (Get-Content -LiteralPath (Get-WslConfigPaths -RepoRoot $repo).Target -Raw -ErrorAction SilentlyContinue) -eq (Get-WslConfigRendered -RepoRoot $repo)
+} '落点与声明渲染不符——重跑 bootstrap 收敛；有意手调值改模板或公式吸收（ADR-0008）'
+# wsl.conf 声明键（ADR-0008 发行版侧半边；LDC ADR-0021 收编回 WDC）：[boot] systemd / [user] default
+# （后者与 Get-WslDefaultUser 的 whoami 独立探测互证——两个来源）；Ubuntu 未就位 SKIP
+if ((Get-WslDistros) -notcontains 'Ubuntu') {
+    Write-Step 'wsl.conf 声明键' 'SKIP' 'Ubuntu 未就位（install-wsl.ps1 先行）'
+} else {
+    $conf = Invoke-WslBounded -ArgumentList @('-d', 'Ubuntu', '-e', 'cat', '/etc/wsl.conf') -TimeoutSeconds 60
+    $script:WslConfText = if ($null -ne $conf) { (@($conf.Lines) -join "`n") -replace "`r", '' } else { '' }
+    Assert 'wsl.conf [boot] systemd=true' {
+        [regex]::IsMatch($script:WslConfText, '(?m)^\[boot\][ \t]*$[\s\S]*?^systemd=true[ \t]*$')
+    } '重跑 bootstrap（setup-ubuntu root 阶段保护合并收敛，ADR-0008）'
+    Assert 'wsl.conf [user] default=默认用户' {
+        [regex]::IsMatch($script:WslConfText, ('(?m)^\[user\][ \t]*$[\s\S]*?^default=' + [regex]::Escape($wslUser) + '[ \t]*$'))
+    } '重跑 bootstrap（setup-ubuntu root 阶段保护合并收敛，ADR-0008）'
+}
+# 发行版内 Linux 环境一切（包/语言栈/dotfiles/身份/docker/默认 shell）委托 LDC verify —— 断言面即
+# LDC 单一实现（工单32；wsl.conf/systemd 生效两键已随 ADR-0008/LDC ADR-0021 分面：前者归上方 WDC 断言，
+# 后者 LDC 保留效果断言）；probe.sh 已退役
 # CI 冒烟交界面化（工单02）下发行版内 LDC 本体未安装——其收敛验证归 LDC 容器冒烟，此处降级 SKIP
 if ($env:GITHUB_ACTIONS) {
     Write-Step 'WSL LDC verify --quick' 'SKIP' 'CI 交界面化——发行版内 LDC 本体未装，收敛验证归 LDC 容器冒烟（工单02）'

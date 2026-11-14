@@ -41,6 +41,26 @@ KV 'NVM_HOME(env)' $([Environment]::GetEnvironmentVariable('NVM_HOME', 'User') ?
 
 Section 'WSL'
 (& wsl.exe -l -v) 2>$null | ForEach-Object { $_ -replace "`0", '' } | Where-Object { $_.Trim() }
+# WSL 平台配置现状补录（ADR-0008，工单03）：.wslconfig（声明面：渲染事实+一致性）/ wsl.conf（全文）/
+# DNS 姿态探测（自留地现状、非断言——dnscrypt 三层定性机器自留地，跨机差异靠盘点呈现）
+. (Join-Path $PSScriptRoot 'lib/wslconfig.ps1')
+$invRepo = Split-Path $PSScriptRoot -Parent
+$invPaths = Get-WslConfigPaths -RepoRoot $invRepo
+if (Test-Path -LiteralPath $invPaths.Target) {
+    $invFacts = Get-WslConfigFacts
+    $invSync = if ((Get-Content -LiteralPath $invPaths.Target -Raw) -eq (Get-WslConfigRendered -RepoRoot $invRepo)) { 'ok' } else { 'drift' }
+    KV '.wslconfig' "在位 [$invSync]（机器 $($invFacts.Cores) 核/$($invFacts.PhysicalGb)GB → 渲染 $($invFacts.Processors) 核/$($invFacts.MemoryGb)GB）"
+} else { KV '.wslconfig' '不存在' }
+$invDistros = (& wsl.exe -l -q) 2>$null | ForEach-Object { ($_ -replace "`0", '').Trim() } | Where-Object { $_ }
+if ($invDistros -contains 'Ubuntu') {
+    "`n### wsl.conf（全文）`n"
+    (& wsl.exe -d Ubuntu -e cat /etc/wsl.conf) 2>$null | ForEach-Object { $_ -replace "`0", '' } | Where-Object { $_.Trim() } | ForEach-Object { "- $_" }
+    "`n### DNS 姿态探测（自留地现状，ADR-0008）`n"
+    $invDns = (& wsl.exe -d Ubuntu -e dpkg-query -W -f='${Status}' dnscrypt-proxy) 2>$null | ForEach-Object { $_ -replace "`0", '' }
+    KV 'dnscrypt-proxy(apt)' ("$invDns" -match 'install ok installed' ? '已装' : '未装')
+    $invDropins = (& wsl.exe -d Ubuntu -e ls /etc/systemd/resolved.conf.d/) 2>$null | ForEach-Object { ($_ -replace "`0", '').Trim() } | Where-Object { $_ }
+    if ($invDropins) { $invDropins | ForEach-Object { KV 'resolved drop-in' $_ } } else { KV 'resolved drop-in' '（无）' }
+}
 
 Section 'dotfiles 存在性（只报有无与大小/状态，不读内容）'
 # 落点清单来自 Get-DotfilesMap 单一来源；身份文件另加（机器数据，ADR-0003）

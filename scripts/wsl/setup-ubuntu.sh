@@ -72,6 +72,59 @@ if [ "$ROLE" = "__ensure_ldc" ]; then
 fi
 
 if [ "$ROLE" = "root" ]; then
+    # wsl.conf 保护合并（ADR-0008；LDC ADR-0021 收编回 WDC）：整文件归本 wrapper 单一实现——
+    # 只管声明键（[boot] systemd / [user] default），其余段与键（如本机 DNS 姿态 [network]）保护不动；
+    # 在委托 LDC 之前执行（fresh-machine 时序不变：systemd 未生效中间态由 LDC docker_skipped 自跳）。
+    # SKIP_LDC（CI 冒烟）亦跑——WDC 自有面，无 LDC 依赖
+    ensure_wslconf_key() {
+        # 保护合并一枚声明键：段内首见替换、重复剔除、缺键段尾补、缺段文末补；其余行原样保留。
+        # 写回走 cat > 原 inode（保留属主/权限，mktemp 是 0600）
+        local sec="[$1]" kv="$2" tmp
+        tmp=$(mktemp)
+        awk -v sec="$sec" -v kv="$kv" -v k="${kv%%=*}" '
+            function trim(s) { gsub(/^[ \t]+|[ \t]+$/, "", s); return s }
+            BEGIN { insec = 0; done = 0 }
+            {
+                line = $0; sub(/\r$/, "", line)
+                if (line ~ /^[ \t]*\[[^]]*\][ \t]*$/) {
+                    if (insec && !done) print kv
+                    insec = (trim(line) == sec); print line; next
+                }
+                if (insec && line ~ "^[ \t]*" k "[[:space:]]*=") {
+                    if (!done) print kv
+                    done = 1; next
+                }
+                print line
+            }
+            END {
+                if (!done) {
+                    if (insec) print kv
+                    else { if (NR > 0) print ""; print sec; print kv }
+                }
+            }
+        ' /etc/wsl.conf > "$tmp"
+        if ! cmp -s /etc/wsl.conf "$tmp"; then
+            cat "$tmp" > /etc/wsl.conf
+            rm -f "$tmp"
+            return 0
+        fi
+        rm -f "$tmp"
+        return 1
+    }
+    if [ ! -f /etc/wsl.conf ]; then
+        printf '[boot]\nsystemd=true\n\n[user]\ndefault=%s\n' "$WDC_USER" > /etc/wsl.conf
+        log "wsl.conf 已创建（[boot] systemd / [user] default）——wsl --shutdown 后下次进入生效"
+    else
+        wslconf_changed=0
+        ensure_wslconf_key boot 'systemd=true' && wslconf_changed=1
+        ensure_wslconf_key user "default=$WDC_USER" && wslconf_changed=1
+        if [ "$wslconf_changed" -eq 1 ]; then
+            log "wsl.conf 已收敛声明键（[boot] systemd / [user] default；其余段保护不动）——wsl --shutdown 后下次进入生效"
+        else
+            log "wsl.conf 声明键已一致（保护合并幂等）"
+        fi
+    fi
+
     if [ "$SKIP_LDC" = "1" ]; then
         log "CI 冒烟交界面化（工单 02）：LDC 本体安装验证让位给 LDC 容器冒烟——root 最小面无发行版内动作"
     else
@@ -83,10 +136,10 @@ if [ "$ROLE" = "root" ]; then
         log "LDC 定位（以 $WDC_USER 身份落 ~/dev/ldc）"
         su -l "$WDC_USER" -c "bash '$0' __ensure_ldc '$WDC_USER'"
 
-        # 工单41：机器形态三件（默认 shell/wsl.conf systemd/docker 组）已随 LDC 工单12 归位
-        # install-packages.sh——root 直调缺 SUDO_USER 由 LDC_USER 契约补（ADR-0007 补记 2026-11-01）；
+        # 机器形态边界（ADR-0008 + LDC ADR-0021）：默认 shell + docker 组两件归 LDC
+        # install-packages.sh（LDC_USER 契约传默认用户）；wsl.conf 归本 wrapper 上方保护合并；
         # docker 域的无 systemd 中间态跳过由 LDC docker_skipped() 自判定（本 wrapper 不再透传 env）
-        log "root 委托 LDC install-packages.sh（apt 清单/gh/Docker/桌面应用域/机器形态三件按机器形态自动 SKIP）"
+        log "root 委托 LDC install-packages.sh（apt 清单/gh/Docker/桌面应用域/机器形态两件按机器形态自动 SKIP；wsl.conf 归本 wrapper，ADR-0008）"
         LDC_USER="$WDC_USER" bash "$(user_home)/dev/ldc/scripts/install-packages.sh"
     fi
 

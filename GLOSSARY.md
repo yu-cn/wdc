@@ -25,6 +25,10 @@ _Avoid_: setup.sh、装机脚本
 运行在 WSL/Ubuntu 里的另一半环境（apt 包、Linux 下的 dotfiles），与 Windows 侧同仓库管理、各自的安装机制独立。
 _Avoid_: Linux 环境（指代不清）
 
+**WSL 平台配置**:
+WSL 平台自身的配置层（ADR-0008）：Windows 侧 `%USERPROFILE%\.wslconfig`（VM 形态——机器派生值安装期公式渲染）+ 发行版内 `/etc/wsl.conf`（root 阶段保护合并声明键 `[boot]` systemd / `[user]` default）。按「配置属于谁」而非「文件在哪个文件系统」划界，归 WDC 单一实现（LDC ADR-0021 收编）；wsl.conf 未管理段（如 DNS 姿态 `[network]`）保护不动，属机器自留地。
+_Avoid_: WSL 设置（歧义）
+
 **通用核心**:
 配置中每台开发机都需要的那部分；某项只要存在「某台机器不需要」的情形即出局，归机器自留地。
 _Avoid_: 默认配置

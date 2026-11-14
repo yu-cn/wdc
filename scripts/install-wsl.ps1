@@ -6,6 +6,11 @@
 param()
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'lib/common.ps1')
+. (Join-Path $PSScriptRoot 'lib/wslconfig.ps1')
+
+# .wslconfig 预渲染（ADR-0008）：先于任何 wsl.exe 动作落位——全新机器 WSL2 VM 自首次启动
+# 即读到声明形态（mirrored/dnsTunneling 等网络语义第一启即生效；幂等，常规重渲染另在 dotfiles 阶段）
+Install-WslConfig -RepoRoot (Split-Path $PSScriptRoot -Parent)
 
 $elevated = Test-IsElevated
 

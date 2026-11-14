@@ -14,6 +14,7 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'lib/common.ps1')
 . (Join-Path $PSScriptRoot 'lib/dotfiles-map.ps1')
 . (Join-Path $PSScriptRoot 'lib/pwsh-init-cache.ps1')
+. (Join-Path $PSScriptRoot 'lib/wslconfig.ps1')
 
 $repoRoot = Split-Path $PSScriptRoot -Parent
 $dotfilesRoot = Join-Path $repoRoot 'dotfiles'
@@ -116,6 +117,11 @@ Write-Phase 'Dotfiles 2/3 - Windows 侧渲染拷贝'
 foreach ($m in (Get-DotfilesMap)) {
     Install-Dotfile -Source (Join-Path $dotfilesRoot $m.Source) -Target $m.Target
 }
+
+# .wslconfig（WSL 平台配置 Windows 侧半边，ADR-0008）：机器派生值公式渲染——不入静态 map
+# （纯拷贝模型不适配派生值，~/.wdc 指针同款先例）。install-wsl.ps1 亦在 WSL 动作前预渲染
+# （全新机器 VM 首启即读声明形态）；此处覆盖常规重渲染面
+Install-WslConfig -RepoRoot $repoRoot
 
 # Ubuntu 图标资产（ADR-0006）：仓库持有，装到每机相同的固定位置；模板经 %LOCALAPPDATA% 展开引用，
 # 图标路径不含任何机器派生值（发行版 GUID 派生的 wsl 官方路径不可入模板）

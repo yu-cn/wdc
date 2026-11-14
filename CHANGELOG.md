@@ -9,9 +9,14 @@
 
 ## [Unreleased]
 
+### Added
+- `.wslconfig` 入声明（wsl-tuning 工单01，[ADR-0008](docs/adr/0008-wsl-platform-config-declared.md)）——WSL 平台配置 Windows 侧半边：`dotfiles/windows/wslconfig` 模板 + `scripts/lib/wslconfig.ps1` 渲染单一来源（install-wsl / install-dotfiles / verify / inventory 四方共读）；机器派生值安装期公式渲染（processors=逻辑核−6 下限 4、memory=物理内存半数向上取整夹 8–16GB，锚定主人手调值 22 核/31GB 机 → 16/16GB），功能旗标（mirrored / dnsTunneling / autoMemoryReclaim / sparseVhd / virtiofs）为通用核心——新机器不再全默认缺位；install-wsl 在任何 wsl.exe 动作前预渲染（全新机器 VM 首启即读声明形态）；幂等（内容一致跳过）、变更备份 `.bak` 并提示 `wsl --shutdown` 生效
+- inventory WSL 节补录平台配置现状（wsl-tuning 工单03）：`.wslconfig` 渲染事实与一致性、`wsl.conf` 全文、DNS 姿态探测（dnscrypt-proxy / resolved drop-in——自留地现状非断言，跨机差异靠盘点呈现）
+
 ### Changed
 - pwsh init 产物缓存（pwsh-startup 工单01）：starship/gh/zoxide 的静态 init 产物改 bootstrap 渲染时生成到 `%LOCALAPPDATA%\wdc\cache\`（机器本地派生资产，ADR-0004 模式；starship 单层直取 `--print-full-init` 全量产物，绕旧写法「init 产物是 117 字节壳、求值时再嵌套 spawn 一次」的双层 spawn），profile 命中即 dot-source、缺失回退原样 spawn——存在性守卫原则不变，未 bootstrap 机器零报错；工具升级后缓存滞后一版，重跑 bootstrap 收口（profile 内刻意不做版本校验——校验即 spawn，抵消收益）。ASUS 真机热态开窗 4~5s → 2.5~3s（分步基准与诊断定案见 `.scratch/pwsh-startup/spec.md`）
 - uv 参数补全惰性加载（pwsh-startup 工单02）：766KB 补全脚本原每开终端固定付 spawn+求值 ~670ms 而多数会话不用——改薄壳 ArgumentCompleter 首次 `uv <Tab>` 才生成求值（同一轮原生 completer 即注册参与出候选；置位后薄壳恒返回空让路，防双份候选）；uv 缺席不注册（存在性守卫）
+- `/etc/wsl.conf` 整文件管理权收归 WDC（wsl-tuning 工单02，[ADR-0008](docs/adr/0008-wsl-platform-config-declared.md)；联动 LDC [ADR-0021](https://github.com/yu-cn/ldc/blob/main/docs/adr/0021-wsl-platform-config-back-to-wdc.md) 同日收编——其机器形态段瘦身为默认 shell + docker 组）：setup-ubuntu.sh root 阶段（委托 LDC 之前、CI 冒烟亦跑）保护合并 `[boot]` systemd / `[user]` default——段内首见替换、重复剔除、缺键段尾补、缺段文末补；未管理段（本机 DNS 姿态 `[network]`）保护不动。DNS 链（dnscrypt-proxy + resolved drop-in + wsl.conf `[network]`）经主人定夺定性**机器自留地**不入声明（对本机有价值、对大众/fork 用户不值——Windows 11 原生 DoH + dnsTunneling 已是更简形态；fallback 空则隧道断全瘫）。verify 新增 `.wslconfig` 渲染一致与 wsl.conf 两声明键断言（`[user] default` 与 whoami 独立探测互证）；GLOSSARY 新词条「WSL 平台配置」
 
 ## [0.13.0] - 2026-11-07
 
