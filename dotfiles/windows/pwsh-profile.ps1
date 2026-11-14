@@ -5,6 +5,18 @@
 $miseCmd = Get-Command mise -ErrorAction SilentlyContinue
 if ($miseCmd) { (& $miseCmd.Source activate pwsh) | Out-String | Invoke-Expression }
 
+# --- init 产物缓存命中（pwsh-startup 工单01）---
+# starship/gh/zoxide 的 init 产物是静态脚本——bootstrap 渲染时已生成到 %LOCALAPPDATA%\wdc\cache\
+# （scripts/lib/pwsh-init-cache.ps1；starship 缓存的是 --print-full-init 全量产物，绕旧写法的双层 spawn）。
+# 命中即 dot-source（零 spawn），缺失回退原样 spawn——守卫原则不变。工具升级后缓存滞后一版，
+# 重跑 bootstrap 收口（profile 内刻意不做版本校验——校验即 spawn，抵消收益）。
+# 路径与 lib 侧 Get-WdcInitCacheDir 各自声明（模板自足原则：开终端不得依赖仓库在位，工单15 族教训）
+function __wdcInitCachePath {
+    param([Parameter(Mandatory)][string]$Name)
+    $p = Join-Path (Join-Path $env:LOCALAPPDATA 'wdc\cache') $Name
+    if (Test-Path $p) { $p } else { $null }
+}
+
 # --- PSReadLine：历史去重 + 预测式补全 + ListView 可视预测（输出重定向等场景下静默跳过）---
 try {
     Set-PSReadLineOption -HistoryNoDuplicates -PredictionSource History -PredictionViewStyle ListView -EditMode Windows -ErrorAction SilentlyContinue
@@ -12,7 +24,8 @@ try {
 
 # --- zoxide：z 智能跳目录（与 bash 侧同款）---
 if (Get-Command zoxide -ErrorAction SilentlyContinue) {
-    Invoke-Expression (& { (zoxide init powershell | Out-String) })
+    $__init = __wdcInitCachePath 'zoxide-init.ps1'
+    if ($__init) { . $__init } else { Invoke-Expression (& { (zoxide init powershell | Out-String) }) }
 }
 
 # --- fzf：Ctrl-R 搜历史 / Ctrl-T 选文件 / Alt-C 跳目录（与 bash 侧同款语义）---
@@ -68,13 +81,35 @@ if (Get-Command fzf -ErrorAction SilentlyContinue) {
 # --- 原生参数补全（gh/uv 各自发行生成器；存在性守卫 + try/catch 静默降级）---
 # pwsh 无 git 原生补全生态（补全脚本是 bash 系）——PSReadLine 预测已覆盖大头，刻意不补；
 # docker 不在 Windows（家在 WSL，bash-completion 侧已齐）——刻意不补（GLOSSARY「双边最优化」）
-if (Get-Command gh -ErrorAction SilentlyContinue) { try { Invoke-Expression (& gh completion -s powershell | Out-String) } catch { } }
-if (Get-Command uv -ErrorAction SilentlyContinue) { try { Invoke-Expression (& uv generate-shell-completion powershell | Out-String) } catch { } }
+if (Get-Command gh -ErrorAction SilentlyContinue) {
+    try {
+        $__init = __wdcInitCachePath 'gh-completion.ps1'
+        if ($__init) { . $__init } else { Invoke-Expression (& gh completion -s powershell | Out-String) }
+    } catch { }
+}
+# uv 补全惰性加载（pwsh-startup 工单02）：产物 766KB、spawn+求值 ~670ms（ASUS 真机）而多数会话不用 uv——
+# 薄壳 completer 首次 `uv <Tab>` 才生成求值（同一轮原生 completer 即已注册参与出候选）；置位后恒返回空
+# 让路后注册的原生 completer——同命令多 completer 叠加执行，不置位会双份候选
+if (Get-Command uv -ErrorAction SilentlyContinue) {
+    $global:__uvCompletionLoaded = $false
+    Register-ArgumentCompleter -CommandName uv -ScriptBlock {
+        param($wordToComplete, $commandAst, $cursorPosition)
+        if (-not $global:__uvCompletionLoaded) {
+            $global:__uvCompletionLoaded = $true
+            try { Invoke-Expression (& uv generate-shell-completion powershell | Out-String) } catch { return @() }
+        }
+        return @()
+    }
+}
 
 # --- starship 提示符（最后初始化；三 shell 共用 ~/.config/starship.toml）---
 if (Get-Command starship -ErrorAction SilentlyContinue) {
-    Invoke-Expression (&starship init powershell)
+    $__init = __wdcInitCachePath 'starship-init.ps1'
+    if ($__init) { . $__init } else { Invoke-Expression (&starship init powershell) }
 }
+# init 机件收尾：__wdcInitCachePath 与 $__init 仅 init 期使用（点注产物落 profile 作用域随会话保留）——用完即清不落会话
+Remove-Item function:__wdcInitCachePath -ErrorAction SilentlyContinue
+Remove-Variable __init -ErrorAction SilentlyContinue
 
 # --- git 快捷方式（与 bash 侧 gs/gl/gd/gco 同义）---
 function gs { git status -sb }

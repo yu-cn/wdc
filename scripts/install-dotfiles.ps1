@@ -13,6 +13,7 @@ param()
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'lib/common.ps1')
 . (Join-Path $PSScriptRoot 'lib/dotfiles-map.ps1')
+. (Join-Path $PSScriptRoot 'lib/pwsh-init-cache.ps1')
 
 $repoRoot = Split-Path $PSScriptRoot -Parent
 $dotfilesRoot = Join-Path $repoRoot 'dotfiles'
@@ -134,6 +135,13 @@ if (-not (Test-Path $wdcPtr) -or ((Get-Content $wdcPtr -Raw -ErrorAction Silentl
     Set-Content -Path $wdcPtr -Encoding ascii -Value $repoRoot
     Write-Step '.wdc' 'CHANGED' "仓库路径指针已写入（wdc 命令用）"
 } else { Write-Step '.wdc' 'OK' '已是本仓库路径' }
+
+# pwsh init 产物缓存（pwsh-startup 工单01）：starship/gh/zoxide 静态产物 bootstrap 时生成到机器本地，
+# profile 侧命中即 dot-source（热态省 ~1s，分步基准见 .scratch/pwsh-startup/spec.md）；SKIP/失败不拦安装，
+# profile 缺失回退原样 spawn 兜底（存在性守卫）
+foreach ($cacheItem in (Install-WdcInitCache -CacheDir (Get-WdcInitCacheDir))) {
+    Write-Step "init-cache/$($cacheItem.Tool)" $cacheItem.State $cacheItem.Detail
+}
 
 # ---------------------------------------------------------------------------
 # 3/3 · WSL 侧（占位说明）

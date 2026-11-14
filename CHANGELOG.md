@@ -9,6 +9,10 @@
 
 ## [Unreleased]
 
+### Changed
+- pwsh init 产物缓存（pwsh-startup 工单01）：starship/gh/zoxide 的静态 init 产物改 bootstrap 渲染时生成到 `%LOCALAPPDATA%\wdc\cache\`（机器本地派生资产，ADR-0004 模式；starship 单层直取 `--print-full-init` 全量产物，绕旧写法「init 产物是 117 字节壳、求值时再嵌套 spawn 一次」的双层 spawn），profile 命中即 dot-source、缺失回退原样 spawn——存在性守卫原则不变，未 bootstrap 机器零报错；工具升级后缓存滞后一版，重跑 bootstrap 收口（profile 内刻意不做版本校验——校验即 spawn，抵消收益）。ASUS 真机热态开窗 4~5s → 2.5~3s（分步基准与诊断定案见 `.scratch/pwsh-startup/spec.md`）
+- uv 参数补全惰性加载（pwsh-startup 工单02）：766KB 补全脚本原每开终端固定付 spawn+求值 ~670ms 而多数会话不用——改薄壳 ArgumentCompleter 首次 `uv <Tab>` 才生成求值（同一轮原生 completer 即注册参与出候选；置位后薄壳恒返回空让路，防双份候选）；uv 缺席不注册（存在性守卫）
+
 ## [0.13.0] - 2026-11-07
 
 ### Added
