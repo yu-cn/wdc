@@ -35,8 +35,8 @@ profile 对**每份静态产物**（工具输出不随会话变）每次开终�
 
 ## 优化方向（拆两票）
 
-1. [issues/01-init-artifact-cache.md](issues/01-init-artifact-cache.md)：starship / gh / zoxide 静态产物 bootstrap 缓存（预期热态省 ~0.8-1s）
-2. [issues/02-uv-completion-lazy.md](issues/02-uv-completion-lazy.md)：uv 补全惰性加载（预期热态再省 ~650ms）
+1. [issues/done/01-init-artifact-cache.md](issues/done/01-init-artifact-cache.md)：starship / gh / zoxide 静态产物 bootstrap 缓存（预期热态省 ~0.8-1s）
+2. [issues/done/02-uv-completion-lazy.md](issues/done/02-uv-completion-lazy.md)：uv 补全惰性加载（预期热态再省 ~650ms）
 
 两票合计热态 4~5s → 2.5~3s；冷启动按比例缩至 ~5-6s。
 
