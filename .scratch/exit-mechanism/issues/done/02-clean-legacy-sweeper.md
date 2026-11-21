@@ -1,6 +1,6 @@
 # 02 wdc clean-legacy 签名清扫（层1）
 
-Status: ready-for-agent
+Status: done
 Type: task
 
 ## 内容
@@ -17,3 +17,4 @@ Type: task
 ## Comments
 
 - 2026-11-21 实施实录：① schtasks CSV 表头随系统语言本地化（中文系统无 TaskName 属性——坑1「输出随语言变」同族），改按首列位置取值（列序稳定）；② `Invoke-WslBounded` 返回 `{Lines,Exit}`、参数为 `-ArgumentList/-TimeoutSeconds`（初版写错已修）；③ 分节 $found 基线防止跨节 OK 抑制。执行体 `scripts/clean-legacy.ps1`（自包含 dot-source common+dotfiles-map），wdc.ps1 增 `clean-legacy` 子命令与 `-Fix` 旗标透传。
+- 2026-11-22 ASUS 收口实录（验收项「ASUS 待跑」落地，v1-program/08 联动）：报告 3 项——uv `.local/bin` 副本（0.13.1 遮蔽 winget 0.13.9）、Cascadia per-user 74 文件（LETH 仅 2；HKCU 值↔文件配对零孤儿后全删），两项按 LETH 同款处置、复跑该两节转 `[OK]`；死计划任务 `WDC-GitUpgrade-20261107-1853` 原样记录（SafeToFix，`-Fix` 可清，主人定夺）。八节其余干净，幂等确认。随 ASUS 终验归档（v1-program/04 归档卫生项）。
