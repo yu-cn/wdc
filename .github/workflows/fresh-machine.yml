@@ -56,17 +56,19 @@ jobs:
           }
           Write-Host "幂等重跑通过：第二遍零变更（核查 $($logs.Count) 份日志，排除项=身份占位提醒 + WT settings 环境写穿）"
       # 09 票 verify 腿（v1.0.0 断言残留绿灯放行的根因放大器补面）：收敛后的机器断言必须全绿。
-      # runner 两类已知环境噪声（幂等腿同源实录）：① 身份占位（无人填）——本步预填一次性 CI 身份
-      # 消除（.gitidentity 属 exit 红线自留物不随退场走，退了→装重 bootstrap 幂等「已存在」）；
-      # ② WT settings 落点写穿（坑6 动态生成器类，run 40352220515 实录）——环境噪声非机器漂移，
-      # 滤网放行；其余 FAIL 零容忍。防「断言引用已删文件」类残留再绿灯出厂（bef1b63 实录）。
+      # runner 环境三处适配（首跑 run 44937389307 实录）：① 身份——bootstrap 必已生成空值占位，
+      # 无条件覆写一次性 CI 身份（runner 无真身份可毁；.gitidentity 属 exit 红线自留物不随退场走）；
+      # ② PATH——winget 装机的 PATH 增量写注册表，不进已运行 job 的进程环境快照，自 Machine+User
+      # 注册表重建（mise/uv 等 Get-Command 断言依赖）；③ WT settings 落点写穿（坑6 动态生成器类，
+      # run 40352220515 实录）——环境噪声非机器漂移，滤网放行；其余 FAIL 零容忍、无汇总行的中断亦红。
+      # 防「断言引用已删文件」类残留再绿灯出厂（bef1b63 实录）。
       - name: wdc verify 机器断言（收敛后应全绿）
         shell: pwsh
         run: |
-          $id = Join-Path $env:USERPROFILE '.gitidentity'
-          if (-not (Test-Path $id)) {
-            "[user]`n    name = wdc-ci`n    email = wdc-ci@users.noreply.github.com`n" | Set-Content -LiteralPath $id -Encoding utf8
-          }
+          "[user]`n    name = wdc-ci`n    email = wdc-ci@users.noreply.github.com`n" |
+            Set-Content -LiteralPath (Join-Path $env:USERPROFILE '.gitidentity') -Encoding utf8
+          $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
+                      [Environment]::GetEnvironmentVariable('Path', 'User')
           $out = @(& pwsh -NoProfile -File "$env:RUNNER_TEMP\wdc\scripts\verify-machine.ps1" -Quick)
           $code = $LASTEXITCODE
           $out | Write-Host
