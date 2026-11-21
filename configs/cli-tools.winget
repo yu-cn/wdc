@@ -177,5 +177,6 @@ resources:
   metadata:
     description: PowerToys（注意：依赖 .NET Desktop 运行时——故移除清单明确保留之）
 
-# 浏览器（Chrome）不在此域：拆独立域 chrome.winget（工单40）——Chrome 下载体积大、CI runner
-# 禁 DO 服务环境三连败实录（工单26），独立成域使失败只红自己、不拖累本域其余声明。
+# 浏览器（Chrome）已整体除名（v1-program 工单02，2026-11-21）：通用消费软件出局通用核心第二轴
+# （开发环境相关性；Edge 预装等价）——存量机 Chrome 转机器自留地不卸载（ADR-0007 收敛-only）。
+# 史档：工单40 曾拆独立域 chrome.winget 隔离 CI DO 闪失败（工单26），随除名一并退役。

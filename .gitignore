@@ -7,3 +7,5 @@ logs/
 # ZCode 插件注入的本机标记（plugin_root），非仓库内容
 .v2c/
 .video_agent/
+# ZCode 会话产物（plan 模式 plans/ 等），非仓库内容
+.zcode/
