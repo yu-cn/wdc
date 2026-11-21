@@ -12,6 +12,7 @@
 param(
     [switch]$KeepTools,   # T1：只退状态不动声明面
     [switch]$Yes,         # 免确认（CI/脚本）
+    [switch]$WithWsl,     # T3a：WSL 平台层还原（.wslconfig 自动；wsl.conf/LDC 侧打印指引不代跑）
     [switch]$ElevatedPass # 提权子回合自重启标记（内部）
 )
 $ErrorActionPreference = 'Stop'
@@ -123,6 +124,9 @@ function Show-ExitPlan {
         Write-Step '注册表还原' 'INFO' "$($regs.Count) 项；基准 = $snapMode"
         Write-Step 'dotfiles 落点处置' 'INFO' (($dotfilesPlan | ForEach-Object { "$($_.Name)=$(if ($_.HasBak) { '还原 .bak 原文件' } else { '删除（WDC 创建）' })" }) -join '；')
         Write-Step '残留清扫' 'INFO' 'clean-legacy -Fix（WT fragments / vp / 死计划任务）'
+        if ($WithWsl) {
+            Write-Step 'WSL 平台层（-WithWsl）' 'INFO' '.wslconfig 自动还原（.bak 原文件/无则删）；wsl.conf 声明键与 LDC 侧打印指引不代跑（发行版卸载永不代跑——数据自担）'
+        }
     }
     Write-Step '机器状态删除' 'INFO' '%LOCALAPPDATA%\wdc（账本/渲染账本/缓存/pre-install 快照）+ ~/.wdc 指针 + 死计划任务'
     Write-Step '不碰' 'INFO' '机器自留地（ADR-0003）· 语言数据面（runtime/venvs/cache）· 已除名软件（Chrome）· ~/.gitidentity · 仓库 clone 本身（自行处置）'
@@ -150,7 +154,8 @@ if ($ElevatedPass) {
     if (-not $KeepTools -and -not (Test-IsElevated)) {
         Write-Phase '提权子回合（HKLM 注册表还原 + 机器级包卸载）'
         $kt = if ($KeepTools) { ' -KeepTools' } else { '' }
-        $childCmd = "& '$PSCommandPath'$kt -Yes -ElevatedPass *>&1 | Tee-Object -FilePath '$env:TEMP\wdc-exit.log'; exit `$LASTEXITCODE"
+        $ww = if ($WithWsl) { ' -WithWsl' } else { '' }
+        $childCmd = "& '$PSCommandPath'$kt$ww -Yes -ElevatedPass *>&1 | Tee-Object -FilePath '$env:TEMP\wdc-exit.log'; exit `$LASTEXITCODE"
         try {
             $child = Start-Process pwsh -Verb RunAs -ArgumentList @('-NoProfile', '-Command', $childCmd) -PassThru -Wait
             Write-Step '提权子回合' (($child.ExitCode -eq 0) ? 'OK' : 'FAIL') "退出执行退出码 $($child.ExitCode)"
@@ -247,6 +252,26 @@ if (-not $KeepTools) {
     # 4/4 残留清扫（fragments / vp / 死计划任务）
     Write-Phase '退出 4/4 - 残留清扫（clean-legacy -Fix）'
     & (Join-Path $PSScriptRoot 'clean-legacy.ps1') -Fix
+}
+
+# WSL 平台层还原（-WithWsl，T3a）：.wslconfig 自动（与 dotfiles 同款 .bak 语义——首次渲染前原文件
+# 还原、无 .bak 即 WDC 创建则删）；wsl.conf 声明键与 LDC 侧只打印指引（发行版内 root 编辑的失败
+# 模式与 LDC 领地边界，摘键归未来的 ldc exit；`wsl --unregister` 永不代跑——发行版内有用户数据）
+if ($WithWsl -and -not $KeepTools) {
+    Write-Phase '退出（可选）- WSL 平台层还原（-WithWsl / T3a）'
+    $wslcfg = Join-Path $env:USERPROFILE '.wslconfig'
+    if (Test-Path -LiteralPath $wslcfg) {
+        if (Test-Path -LiteralPath "$wslcfg.bak") {
+            Copy-Item -LiteralPath "$wslcfg.bak" -Destination $wslcfg -Force
+            Remove-Item -LiteralPath "$wslcfg.bak*" -Force -ErrorAction SilentlyContinue
+            Exit-Step '.wslconfig' $true '已还原 .bak 原文件（备份链清）；下次 wsl --shutdown 后生效'
+        } else {
+            Remove-Item -LiteralPath $wslcfg -Force
+            Exit-Step '.wslconfig' $true '已删除（WDC 创建；WSL 回全默认形态），wsl --shutdown 后生效'
+        }
+    } else { Exit-Step '.wslconfig' $true '本就不在' }
+    Write-Step 'wsl.conf 声明键' 'INFO' '不代跑——指引：发行版内 root 编辑 /etc/wsl.conf 摘 [boot] systemd 与 [user] default 两键（或留给 ldc exit，落地后自动）'
+    Write-Step 'LDC 侧（发行版内环境）' 'INFO' "不代跑——指引：发行版内 ~/dev/ldc 跑 ldc exit（落地后）或按其 configs 清单自卸；仓库目录可删；完整移除发行版：wsl --unregister Ubuntu（**数据全失，自担**）"
 }
 
 # 机器状态删除（T1/T2 共有）

@@ -73,10 +73,10 @@ gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL b
 - **直接用**：照上文「快速开始」clone 本仓库跑 bootstrap。仓库不含作者的身份与机器派生值——`~/.gitidentity` 填你自己的 git name/email，WSL 终端配置按你本机发行版渲染（[ADR-0004](docs/adr/0004-machine-adaptive-rendering.md)）——之后想跟进上游演进时显式跑 `wdc sync`（手动更新，ADR-0009）。
 - **fork 改造（推荐）**：fork 成你自己的仓库再 bootstrap（引导命令前设 `$env:WDC_REPO` 指向你的仓库即可，get.ps1 写死的是上游地址），偏好由你定。改造清单：
    1. `configs/*.winget`——软件清单，删你不用的（VSCode 扩展/设置归其原生设置同步，不入仓）
-  2. `dotfiles/`——shell / git / 终端 / 编辑器偏好
-  3. `LICENSE`——版权人换成你自己
-  4. `.scratch/`——作者的内部工单流，可删可留（留作方法参考）
-  5. `scripts/remove-leftovers.ps1`——移除清单（[ADR-0007](docs/adr/0007-removal-list-converge-only.md)：本仓自清理 + 迁移冲突，不卸语言栈），按你自己的迁移需求增删
+   2. `dotfiles/`——shell / git / 终端 / 编辑器偏好
+   3. `LICENSE`——版权人换成你自己
+   4. `.scratch/`——作者的内部工单流，可删可留（留作方法参考）
+   5. `scripts/remove-leftovers.ps1`——移除清单（[ADR-0007](docs/adr/0007-removal-list-converge-only.md)：本仓自清理 + 迁移冲突，不卸语言栈），按你自己的迁移需求增删
 
   脚本里没有写死的仓库地址，fork 后无需改动即可 bootstrap；日后跟随上游演进的 recipe 见 [docs/forking.md](docs/forking.md)。例外：[scripts/get.ps1](scripts/get.ps1) 是面向上游的远程一键引导、写死上游地址——fork 用户走手动 clone 三行，或把它改成你的仓库地址再发布。
 
@@ -95,13 +95,13 @@ gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL b
 ## 常用命令
 
 | 命令 | 用途 |
-|---|---|
+| --- | --- |
 | `wdc` | 只读快照（裸命令默认，秒级）：远端差距 / dotfiles 漂移 / 身份与 WSL / 最近 bootstrap；`-Json` 单行机器可读出口 |
 | `wdc plan` | 干跑预演（只读零变更）：重跑 wdc sync 会做什么——会不会弹 UAC、走全量还是快速路径；更新/回归前的推荐步骤（ADR-0009） |
 | `wdc sync` | 手动更新/回归入口（fetch → pull → bootstrap → verify -Quick 收尾；会请求一次 UAC；ADR-0009）。已收敛且声明未变（收敛账本=HEAD、工作区干净）走快速路径跳过 bootstrap，秒级完成；账本缺失/损坏或有新 pull 一律回退全量（宁可慢不可假绿），`-Full` 强制全量 |
 | `wdc verify [-Full]` / `wdc triage` / `wdc log` / `wdc help` | 机器断言（默认 -Quick）/ dotfiles 落点漂移分流 / 最近日志尾部 / 帮助与版本（子命令后接 `-h` 出该命令详解；Tab 补全词表解析自脚本单一来源） |
 | `wdc clean-legacy [-Fix]` | 版本残留清扫（按签名不按版本号；默认报告恒 exit 0，`-Fix` 只清安全项——fragments/vp/死计划任务） |
-| `wdc exit [-KeepTools] [-Yes]` | 退出 WDC（[ADR-0010](docs/adr/0010-wdc-exit.md)）：默认完整退出——声明面全退、数据面不动，pre-install 快照优先还原；`-KeepTools` 只退状态；非交互无 `-Yes` 自动预演 |
+| `wdc exit [-KeepTools] [-Yes] [-WithWsl]` | 退出 WDC（[ADR-0010](docs/adr/0010-wdc-exit.md)）：默认完整退出——声明面全退、数据面不动，pre-install 快照优先还原；`-KeepTools` 只退状态；`-WithWsl` 加做 WSL 平台层还原（发行版内只指路）；非交互无 `-Yes` 自动预演 |
 | `pwsh bootstrap.ps1` | 完整收敛（更新/回归的显式重跑入口） |
 | `pwsh bootstrap.ps1 -ValidateOnly` | 只做无副作用校验（配置 schema + 脚本静态检查） |
 | `pwsh validate.ps1` | 同上的校验入口，独立可用 |
@@ -134,7 +134,7 @@ Docker Engine 由 WSL 阶段委托 LDC 从官方源安装（免 sudo 需重新�
 
 ## 文档
 
-- 词汇表：[GLOSSARY.md](GLOSSARY.md) · 决策：[docs/adr/](docs/adr/) · 调研档案：[docs/research/](docs/research/) · 吸收账本（已封卷）：[docs/upstream-ledger.md](docs/upstream-ledger.md) · undo 表：[docs/undo-table.md](docs/undo-table.md) · 存量机升级指引：[docs/upgrade-v1.md](docs/upgrade-v1.md) · 变更记录：[CHANGELOG.md](CHANGELOG.md)
+- 词汇表：[GLOSSARY.md](GLOSSARY.md) · 决策：[docs/adr/](docs/adr/) · 调研档案：[docs/research/](docs/research/) · 吸收账本（已封卷）：[docs/upstream-ledger.md](docs/upstream-ledger.md) · undo 表：[docs/undo-table.md](docs/undo-table.md) · WSL/LDC 边界：[docs/wsl-and-ldc.md](docs/wsl-and-ldc.md) · 存量机升级指引：[docs/upgrade-v1.md](docs/upgrade-v1.md) · 变更记录：[CHANGELOG.md](CHANGELOG.md)
 - Fork 跟随：[docs/forking.md](docs/forking.md)（改造成自己环境后如何跟上游演进）
 - 贡献指南：[CONTRIBUTING.md](CONTRIBUTING.md)（fork 自用为主，通用核心改进欢迎 PR）
 - 工单与规格：`.scratch/`（作者的本地 markdown 工单流；外部贡献请走 GitHub Issues/PR）

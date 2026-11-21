@@ -16,13 +16,18 @@ function Get-WslConfigPaths {
 function Get-WslConfigFacts {
     # 渲染公式（ADR-0008，锚定主人 2026-11-13 手调值：22 逻辑核/31GB 机 → 16 核/16GB）：
     #   processors = 逻辑核 − 6（给 Windows 留 6 核，避免 WSL 内编译时前台卡顿；下限 4）
-    #   memory     = 物理内存半数向上取整，夹在 8–16GB（重负载够用，同时保宿主响应）
+    #   memory     = 物理半数向上取整，夹 4–16GB，且宿主至少保留 4GB（三重保护，v1 收官批 2026-11-22：
+    #                旧式「夹 8–16」在 8GB 小机会算出 8GB=整机内存挤死宿主——环境适应性死角；
+    #                8GB→4、12GB→6、16GB→8、31GB→16 主人锚定值不变，存量机零重渲染）
     $cs = Get-CimInstance Win32_ComputerSystem
     $cores = [int]$cs.NumberOfLogicalProcessors
     $physGb = [math]::Ceiling($cs.TotalPhysicalMemory / 1GB)
+    $half = [math]::Ceiling($physGb / 2)
+    $capped = [math]::Min(16, [math]::Max(4, $half))
+    $hostSafe = [math]::Max(2, $physGb - 4)
     [pscustomobject]@{
         Processors = [math]::Max(4, $cores - 6)
-        MemoryGb   = [math]::Min(16, [math]::Max(8, [math]::Ceiling($physGb / 2)))
+        MemoryGb   = [math]::Min($capped, $hostSafe)
         Cores      = $cores
         PhysicalGb = $physGb
     }

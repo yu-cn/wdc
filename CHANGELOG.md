@@ -10,10 +10,12 @@
 ## [Unreleased]
 
 ### Fixed
-- `wdc exit` 不再卸载 VCRedist 基础设施运行库（v1-program 工单03 CI 死因定性）：公共依赖装机面极广——真实机器上 Chrome/无数无关应用共用，卸载即破坏用户环境（ADR-0010 红线补入）；CI 两轮同位实录（run 44917510844 / 44923793172）卸完 VCRedist 后下一次 winget 调用全步覆灭——App Installer 自身依赖 VC 运行时的强证据。undo 表包指针同步
+- wslconfig 内存公式小机保护（v1 收官批）：旧式「半数夹 8–16GB」在 8GB 小机会算出 8GB=整机内存挤死宿主——改三重保护「半数、夹 4–16、宿主至少留 4GB」（8GB→4 / 12GB→6 / 16GB→8 / 31GB→16 主人锚定值不变，存量机零重渲染）
+- `wdc exit` 不再卸载基础设施共享资源（v1-program 工单03 CI 死因定性，范围扩至 VCRedist + NF 字体）：公共运行库装机面极广（Chrome 等无数无关应用共用）、NF 字体为系统级共享（卸之其他终端渲染豆腐块）；CI 三轮恒死于字体包卸载（字体变更广播掀翻无头进程树）。undo 表/ADR-0010 红线同步
 - pwsh 配置源不可知化（v1-program 工单05，主人跨机报告）：PowerShell 7.7.0 起 MSI 停发、MSIX 成 Windows 唯一官方渠道，而 WT 模板硬编码 MSI 路径——MSIX 机器上 WT profile 异常。三处修复：WT 模板 commandline 改裸 `pwsh.exe`（PATH 解析，MSI 机器级/用户级/MSIX 三态通吃，WindowsApps 别名路径版本无关）；bootstrap 入口 Get-PwshExe 候选补 MSIX 别名位、`winget upgrade` 摘除来源钉死（按已装包自身来源解析，msstore 装机也匹配）；git-upgrade 计划任务动作改运行时解析实际 pwsh（绝对路径要求不变）。存量机影响：WT 落点下次 sync 重渲染，行为正向
 
 ### Added
+- `wdc exit -WithWsl`（T3a，[ADR-0010](docs/adr/0010-wdc-exit.md)）：WSL 平台层还原半档——`.wslconfig` 自动还原（.bak 原文件/无则删）；wsl.conf 声明键与 LDC 侧打印指引不代跑（摘键归未来的 `ldc exit`）；`wsl --unregister` 永不代跑（发行版内有用户数据）。边界一页化 [docs/wsl-and-ldc.md](docs/wsl-and-ldc.md)（分层表+想改什么找谁）
 - wdc CLI 注入改为用户选择（v1-program 工单07）：bootstrap 首跑在入口层问一次「是否把 wdc 命令装进 shell」（默认 Y；`-NoCli`/`-Cli` 旗标预设跳过；非交互 CI/管道默认装），选择记 `%LOCALAPPDATA%\wdc\cli.json` 后不再问（`wdc exit` 删状态后重装会再问）。选择「不装」时 pwsh profile 与 bashrc 的 wdc 段（函数/Tab 补全/漂移提示）渲染期剥除（模板 `wdc-cli:begin/end` 标记段 + dotfiles-map 单一来源变换，六方漂移判定共用不破坏）——shell 配置零 WDC 痕迹；「装」时渲染内容与原模板字节一致（存量机零回归实测）。
 - `wdc exit [-KeepTools] [-Yes]`（exit-mechanism 工单03，[ADR-0010](docs/adr/0010-wdc-exit.md)）：一次性配置的退出面——T2 完整退出（默认）：VSCode 扩展逐个卸载、声明包逐 Id 卸载（坑7 多版本逐版本显式）、注册表还原（pre-install 快照优先**逐值**还原、绝不整键删除防连坐共享键，存量机降级 undo 表 Windows 默认值并明示）、dotfiles 落点处置（有 `.bak` 还原首次渲染前原文件、无则删除）、`clean-legacy -Fix` 清扫、机器状态删除，收尾自带退出断言（状态目录/指针/备份链已清），幂等失败重跑收尾；T1 状态退出（`-KeepTools`）只删机器状态环境原样。安全设计：默认打印全计划后交互确认，非交互且无 `-Yes` 自动降级预演零变更，T2 确认后自重启提权子回合。红线：语言数据面（runtime/venvs/cache）/自留地/已除名软件（Chrome）/~/.gitidentity/仓库 clone 一概不碰。cli-parity 契约同步（LDC 主作者位先行 09f8d1f）
 - pre-install 注册表快照（exit-mechanism 工单01 代码半边）：bootstrap Stage 3 首次 apply base-windows 前对全部声明 keyPath（15 个去重，自 .winget 单一来源提取）一次性 `reg export` 到 `%LOCALAPPDATA%\wdc\pre-install\`（marker=manifest.json 幂等）——`wdc exit` 的还原基准层；存量机（收敛账本在位=机制上线前已收敛）落 skipped-already-converged 标记，绝不拿已应用值冒充 pre-install（宁缺毋假），exit 还原降级走 undo 表 Windows 默认值

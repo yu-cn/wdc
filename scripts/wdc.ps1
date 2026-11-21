@@ -30,6 +30,7 @@ param(
     [switch]$Fix,
     [switch]$KeepTools,
     [switch]$Yes,
+    [switch]$WithWsl,
     [switch]$Json,
     [int]$Lines = 40
 )
@@ -189,7 +190,9 @@ wdc exit [-KeepTools] [-Yes] — 退出 WDC（ADR-0010）
 （有 .bak 还原原文件/无则删除）、clean-legacy -Fix 清扫；T1 状态退出（-KeepTools）= 只删机器状态不动环境。
 安全：默认打印全计划后交互确认；非交互（管道/CI）且无 -Yes 自动降级为预演零变更——执行加 -Yes。
 T2 确认后自重启提权子回合（HKLM 注册表 + 机器级包卸载需要）。红线：自留地/语言数据面
-（runtime/venvs/cache）/已除名软件（Chrome）/~/.gitidentity/仓库 clone 一概不碰。WSL 侧（T3）另议。
+（runtime/venvs/cache）/已除名软件（Chrome）/~/.gitidentity/仓库 clone 一概不碰。
+-WithWsl（T3a）：加做 WSL 平台层还原——.wslconfig 自动（.bak 还原/无则删）；wsl.conf 声明键与
+LDC 侧打印指引不代跑；`wsl --unregister` 永不代跑（发行版内有用户数据）。见 docs/wsl-and-ldc.md。
 收尾自带退出断言（verify-exit：状态目录/指针/备份链已清）。幂等——失败重跑收尾。
 '@
     'log' = @'
@@ -404,7 +407,7 @@ switch ($Command) {
     }
 
     'exit' {
-        $exArgs = @(); if ($KeepTools) { $exArgs += '-KeepTools' }; if ($Yes) { $exArgs += '-Yes' }
+        $exArgs = @(); if ($KeepTools) { $exArgs += '-KeepTools' }; if ($Yes) { $exArgs += '-Yes' }; if ($WithWsl) { $exArgs += '-WithWsl' }
         & pwsh -NoProfile -File (Join-Path $repo 'scripts\exit-wdc.ps1') @exArgs
         exit $LASTEXITCODE
     }
