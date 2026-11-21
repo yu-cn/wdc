@@ -6,7 +6,10 @@
 #   sudo schtasks 内联提权（弹一次 UAC 交机主）；sudo 缺席时如实报错并给管理员终端指引。
 param([string]$TaskName = ('WDC-GitUpgrade-' + (Get-Date -Format 'yyyyMMdd-HHmm')), [switch]$ViaSudo)
 $target = Join-Path $PSScriptRoot 'git-upgrade-task.ps1'
-$pwsh = Join-Path $env:ProgramFiles 'PowerShell\7\pwsh.exe'
+# pwsh 绝对路径（动作不能用裸名，见头注）——运行时解析实际 pwsh（源不可知：MSI 机器级/用户级/MSIX
+# WindowsApps 别名，v1-program 工单05），ProgramFiles MSI 兜底
+$pwsh = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
+if (-not $pwsh) { $pwsh = Join-Path $env:ProgramFiles 'PowerShell\7\pwsh.exe' }
 $start = (Get-Date).AddMinutes(2).ToString('HH:mm')
 $tr = '"' + $pwsh + '" -NoProfile -ExecutionPolicy Bypass -File "' + $target + '"'
 if ($ViaSudo) {

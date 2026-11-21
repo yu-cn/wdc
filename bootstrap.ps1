@@ -24,7 +24,11 @@ function Get-PwshExe {
     if ($cmd) { return $cmd.Source }
     $candidates = @()
     if ($env:ProgramFiles) { $candidates += (Join-Path $env:ProgramFiles 'PowerShell\7\pwsh.exe') }
-    if ($env:LOCALAPPDATA) { $candidates += (Join-Path $env:LOCALAPPDATA 'Microsoft\PowerShell\7\pwsh.exe') }
+    if ($env:LOCALAPPDATA) {
+        # MSIX 形态（7.7.0 起 MSI 停发，官方唯一渠道；亦含 msstore 来源安装）：WindowsApps 执行别名，路径版本无关
+        $candidates += (Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps\pwsh.exe')
+        $candidates += (Join-Path $env:LOCALAPPDATA 'Microsoft\PowerShell\7\pwsh.exe')
+    }
     foreach ($p in $candidates) {
         if (Test-Path $p) { return $p }
     }
@@ -56,10 +60,11 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
         }
     }
     # pwsh 在位但可能过期：升级 PS7 的 MSI 会强杀 pwsh 宿主（工单27）——本层是 5.1 宿主，升级安全；
-    # cmd /c 包装双保险。-ValidateOnly 跳过（保持无副作用承诺）
+    # MSIX 时代（7.7.0 起）同理只在 5.1 宿主升。upgrade 不钉来源：按已装包自身来源解析
+    # （winget 源装的 MSIX / msstore 源装的商店版都能匹配）。-ValidateOnly 跳过（保持无副作用承诺）
     if (-not $ValidateOnly) {
         Write-Host '[bootstrap] 检查 PowerShell 7 更新（5.1 宿主内升级安全）…'
-        & cmd /c 'winget upgrade -e --id Microsoft.PowerShell --source winget --accept-package-agreements --accept-source-agreements --disable-interactivity' | Out-Null
+        & cmd /c 'winget upgrade -e --id Microsoft.PowerShell --accept-package-agreements --accept-source-agreements --disable-interactivity' | Out-Null
         # 0x8A15002B = APPINSTALLER_CLI_ERROR_UPDATE_NOT_APPLICABLE（无适用升级）——已是最新时的正常退出码，非错误
         $noUpgrade = -1978335189
         if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne $noUpgrade) {
