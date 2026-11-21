@@ -121,7 +121,7 @@ Docker Engine 由 WSL 阶段委托 LDC 从官方源安装（免 sudo 需重新�
 
 ## 文档
 
-- 词汇表：[GLOSSARY.md](GLOSSARY.md) · 决策：[docs/adr/](docs/adr/) · 调研档案：[docs/research/](docs/research/) · 吸收账本（已封卷）：[docs/upstream-ledger.md](docs/upstream-ledger.md) · undo 表：[docs/undo-table.md](docs/undo-table.md) · 变更记录：[CHANGELOG.md](CHANGELOG.md)
+- 词汇表：[GLOSSARY.md](GLOSSARY.md) · 决策：[docs/adr/](docs/adr/) · 调研档案：[docs/research/](docs/research/) · 吸收账本（已封卷）：[docs/upstream-ledger.md](docs/upstream-ledger.md) · undo 表：[docs/undo-table.md](docs/undo-table.md) · 存量机升级指引：[docs/upgrade-v1.md](docs/upgrade-v1.md) · 变更记录：[CHANGELOG.md](CHANGELOG.md)
 - Fork 跟随：[docs/forking.md](docs/forking.md)（改造成自己环境后如何跟上游演进）
 - 贡献指南：[CONTRIBUTING.md](CONTRIBUTING.md)（fork 自用为主，通用核心改进欢迎 PR）
 - 工单与规格：`.scratch/`（作者的本地 markdown 工单流；外部贡献请走 GitHub Issues/PR）

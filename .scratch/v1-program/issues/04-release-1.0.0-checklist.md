@@ -11,8 +11,17 @@ Type: task
 - [ ] LDC 侧 fresh-container CI 绿（P3 批 85f3171 后首跑）
 - [ ] 文档一致终查：README / GLOSSARY / undo-table / ADR-0003/0009/0010 / cli-parity / docs/research/v1-comparison.md
 - [ ] CHANGELOG 收节 v1.0.0（Unreleased → 版本节；compare 链续 v1.0.0...HEAD）
-- [ ] release notes 按「效果优先」纪律：承诺面置顶（一次性配置+显式更新/回归+完整退出+漂移不纠察）、存量机影响正面回答（Chrome/VSCode 扩展两让位的迁移指引）、行为变化进已知事项（Stage 4 瘦身/exit 新命令/clean-legacy 新命令）
+- [ ] release notes 按「效果优先」纪律：承诺面置顶（一次性配置+显式更新/回归+完整退出+漂移不纠察）、存量机影响正面回答（**链接 [docs/upgrade-v1.md](../../../docs/upgrade-v1.md) 存量机升级指引**：一条 `wdc sync` + Chrome/VSCode 两让位行为表 + 建议手动两件 + pwsh 7.7 可选迁移）、行为变化进已知事项（Stage 4 瘦身/exit 新命令/clean-legacy 新命令/WT 裸 pwsh）
 - [ ] 双仓版本口径：**v1.0.0 同号同日**（LDC 85f3171 姿态对齐批=联动变更成立，dev-standard §5）；tag/release 同会话收口（协作规矩）
+
+## 里程碑加持（「里程碑版本」应有的额外面——2026-11-22 主人定调补充）
+
+- [ ] **README 里程碑翻新**：对外门面整体校——「一条命令得到什么」清单已变（扩展/Chrome 让位后）；首段后可加「1.0.0 承诺面」一句话；demo 产物与现命令集的差异说明（重录为可选项）
+- [ ] **SemVer 1.0.0 语义宣告**：CHANGELOG 前言与 release notes 明示「1.0.0 起 SemVer 完整生效（此前 v0.x 破坏性走 MINOR）」——里程碑的正式含义
+- [ ] **坑档收编两条新实录**（collaboration.md）：① winget 拒绝跨安装技术升级且退出码 0 假绿（MSI→MSIX，2026-11-21 LETH）；② pwsh 数组 `-notmatch` 返回不匹配行数组非空恒真（CI 断言腿 run 44917510844 实录）
+- [ ] **钉版回退预案**入 release notes 已知事项一句：出问题可 `WDC_TAG=v0.14.0` 钉旧版重跑（get.ps1 既有能力）
+- [ ] 归档卫生：exit-mechanism 工单02 随 ASUS 终验收口；v1-program 工单全归档（本票发布时收）
+- [ ] 可选（主人定）：demo.gif 重录（现 gif 为旧命令集 wdc/verify 循环，1.0.0 新面貌 plan/exit/clean-legacy）
 
 ## 遗留观察（不阻塞，主人另定）
 

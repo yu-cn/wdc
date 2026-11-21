@@ -40,3 +40,7 @@
 - **禁 `git add -A`**：永远按显式路径 add——triage 吸收走显式 pathspec commit；全量 add 会把非目标改动无声带进 commit，提交前 `git status` 核对。
 
 18. **根目录临时日志被 `*.log` 盲吞，垃圾永存不可见**（2026-11-14 实录：`tmpwebapp-node-modulesprepare.log`——video2code 插件 web-replicate 会话失败调用的 stderr，Windows 路径反斜杠经 bash 转发被吃掉当场报错，重定向落在仓库根三个月无人见；同坑扫出 `scripts/adhoc/git-upgrade-schtasks.log` 运行残渣，均已清）。根源：插件/agent 会话以 cwd 落临时文件不讲武德 + `.gitignore` 的 `*.log` 有意盲吞一切散落日志。处置（主人 2026-11-14 定夺，方案 A）：规则不动（插件会话常态复发——`.v2c` 活跃中，显形=慢性 status 噪声；否决 B 收窄 `logs/` 与 C 根目录反转显形），巡检走 `git status --ignored`——见非 `logs/`、非插件目录（`.v2c/`、`.video_agent/`）的 `*.log` 即残渣，看一眼内容无取证价值即删。
+
+19. **winget 拒绝跨安装技术升级且退出码 0 假绿**（2026-11-21 LETH 实录，MSI→MSIX 时代面）：PowerShell 7.7.0 起官方停发 MSI（MSIX 成 Windows 唯一渠道），MSI 旧机跑 `winget upgrade -e --id Microsoft.PowerShell` 回「找到了较新的版本，但安装技术与当前安装的版本不同。请卸载包并安装较新的版本」且 **EXIT=0**——按退出码判升级态的脚本全数假绿。处置：跨形态升级手动两步（`winget uninstall` → `winget install`，第二步用户级 MSIX 无需提权）；WDC 适配已落（v1-program 工单05 源不可知化：WT 裸 `pwsh.exe` / 入口层候选含 WindowsApps 别名 / schtasks 动作运行时解析）。存量机指引见 docs/upgrade-v1.md。
+
+20. **pwsh 数组 `-notmatch` 恒真**（2026-11-21 CI run 44917510844 实录）：`$out = & pwsh -File <脚本>` 得到的是多行**数组**——`if ($out -notmatch 'x')` 里数组 `-notmatch` 返回「不匹配行组成的数组」，非空数组在布尔上下文恒 `$true`，断言腿永红（当日 clean-legacy 零发现腿实际八节全 OK 仍报失败）。处置：先 `$text = $out -join "\`n"` 归一成单串再匹配；CI 断言已修（fresh-machine.yml 留注）。
