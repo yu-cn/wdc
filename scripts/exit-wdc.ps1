@@ -240,7 +240,8 @@ if (-not $KeepTools) {
         if (Test-Path -LiteralPath $d.Target) {
             if ($d.HasBak) {
                 Copy-Item -LiteralPath "$($d.Target).bak" -Destination $d.Target -Force
-                Remove-Item -LiteralPath "$($d.Target).bak*" -Force -ErrorAction SilentlyContinue
+                # 通配清链必须走 -Path（-LiteralPath 不展开 *，.bak 永残留——run 44928805898 verify-exit 实录）
+                Remove-Item -Path "$($d.Target).bak*" -Force -ErrorAction SilentlyContinue
                 Exit-Step "落点 $($d.Name)" $true '已还原 .bak 原文件（备份链清）'
             } else {
                 Remove-Item -LiteralPath $d.Target -Force
@@ -263,7 +264,7 @@ if ($WithWsl -and -not $KeepTools) {
     if (Test-Path -LiteralPath $wslcfg) {
         if (Test-Path -LiteralPath "$wslcfg.bak") {
             Copy-Item -LiteralPath "$wslcfg.bak" -Destination $wslcfg -Force
-            Remove-Item -LiteralPath "$wslcfg.bak*" -Force -ErrorAction SilentlyContinue
+            Remove-Item -Path "$wslcfg.bak*" -Force -ErrorAction SilentlyContinue
             Exit-Step '.wslconfig' $true '已还原 .bak 原文件（备份链清）；下次 wsl --shutdown 后生效'
         } else {
             Remove-Item -LiteralPath $wslcfg -Force
@@ -314,6 +315,6 @@ if ($failCount -eq 0 -and $va) {
     Write-Step 'wdc exit' 'OK' "$(if ($KeepTools) { 'T1 状态退出完成' } else { 'T2 完整退出完成' })——机器状态已清，声明面已退；仓库 clone 自行处置；WSL 侧（T3）另议"
     exit 0
 } else {
-    Write-Step 'wdc exit' 'FAIL' "有 $failCount 项失败——重跑幂等收尾；日志见上"
+    Write-Step 'wdc exit' 'FAIL' "有 $($failCount + $(if ($va) { 0 } else { 1 })) 项失败——重跑幂等收尾；日志见上"
     exit 1
 }
