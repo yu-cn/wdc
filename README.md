@@ -83,7 +83,7 @@ gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL b
 
 只想配置这一次、之后 WDC 从你的生活里消失？三步：
 
-1. **装**：照「快速开始」跑一行命令（全席：工具 + 终端体验 + 系统调优 + WSL）；
+1. **装**：照「快速开始」跑一行命令（全席：工具 + 终端体验 + 系统调优 + WSL）。首跑会问一次「是否把 `wdc` 命令装进 shell」——不装则你的 shell 配置零 WDC 痕迹（自动化预设：`bootstrap.ps1 -NoCli` / `-Cli`）；
 2. **验收**：`pwsh scripts/verify-machine.ps1` 全绿；
 3. **走**：`wdc exit -KeepTools`（清 WDC 机器状态与指针，环境原样保留）→ 删掉 clone 目录。
 

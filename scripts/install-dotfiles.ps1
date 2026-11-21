@@ -60,7 +60,7 @@ function Install-Dotfile {
             Remove-Item -LiteralPath $item.FullName -Force
             Write-Step $leaf 'CHANGED' "符号链接已替换为渲染拷贝（原指向 $oldTarget）"
         }
-        elseif ((Get-FileHash -LiteralPath $item.FullName).Hash -eq (Get-FileHash -LiteralPath $Source).Hash) {
+        elseif ((Get-FileHash -LiteralPath $item.FullName).Hash -eq (Get-DotfileSourceHash -Source $Source)) {
             Write-Step $leaf 'OK' '已与模板一致（幂等跳过）'
             # 账本自愈：SKIP 路径内容=模板，指纹必对（账本丢失场景在此重建）
             Set-RenderedState -Target $Target -Hash (Get-FileHash -LiteralPath $Target).Hash
@@ -85,7 +85,12 @@ function Install-Dotfile {
             }
         }
     }
-    Copy-Item -LiteralPath $Source -Destination $Target -Force
+    # 标记模板（工单07）：按渲染内容写（含 CLI 选择剥段；UTF-8 无 BOM）；其余照字节拷贝保真
+    if (@(Get-Content -LiteralPath $Source | Select-String -Pattern 'wdc-cli:' -List).Count -gt 0) {
+        [System.IO.File]::WriteAllText($Target, (Get-DotfileRenderContent -Source $Source))
+    } else {
+        Copy-Item -LiteralPath $Source -Destination $Target -Force
+    }
     Set-RenderedState -Target $Target -Hash (Get-FileHash -LiteralPath $Target).Hash
     Write-Step $leaf 'CHANGED' "已渲染 <- $Source"
 }

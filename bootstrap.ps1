@@ -10,7 +10,9 @@ param(
     [switch]$ValidateOnly,
     [switch]$NoElevate,
     [switch]$ElevatedPass,  # 内部参数：与 main 保持一致，原样转发
-    [switch]$SkipValidate   # 工单02：wdc sync 无更新场景（HEAD==origin/main，CI 已把关），转发给 main 降级 Stage 2
+    [switch]$SkipValidate,  # 工单02：wdc sync 无更新场景（HEAD==origin/main，CI 已把关），转发给 main 降级 Stage 2
+    [switch]$NoCli,         # 工单07：预设「不装 wdc CLI」（跳过首跑提问）
+    [switch]$Cli            # 工单07：预设「装」（跳过提问；默认即装，此旗标只为免问）
 )
 $ErrorActionPreference = 'Stop'
 try {
@@ -96,6 +98,23 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
 }
 
 # 参数原样转发（switch 还原为字符串，-File 调用下由 main 重新绑定）
+# --- wdc CLI 注入选择（v1-program 工单07）：首跑问一次记 cli.json，此后不再问 ---
+# 旗标预设优先；非交互（CI/管道）默认装；ValidateOnly 不问不记（无副作用承诺）。
+# 选择在入口层（提权子回合之前）落定——渲染层只读状态（单一事实源），提权链零透传
+$cliJson = Join-Path $env:LOCALAPPDATA 'wdc\cli.json'
+if (-not (Test-Path $cliJson) -and -not $ValidateOnly) {
+    $installCli = $true
+    if ($NoCli) { $installCli = $false }
+    elseif (-not $Cli -and -not [Console]::IsInputRedirected) {
+        $ans = Read-Host '是否把 wdc 命令装进 shell（更新/回归/退出的的一键入口；不装也可直接跑仓库脚本）？(Y/n)'
+        if ($ans -match '^\s*[nN]') { $installCli = $false }
+    }
+    $cliDir = Split-Path $cliJson -Parent
+    if (-not (Test-Path $cliDir)) { New-Item -ItemType Directory -Path $cliDir -Force | Out-Null }
+    @{ install = $installCli } | ConvertTo-Json -Compress | Set-Content -LiteralPath $cliJson -Encoding utf8
+    Write-Host "[bootstrap] wdc CLI 注入选择：$(if ($installCli) { '装（默认）' } else { '不装——shell 配置零 WDC 痕迹（重跑 bootstrap 可改选）' })"
+}
+
 $fwd = @()
 if ($ValidateOnly) { $fwd += '-ValidateOnly' }
 if ($NoElevate)    { $fwd += '-NoElevate' }

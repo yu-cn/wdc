@@ -117,6 +117,7 @@ function gl { git log --oneline --graph --decorate -20 }
 function gd { git diff }
 function gco { param([string]$Branch) git checkout $Branch }
 
+# --- wdc-cli:begin ---（工单07：选择不装 CLI 时渲染期剥除本段至 end 标记——函数/补全/漂移提示）
 # --- wdc：一键工具（薄包装；全部逻辑在仓库 scripts/wdc.ps1，工单 20——单一来源防漂移）---
 function wdc {
     $repo = (Get-Content "$HOME\.wdc" -ErrorAction SilentlyContinue | Select-Object -First 1)
@@ -165,3 +166,4 @@ if ($__wdcRepo -and (Test-Path (Join-Path $__wdcRepo 'scripts\lib\dotfiles-map.p
     if ($__uncommitted -gt 0) { Write-Host "wdc: dotfiles 模板有 $__uncommitted 处未提交编辑——commit 收口" -ForegroundColor Yellow }
 }
 Remove-Variable __wdcRepo, __driftNames, __uncommitted -ErrorAction SilentlyContinue
+# --- wdc-cli:end ---

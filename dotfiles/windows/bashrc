@@ -67,6 +67,7 @@ command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init bash)"
 # --- starship 提示符（三 shell 统一主题；二进制缺失时静默跳过）---
 command -v starship >/dev/null 2>&1 && eval "$(starship init bash)"
 
+# --- wdc-cli:begin ---（工单07：选择不装 CLI 时渲染期剥除本段至 end 标记——函数/补全/漂移提示）
 # --- wdc: 一键工具（薄包装；全部逻辑在仓库 scripts/wdc.ps1，工单 20——单一来源防漂移）---
 wdc() {
     local repo
@@ -126,4 +127,5 @@ if [[ $- == *i* ]] && [ -f "$HOME/.wdc" ]; then
     fi
     unset _wdc_repo _wdc_drift _wdc_n
 fi
+# --- wdc-cli:end ---
 

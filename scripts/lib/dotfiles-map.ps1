@@ -23,6 +23,47 @@ function Get-DotfilesMap {
     )
 }
 
+function Get-WdcCliChoiceFile {
+    # wdc CLI 注入选择状态（v1-program 工单07）：{ "install": <bool> }——机器本地，不入仓库（ADR-0004）。
+    # 缺失/损坏一律按 true（默认装）——状态是「用户说过不要」的记忆，不是安装许可
+    Join-Path $env:LOCALAPPDATA 'wdc\cli.json'
+}
+
+function Test-WdcCliChosen {
+    # 纯函数：不依赖 common.ps1（profile 漂移提示亦读本面）
+    $f = Get-WdcCliChoiceFile
+    if (-not (Test-Path -LiteralPath $f)) { return $true }
+    try { return ((Get-Content -LiteralPath $f -Raw | ConvertFrom-Json).install -ne $false) } catch { return $true }
+}
+
+function Get-DotfileRenderContent {
+    # 渲染内容单一来源（工单07）：模板原文重建（LF+尾换行，与仓库模板字节形态一致）；模板含
+    # wdc-cli 标记段且用户选择不装 CLI 时剥除标记段（含边界行）。六方共读同一变换，落点判定不破坏
+    param([Parameter(Mandatory)][string]$Source)
+    $lines = @(Get-Content -LiteralPath $Source)
+    $marked = @($lines | Where-Object { $_ -match 'wdc-cli:(begin|end)' }).Count -gt 0
+    if ($marked -and -not (Test-WdcCliChosen)) {
+        $out = @(); $skip = $false
+        foreach ($l in $lines) {
+            if ($l -match '^# --- wdc-cli:begin ---') { $skip = $true; continue }
+            if ($l -match '^# --- wdc-cli:end ---') { $skip = $false; continue }
+            if (-not $skip) { $out += $l }
+        }
+        return ((@($out) -join "`n") + "`n")
+    }
+    return (($lines -join "`n") + "`n")
+}
+
+function Get-DotfileSourceHash {
+    # 模板的有效渲染指纹（工单07）：标记模板按渲染内容哈希（UTF-8 无 BOM 字节），其余按文件原字节
+    param([Parameter(Mandatory)][string]$Source)
+    $first = @(Get-Content -LiteralPath $Source -TotalCount 400 | Where-Object { $_ -match 'wdc-cli:' }).Count
+    if ($first -eq 0) { return (Get-FileHash -LiteralPath $Source).Hash }
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes((Get-DotfileRenderContent -Source $Source))
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try { return ([System.BitConverter]::ToString($sha.ComputeHash($bytes))).Replace('-', '') } finally { $sha.Dispose() }
+}
+
 function Test-JsonSemanticEqual {
     # JSON 语义等价递归比对（Test-DotfileInSync 的 JSON 层专用）：对象键序不计、数组序保持语义（数组有序是
     # JSON 语义，不可比掉）、标量严格——字符串大小写敏感（Ordinal）、类型不混（"1" ≠ 1、true ≠ 1）、
@@ -76,7 +117,7 @@ function Test-DotfileInSync {
     $item = Get-Item -LiteralPath $Target -Force -ErrorAction SilentlyContinue
     if (-not $item) { return 'absent' }
     if ($item.LinkType -or $item.PSIsContainer) { return 'drift' }
-    if ((Get-FileHash -LiteralPath $Target).Hash -eq (Get-FileHash -LiteralPath $Source).Hash) { return 'ok' }
+    if ((Get-FileHash -LiteralPath $Target).Hash -eq (Get-DotfileSourceHash -Source $Source)) { return 'ok' }
     if ($Source -like '*.json') {
         try {
             $tpl = Get-Content -LiteralPath $Source -Raw | ConvertFrom-Json -AsHashtable
@@ -138,6 +179,6 @@ function Get-DriftDirection {
     $rec = Get-RenderedState -Target $Target
     if (-not $rec) { return 'unknown' }
     if ((Get-FileHash -LiteralPath $Target).Hash -eq $rec) { return 'template-update' }
-    if ((Get-FileHash -LiteralPath $Source).Hash -eq $rec) { return 'machine' }
+    if ((Get-DotfileSourceHash -Source $Source) -eq $rec) { return 'machine' }
     return 'both'
 }
