@@ -9,6 +9,10 @@
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-22
+
+> **里程碑**：产品定位定型（[ADR-0009](docs/adr/0009-oneshot-manual-update-reconverge.md) 一次性配置 + 显式更新/回归）+ 退出面补齐（[ADR-0010](docs/adr/0010-wdc-exit.md)）。**1.0.0 起 SemVer 完整生效**——破坏性变更走 MAJOR。验证锚点：全环 CI run 44930767170 六腿全绿（bootstrap→幂等→快照断言→clean-legacy 零发现→exit 全退→退了→装）。
+
 ### Fixed
 - wslconfig 内存公式小机保护（v1 收官批）：旧式「半数夹 8–16GB」在 8GB 小机会算出 8GB=整机内存挤死宿主——改三重保护「半数、夹 4–16、宿主至少留 4GB」（8GB→4 / 12GB→6 / 16GB→8 / 31GB→16 主人锚定值不变，存量机零重渲染）
 - `wdc exit` 不再卸载基础设施共享资源（v1-program 工单03 CI 死因定性，范围扩至 VCRedist + NF 字体）：公共运行库装机面极广（Chrome 等无数无关应用共用）、NF 字体为系统级共享（卸之其他终端渲染豆腐块）；CI 三轮恒死于字体包卸载（字体变更广播掀翻无头进程树）。undo 表/ADR-0010 红线同步
@@ -169,7 +173,8 @@
 ### Added
 - 开源基线（[v0.1.0](https://github.com/yu-cn/wdc/releases/tag/v0.1.0)）：MIT、README 门面化、CONTRIBUTING、fork 跟随指南；裸机入口降门槛（PowerShell 5.1 自举 PowerShell 7）；WSL 侧 Docker Engine 纳入默认；pre-commit 钩子接线 + verify 断言 + dotfiles 漂移即时提示；fresh-machine 手动冒烟工作流
 
-[Unreleased]: https://github.com/yu-cn/wdc/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/yu-cn/wdc/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/yu-cn/wdc/compare/v0.14.0...v1.0.0
 [0.14.0]: https://github.com/yu-cn/wdc/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/yu-cn/wdc/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/yu-cn/wdc/compare/v0.11.0...v0.12.0
