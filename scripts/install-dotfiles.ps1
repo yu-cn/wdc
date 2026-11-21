@@ -43,6 +43,16 @@ function Install-Dotfile {
     $item = Get-Item -LiteralPath $Target -Force -ErrorAction SilentlyContinue
     if ($item) {
         if ($item.PSIsContainer) { Write-Step $leaf 'FAIL' "落点是目录，无法渲染——请人工处理：$Target"; return }
+        # W-B1 渲染前 JSON 语法预检（v1-program；上游 WindowsDeveloperConfig Terminal 预检同思想）：
+        # 源为 JSON 而落点已存在但解析失败——拒绝覆盖保损坏现场（.bak 兜底是静默的，坏文件值得叫停）
+        if (-not $item.LinkType -and (Split-Path $Source -Leaf) -match '\.json$') {
+            $jsonOk = $true
+            try { $null = Get-Content -LiteralPath $Target -Raw | ConvertFrom-Json } catch { $jsonOk = $false }
+            if (-not $jsonOk) {
+                Write-Step $leaf 'FAIL' "落点 JSON 语法错误——拒绝渲染覆盖（保损坏现场待人工处置）：$Target"
+                return
+            }
+        }
         if ($item.LinkType) {
             # 符号链接残形（ADR-0015 迁移/外来链接）：直接替换不备份——链接本体可再造，指向内容不受影响。
             # 原指向须在删除前取出——Remove-Item 后 FileInfo 失效、Target 读为空
