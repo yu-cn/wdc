@@ -6,9 +6,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 <p align="center">
-  <a href="docs/demo.cast"><img src="docs/demo.gif" width="720" alt="wdc 终端速览：wdc 快照 / wdc verify（约 4 秒循环播放）"></a>
+  <a href="docs/demo.cast"><img src="docs/demo.gif" width="720" alt="wdc 终端速览：wdc 快照 / wdc plan 预演 / wdc exit 预览（1.0.0 命令集）"></a>
 </p>
-<p align="center"><sub>↑ 速览：<code>wdc</code> 只读快照 · <code>wdc verify</code> 机器断言（源文件 <a href="docs/demo.cast">docs/demo.cast</a>）</sub></p>
+<p align="center"><sub>↑ 速览：<code>wdc</code> 只读快照 · <code>wdc plan</code> 更新/回归前预演 · <code>wdc exit</code> 退出预览（非交互自动预演，零变更；源文件 <a href="docs/demo.cast">docs/demo.cast</a>）</sub></p>
 
 这是作者的日常开发环境，以仓库形式维护：配置只描述「一台机器应当处于什么状态」，由 bootstrap 负责把机器收敛到这个状态。基于 [microsoft/WindowsDeveloperConfig](https://github.com/microsoft/WindowsDeveloperConfig) 的经验自建（不 fork，见 [ADR-0001](docs/adr/0001-own-tree-not-fork-upstream.md)）。仓库以 [MIT](LICENSE) 开源，欢迎直接使用或 fork 改造成你自己的环境（见「[使用与改造](#使用与改造)」）。**1.0.0 承诺面**：一次性配置 · 显式更新/回归 · 完整退出（`wdc exit`）· 漂移不纠察——机器日常归你；装完即走见「[一次性使用](#一次性使用外部用户装完即走)」。
 
