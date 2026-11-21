@@ -136,6 +136,20 @@ if ((Get-WslDistros) -notcontains 'Ubuntu') {
         Write-Step 'WSL shellcheck' 'FAIL' $detail
         $failCount++
     }
+
+    # wsl.conf 保护合并单测（v1 收官批 2026-11-22）：wslconf-lib.sh 四语义+守护面八用例，
+    # 与 shellcheck 同守卫（Ubuntu 就位才跑；本地 WSL 与 CI 容器同构）
+    $tr = Invoke-WslBounded -ArgumentList @('-d', 'Ubuntu', '-e', 'bash', "$repoWsl/scripts/wsl/test-wslconf-merge.sh") -TimeoutSeconds 60
+    $tCode = if ($null -ne $tr) { $tr.Exit } else { $null }
+    $tSummary = @($tr.Lines) | Where-Object { $_ -match '单测：' } | Select-Object -First 1
+    if ($tCode -eq 0) {
+        Write-Step 'wsl.conf 合并单测' 'OK' "$tSummary"
+    } elseif ($null -eq $tCode) {
+        Write-Step 'wsl.conf 合并单测' 'SKIP' 'wsl.exe 超时/不可用'
+    } else {
+        Write-Step 'wsl.conf 合并单测' 'FAIL' "$(($tr.Lines | Select-Object -First 6) -join ' | ')"
+        $failCount++
+    }
 }
 
 Write-Phase 'Validate 汇总'

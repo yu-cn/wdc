@@ -75,42 +75,10 @@ if [ "$ROLE" = "root" ]; then
     # wsl.conf 保护合并（ADR-0008；LDC ADR-0021 收编回 WDC）：整文件归本 wrapper 单一实现——
     # 只管声明键（[boot] systemd / [user] default），其余段与键（如本机 DNS 姿态 [network]）保护不动；
     # 在委托 LDC 之前执行（fresh-machine 时序不变：systemd 未生效中间态由 LDC docker_skipped 自跳）。
-    # SKIP_LDC（CI 冒烟）亦跑——WDC 自有面，无 LDC 依赖
-    ensure_wslconf_key() {
-        # 保护合并一枚声明键：段内首见替换、重复剔除、缺键段尾补、缺段文末补；其余行原样保留。
-        # 写回走 cat > 原 inode（保留属主/权限，mktemp 是 0600）
-        local sec="[$1]" kv="$2" tmp
-        tmp=$(mktemp)
-        awk -v sec="$sec" -v kv="$kv" -v k="${kv%%=*}" '
-            function trim(s) { gsub(/^[ \t]+|[ \t]+$/, "", s); return s }
-            BEGIN { insec = 0; done = 0 }
-            {
-                line = $0; sub(/\r$/, "", line)
-                if (line ~ /^[ \t]*\[[^]]*\][ \t]*$/) {
-                    if (insec && !done) print kv
-                    insec = (trim(line) == sec); print line; next
-                }
-                if (insec && line ~ "^[ \t]*" k "[[:space:]]*=") {
-                    if (!done) print kv
-                    done = 1; next
-                }
-                print line
-            }
-            END {
-                if (!done) {
-                    if (insec) print kv
-                    else { if (NR > 0) print ""; print sec; print kv }
-                }
-            }
-        ' /etc/wsl.conf > "$tmp"
-        if ! cmp -s /etc/wsl.conf "$tmp"; then
-            cat "$tmp" > /etc/wsl.conf
-            rm -f "$tmp"
-            return 0
-        fi
-        rm -f "$tmp"
-        return 1
-    }
+    # SKIP_LDC（CI 冒烟）亦跑——WDC 自有面，无 LDC 依赖。
+    # 实现抽至 wslconf-lib.sh（v1 收官批 2026-11-22：setup 与单测共源；键值目标文件参数化）
+    # shellcheck source=/dev/null  # 动态 dirname 路径不可静态跟随（SC1091 抑制；lib 自身独立过检）
+    . "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/wslconf-lib.sh"
     if [ ! -f /etc/wsl.conf ]; then
         printf '[boot]\nsystemd=true\n\n[user]\ndefault=%s\n' "$WDC_USER" > /etc/wsl.conf
         log "wsl.conf 已创建（[boot] systemd / [user] default）——wsl --shutdown 后下次进入生效"
