@@ -8,7 +8,7 @@ README「使用与改造」讲了 fork 初次改造；本文讲之后的日子�
 - fork 的 Actions 默认禁用：到你 fork 的 Actions 页启用 validate / fresh-machine 工作流
 - `.scratch/` 是上游作者的内部工单流，fork 可直接删——留着只会给合并制造噪音
 
-## 日常跟随上游
+## 跟随上游（手动，按需）
 
 ```bash
 git remote add wdc https://github.com/yu-cn/wdc.git   # 一次性

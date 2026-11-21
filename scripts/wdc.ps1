@@ -104,8 +104,8 @@ wdc — WDC 开发环境一键工具（裸命令只读快照；仓库在 ~/.wdc 
 
   wdc | wdc status     只读快照（秒级）：远端差距 / dotfiles 漂移 / 身份与 WSL / 最近 bootstrap；
                        -Json 出单行机器可读出口（包装层把 --json 归一为 -Json）
-  wdc plan             干跑预演（只读零变更）：重跑 wdc sync 会做什么——UAC/重跑前先看一眼
-  wdc sync [-Full]     同步收敛：fetch → pull → bootstrap → verify -Quick（会请求一次 UAC）；
+  wdc plan             干跑预演（只读零变更）：重跑 wdc sync 会做什么——更新/回归前先看一眼（ADR-0009）
+  wdc sync [-Full]     更新/回归入口（手动，ADR-0009）：fetch → pull → bootstrap → verify -Quick（会请求一次 UAC）；
                        已收敛且声明未变走快速路径跳过 bootstrap（秒级），-Full 强制全量
   wdc verify [-Full]   机器断言（默认 -Quick；-Full 含三域漂移约 3 分钟）
   wdc triage           dotfiles 落点漂移分流（逐文件 吸收/还原，交互式）
@@ -136,7 +136,7 @@ wdc plan — 干跑预演（只读，零变更）
   三域漂移详查 wdc verify -Full，dotfiles 漂移分流 wdc triage。恒 exit 0（预演不是断言）。
 '@
     'sync' = @'
-wdc sync [-Full] — 同步收敛（日常一键；会请求一次 UAC）
+wdc sync [-Full] — 更新/回归入口（手动，ADR-0009；会请求一次 UAC）
   顺序：fetch → 落后则 pull --ff-only（本地领先/分叉一律中止交人工）→ bootstrap → verify -Quick 收尾。
   快速路径（工单42）：收敛账本（%LOCALAPPDATA%\wdc\converged.json，bootstrap 全量成功尾部写入）的
   commit == 当前 HEAD 且工作区干净 → 跳过 bootstrap 只跑 verify -Quick，秒级完成；

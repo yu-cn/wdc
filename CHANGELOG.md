@@ -9,6 +9,9 @@
 
 ## [Unreleased]
 
+### Changed
+- WDC 定位改「一次性配置 + 显式更新/回归」（oneshot-positioning 工单01，[ADR-0009](docs/adr/0009-oneshot-manual-update-reconverge.md)）：bootstrap 跑一次即休眠，机器日常归用户、漂移合法（不再是待 triage 的异常）；`wdc sync` 从「日常一键同步」降格为手动更新/回归入口，`wdc` 快照 / verify / triage / audit 定性为按需诊断，`wdc plan` 升格为回归前推荐预演（漂移积累越久，单次回归覆盖面越大）。**纯姿态与叙事变更，零行为变更**——bootstrap 幂等、渲染拷贝、收敛账本快速路径、运行锁、ADR-0007 移除清单语义原样；多机「随时全绿」承诺收缩为各机手动时点对齐（README/GLOSSARY/wdc 帮助文本同批改口径，命令名/旗标/退出码不动）
+
 ### Fixed
 - JSON 落点漂移误报（json-semantic-sync 工单01）：VSCode 设置 UI 触碰任意一项即把该键重排到文件尾，键序差异、内容零差异按字节判定报 drift——吸收固化无语义键序、还原下回 UI 触碰复发，两头打地鼠（2026-11-14 LETH 实录）。`Test-DotfileInSync`（六方共读单一来源）对 `*.json` 落点追加语义等价层：对象键序不计、数组序保持语义（数组有序是 JSON 语义）、标量严格（字符串大小写敏感、类型不混、数值语义等）；解析失败（非 JSON/极端形态/pwsh 5.1）兜底回字节判定 drift，宁严勿松
 

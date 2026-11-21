@@ -1,6 +1,6 @@
 # WDC（Windows Developer Config）— 声明式 Windows 开发环境
 
-> clone 之后一条命令，任何一台 Windows 机器收敛到声明状态：软件、系统设置、dotfiles、WSL Ubuntu——幂等、可重放、可迁移。
+> clone 之后一条命令，任何一台 Windows 机器一次性配置到声明状态：软件、系统设置、dotfiles、WSL Ubuntu。跑完即休眠，机器日常归你、漂移合法；想跟进新声明（更新）或收回声明状态（回归）时显式再跑——幂等、可重放（[ADR-0009](docs/adr/0009-oneshot-manual-update-reconverge.md)）。
 
 [![validate](https://github.com/yu-cn/wdc/actions/workflows/validate.yml/badge.svg)](https://github.com/yu-cn/wdc/actions/workflows/validate.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -30,7 +30,7 @@ powershell -ExecutionPolicy Bypass -File bootstrap.ps1
 
 bootstrap 先确保 PowerShell 7 就位（裸机自动安装），再依次跑七个阶段（预检 → 无副作用校验 → 应用声明配置 → 用户级安装 → 移除清单 → WSL 侧 → dotfiles），全程输出分阶段报告。**一条命令一键收敛**：未提权启动会弹一次 UAC，提权子回合一回合跑完全部七阶段（含 WSL），无需手动二次运行。
 
-> **直接在自己机器上跑之前先知道**：bootstrap 是作者的日常环境收敛——会应用注册表系统设置（含关远程桌面等 opinion），并执行一份显式移除清单（[ADR-0007](docs/adr/0007-removal-list-converge-only.md)：卸载商店版 VSCode 换 winget 版、清理退役终端片段；**不卸载任何语言栈与已装软件**）。想用自己的偏好，建议先 fork 按下文「使用与改造」裁剪再跑。
+> **直接在自己机器上跑之前先知道**：bootstrap 是作者环境的一次性收敛——会应用注册表系统设置（含关远程桌面等 opinion），并执行一份显式移除清单（[ADR-0007](docs/adr/0007-removal-list-converge-only.md)：卸载商店版 VSCode 换 winget 版、清理退役终端片段；**不卸载任何语言栈与已装软件**）。想用自己的偏好，建议先 fork 按下文「使用与改造」裁剪再跑。
 
 <details>
 <summary><strong>首次运行你需要配合的四件事</strong>（UAC 提权 · 重启续跑 · 填写身份 · 关 VSCode 设置同步）</summary>
@@ -42,7 +42,7 @@ bootstrap 先确保 PowerShell 7 就位（裸机自动安装），再依次跑�
 
 </details>
 
-重跑 bootstrap 幂等：已就位的全部跳过，只有漂移会被收敛。收敛完成后验收：`pwsh scripts/verify-machine.ps1`（全绿即与声明一致）。`-NoElevate` 保留为非提权单回合入口（排障逃生通道：apply 与 WSL 启用受限跳过）。
+重跑 bootstrap 幂等：已就位的全部跳过，只有漂移会被收敛——重跑即显式的「更新」（拉了新声明）或「回归」（漂移后收回敛，[ADR-0009](docs/adr/0009-oneshot-manual-update-reconverge.md)），平时 WDC 不碰机器；回归前建议先 `wdc plan` 预演（漂移积累越久，单次回归覆盖面越大）。收敛完成后验收：`pwsh scripts/verify-machine.ps1`（全绿即与声明一致）。`-NoElevate` 保留为非提权单回合入口（排障逃生通道：apply 与 WSL 启用受限跳过）。
 
 <details>
 <summary><strong>一条命令得到什么</strong>（点开看完整清单）</summary>
@@ -69,7 +69,7 @@ gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL b
 
 ## 使用与改造
 
-- **直接用**：照上文「快速开始」clone 本仓库跑 bootstrap。仓库不含作者的身份与机器派生值——`~/.gitidentity` 填你自己的 git name/email，WSL 终端配置按你本机发行版渲染（[ADR-0004](docs/adr/0004-machine-adaptive-rendering.md)）——之后 `wdc sync` 一键跟进上游演进。
+- **直接用**：照上文「快速开始」clone 本仓库跑 bootstrap。仓库不含作者的身份与机器派生值——`~/.gitidentity` 填你自己的 git name/email，WSL 终端配置按你本机发行版渲染（[ADR-0004](docs/adr/0004-machine-adaptive-rendering.md)）——之后想跟进上游演进时显式跑 `wdc sync`（手动更新，ADR-0009）。
 - **fork 改造（推荐）**：fork 成你自己的仓库再 bootstrap（引导命令前设 `$env:WDC_REPO` 指向你的仓库即可，get.ps1 写死的是上游地址），偏好由你定。改造清单：
   1. `configs/*.winget` 与 `configs/vscode-extensions.txt`——软件与扩展清单，删你不用的
   2. `dotfiles/`——shell / git / 终端 / 编辑器偏好
@@ -84,10 +84,10 @@ gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL b
 | 命令 | 用途 |
 |---|---|
 | `wdc` | 只读快照（裸命令默认，秒级）：远端差距 / dotfiles 漂移 / 身份与 WSL / 最近 bootstrap；`-Json` 单行机器可读出口 |
-| `wdc plan` | 干跑预演（只读零变更）：重跑 wdc sync 会做什么——会不会弹 UAC、走全量还是快速路径，先看一眼再决定 |
-| `wdc sync` | 日常一键同步（fetch → pull → bootstrap → verify -Quick 收尾；会请求一次 UAC）。已收敛且声明未变（收敛账本=HEAD、工作区干净）走快速路径跳过 bootstrap，秒级完成；账本缺失/损坏或有新 pull 一律回退全量（宁可慢不可假绿），`-Full` 强制全量 |
+| `wdc plan` | 干跑预演（只读零变更）：重跑 wdc sync 会做什么——会不会弹 UAC、走全量还是快速路径；更新/回归前的推荐步骤（ADR-0009） |
+| `wdc sync` | 手动更新/回归入口（fetch → pull → bootstrap → verify -Quick 收尾；会请求一次 UAC；ADR-0009）。已收敛且声明未变（收敛账本=HEAD、工作区干净）走快速路径跳过 bootstrap，秒级完成；账本缺失/损坏或有新 pull 一律回退全量（宁可慢不可假绿），`-Full` 强制全量 |
 | `wdc verify [-Full]` / `wdc triage` / `wdc log` / `wdc help` | 机器断言（默认 -Quick）/ dotfiles 落点漂移分流 / 最近日志尾部 / 帮助与版本（子命令后接 `-h` 出该命令详解；Tab 补全词表解析自脚本单一来源） |
-| `pwsh bootstrap.ps1` | 完整收敛（日常改了配置后重跑） |
+| `pwsh bootstrap.ps1` | 完整收敛（更新/回归的显式重跑入口） |
 | `pwsh bootstrap.ps1 -ValidateOnly` | 只做无副作用校验（配置 schema + 脚本静态检查） |
 | `pwsh validate.ps1` | 同上的校验入口，独立可用 |
 | `winget configure test --file configs/<域>.winget` | 单域漂移检查（不动机器） |
