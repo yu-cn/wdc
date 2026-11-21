@@ -150,7 +150,7 @@ else {
     Write-Step 'ubuntu.ico' 'CHANGED' "已安装 -> $iconDst"
 }
 
-# ~/.wdc：机器本地仓库路径指针（wdc 一键同步命令用；路径因机而异不入库，ADR-0004 模式）
+# ~/.wdc：机器本地仓库路径指针（wdc 命令与更新/回归入口用；路径因机而异不入库，ADR-0004 模式）
 $wdcPtr = Join-Path $HOME '.wdc'
 if (-not (Test-Path $wdcPtr) -or ((Get-Content $wdcPtr -Raw -ErrorAction SilentlyContinue).Trim() -ne $repoRoot)) {
     Set-Content -Path $wdcPtr -Encoding ascii -Value $repoRoot

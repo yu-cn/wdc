@@ -10,7 +10,7 @@
 </p>
 <p align="center"><sub>↑ 速览：<code>wdc</code> 只读快照 · <code>wdc verify</code> 机器断言（源文件 <a href="docs/demo.cast">docs/demo.cast</a>）</sub></p>
 
-这是作者的日常开发环境，以仓库形式维护：配置只描述「一台机器应当处于什么状态」，由 bootstrap 负责把机器收敛到这个状态。基于 [microsoft/WindowsDeveloperConfig](https://github.com/microsoft/WindowsDeveloperConfig) 的经验自建（不 fork，见 [ADR-0001](docs/adr/0001-own-tree-not-fork-upstream.md)）。仓库以 [MIT](LICENSE) 开源，欢迎直接使用或 fork 改造成你自己的环境（见「[使用与改造](#使用与改造)」）。
+这是作者的日常开发环境，以仓库形式维护：配置只描述「一台机器应当处于什么状态」，由 bootstrap 负责把机器收敛到这个状态。基于 [microsoft/WindowsDeveloperConfig](https://github.com/microsoft/WindowsDeveloperConfig) 的经验自建（不 fork，见 [ADR-0001](docs/adr/0001-own-tree-not-fork-upstream.md)）。仓库以 [MIT](LICENSE) 开源，欢迎直接使用或 fork 改造成你自己的环境（见「[使用与改造](#使用与改造)」）。**1.0.0 承诺面**：一次性配置 · 显式更新/回归 · 完整退出（`wdc exit`）· 漂移不纠察——机器日常归你；装完即走见「[一次性使用](#一次性使用外部用户装完即走)」。
 
 ## 快速开始（新机器）
 
@@ -20,7 +20,7 @@
 powershell -c "irm https://raw.githubusercontent.com/yu-cn/wdc/main/scripts/get.ps1 | iex"
 ```
 
-get.ps1 是唯一的远程引导脚本：缺 Git 自动 winget 安装（弹一次 UAC）→ 定位或 clone 仓库（`~/.wdc` 指针有效则复用，缺省 clone 到 `~\wdc`）→ 直接进入 bootstrap 全流程（缺 PowerShell 7 自动经 winget 用户级安装）。get.ps1 全程纯 ASCII（无 BOM），`irm | iex` 在裸机 Windows PowerShell 5.1 即安全——含中文的脚本不可走这条路（BOM 毒化实录见 [collaboration.md 已知坑16](docs/agents/collaboration.md)）。该命令属于直接执行网络代码——介意可先[审阅 get.ps1](scripts/get.ps1)再粘贴。求稳可先钉版本：`$env:WDC_TAG = 'v0.7.0'` 再执行同一条命令（clone 后 checkout 该 tag，仅作用于全新 clone；tag 清单见 [Releases](https://github.com/yu-cn/wdc/releases)）；fork 用户把地址指到自己的仓库：`$env:WDC_REPO = 'https://github.com/<你>/wdc.git'`——同样一条命令完成引导。偏好手动管理的等价三行（Git 需自备，`winget install Git.Git` 或官网安装包）：
+get.ps1 是唯一的远程引导脚本：缺 Git 自动 winget 安装（弹一次 UAC）→ 定位或 clone 仓库（`~/.wdc` 指针有效则复用，缺省 clone 到 `~\wdc`）→ 直接进入 bootstrap 全流程（缺 PowerShell 7 自动经 winget 用户级安装）。get.ps1 全程纯 ASCII（无 BOM），`irm | iex` 在裸机 Windows PowerShell 5.1 即安全——含中文的脚本不可走这条路（BOM 毒化实录见 [collaboration.md 已知坑16](docs/agents/collaboration.md)）。该命令属于直接执行网络代码——介意可先[审阅 get.ps1](scripts/get.ps1)再粘贴。求稳可先钉版本：`$env:WDC_TAG = 'v0.14.0'` 再执行同一条命令（clone 后 checkout 该 tag，仅作用于全新 clone；tag 清单见 [Releases](https://github.com/yu-cn/wdc/releases)）；fork 用户把地址指到自己的仓库：`$env:WDC_REPO = 'https://github.com/<你>/wdc.git'`——同样一条命令完成引导。偏好手动管理的等价三行（Git 需自备，`winget install Git.Git` 或官网安装包）：
 
 ```powershell
 git clone https://github.com/yu-cn/wdc.git
@@ -33,12 +33,13 @@ bootstrap 先确保 PowerShell 7 就位（裸机自动安装），再依次跑�
 > **直接在自己机器上跑之前先知道**：bootstrap 是作者环境的一次性收敛——会应用注册表系统设置（含关远程桌面等 opinion），并执行一份显式移除清单（[ADR-0007](docs/adr/0007-removal-list-converge-only.md)：卸载商店版 VSCode 换 winget 版、清理退役终端片段；**不卸载任何语言栈与已装软件**）。想用自己的偏好，建议先 fork 按下文「使用与改造」裁剪再跑。
 
 <details>
-<summary><strong>首次运行你需要配合的四件事</strong>（UAC 提权 · 重启续跑 · 填写身份 · 关 VSCode 设置同步）</summary>
+<summary><strong>首次运行你需要配合的五件事</strong>（UAC 提权 · 重启续跑 · 填写身份 · 登录 VSCode 开同步 · CLI 装否选择）</summary>
 
 1. **UAC 提权**——未提权启动会自动请求，点一次确认
 2. **重启**——全新机器 bootstrap 会在提权回合内自动启用 WSL 并提示重启；重启登录后由一次性续跑任务**自动重跑** bootstrap 安装 Ubuntu 并收尾（GLOSSARY「续跑任务」：任意一次 bootstrap 启动即清除、绝不循环；自动登记未成时手工路径：重启后重跑 `bootstrap.ps1`，或管理员终端 `wsl --install`，流程相同）
 3. **填写身份**——bootstrap 生成 `~/.gitidentity` 占位后，填上**本机**的 git name/email（各机身份不同；不填则 git 拒绝提交，这是防错护栏）
 4. **登录 VSCode 开启设置同步**——首次启动 VSCode 登录账号并开启设置同步（齿轮/账户图标），扩展/设置/键位自动回来。WDC 只装本体：账号态归 VSCode 自己的同步机制，仓库管机器环境态（v1-program 工单03，2026-11-21 主人定夺全让位——对照上游 WindowsDeveloperConfig 同款边界：不装扩展、不碰 VSCode 配置文件）
+5. **CLI 装否选择**——bootstrap 会问一次「是否把 `wdc` 命令装进 shell」（默认装；`-NoCli` 可预设跳过）。不装则 shell 配置零 WDC 痕迹，管理命令随时可从仓库脚本直接跑
 
 </details>
 
@@ -50,8 +51,8 @@ bootstrap 先确保 PowerShell 7 就位（裸机自动安装），再依次跑�
 **系统**（[base-windows 域](configs/base-windows.winget)，27 项注册表 opinion）
 开发者模式 · 启用 Sudo · 长路径 · 深色主题 · 显示扩展名/隐藏文件 · 资源管理器与任务栏去噪 · 开始菜单关 Web 搜索与推荐 · 关 Recall / Click To Do / 小组件 · Edge 新标签空白 · 关远程桌面
 
-**CLI**（[cli-tools 域](configs/cli-tools.winget)，17 个 winget 包）
-Git · GitHub CLI · Everything · PowerToys · lazygit · delta · fzf / fd / ripgrep / zoxide / bat / jq · make · JetBrainsMono NF 字体（PowerShell 7 由入口引导层负责安装与升级；浏览器不入声明——Edge 预装等价，Chrome 等属机器自留地，ADR-0003 第二轴）
+**CLI**（[cli-tools 域](configs/cli-tools.winget)，18 个 winget 包）
+Git · GitHub CLI · Everything · PowerToys · lazygit · delta · fzf / fd / ripgrep / zoxide / bat / jq · make · Starship · VC++ 运行库 · JetBrainsMono NF 字体（PowerShell 7 由入口引导层负责安装与升级；浏览器不入声明——Edge 预装等价，Chrome 等属机器自留地，ADR-0003 第二轴）
 
 **编辑器**（[editors 域](configs/editors.winget)）
 VS Code 本体——扩展/设置/键位走 VSCode 原生**设置同步**（账号态，新机登录即回；ADR-0003 第二轴判例，WDC 不与原生机制打架）

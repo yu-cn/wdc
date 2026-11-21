@@ -106,7 +106,7 @@ if (-not (Test-Path $cliJson) -and -not $ValidateOnly) {
     $installCli = $true
     if ($NoCli) { $installCli = $false }
     elseif (-not $Cli -and -not [Console]::IsInputRedirected) {
-        $ans = Read-Host '是否把 wdc 命令装进 shell（更新/回归/退出的的一键入口；不装也可直接跑仓库脚本）？(Y/n)'
+        $ans = Read-Host '是否把 wdc 命令装进 shell（更新/回归/退出的一键入口；不装也可直接跑仓库脚本）？(Y/n)'
         if ($ans -match '^\s*[nN]') { $installCli = $false }
     }
     $cliDir = Split-Path $cliJson -Parent
