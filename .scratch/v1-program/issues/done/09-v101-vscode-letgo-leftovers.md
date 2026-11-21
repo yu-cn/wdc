@@ -1,6 +1,6 @@
 # 09 v1.0.1 盘面——VSCode 让位批漏改残留（ASUS 48h 补验发现）
 
-Status: ready-for-human
+Status: done
 Type: task
 
 根提交 bef1b63（工单03 VSCode 全让位，ADR-0003 修订标注二）删除扩展清单/安装脚本/模板并同步改了
@@ -27,9 +27,20 @@ exit-wdc.ps1 等 12 处，但漏了三处仍引用已删文件的地方；CI 又
 4. **根因放大器 · CI 无 verify 腿**——fresh-machine.yml 六步为 bootstrap / 幂等重跑 / 快照断言 /
    clean-legacy 零发现 / exit 全退 / 退了→装重装，无一步跑 `wdc verify`；validate.ps1 亦为静态检查 +
    winget configure validate，不含机器断言——本 P1 得以绿灯进版。建议：fresh-machine 增 verify 腿
-   （幂等重跑步之后最自然），或 validate 阶段点验 verify 脚本引用的仓库文件齐备。是否补腿、补哪种归主人。
+   （幂等重打磨之后最自然），或 validate 阶段点验 verify 脚本引用的仓库文件齐备。是否补腿、补哪种归主人。
+5. **P4 · CHANGELOG 1.0.0 版本节 exit 表述失实**（实施批追录）——bef1b63 先于 tag 4e207ce 落地、exit 已撤
+   扩展段，但 1.0.0 节两处仍按撤段前口径写成：exit T2「VSCode 扩展逐个卸载」、undo 表「包 / VSCode 扩展 /
+   dotfiles / WSL 四面撤销指针」。GitHub release notes 已核**无**此失实（效果优先口径天然避开），无需勘误。
 
 ## Comments
 
 - 2026-11-22 开票（ASUS 48h 补验 08 票联动）。四项均为断言/文档残留，无行为面损伤；1–3 为同根
   （bef1b63 漏网），4 为流程缺口。
+- 2026-11-22 主人定夺「按建议继续」，同批实施（bb5b76a）：P1 断言块退役留墓碑注释，本机 `wdc verify`
+  复跑全绿（exit 0，含 WSL LDC）；P2/P3 照建议改写；P4 两处随批勘误（节内附勘误标注）；4 按「幂等重跑后
+  增腿」落 fresh-machine.yml。v1.0.1 是否成版仍归主人（修复已进 Unreleased）。
+- 2026-11-22 CI 腿验收两跑收口：首跑 run 44937389307 红——判定逻辑工作正常，红在 CI 步骤自身两坑
+  （65c5210 修正）：① 身份预填的 Test-Path 守卫永不触发（bootstrap 必先生成空值占位）→ 改无条件覆写；
+  ② winget 装机 PATH 增量只进注册表、不进 job 进程环境快照 → step 内自 Machine+User 重建（mise/uv
+  Get-Command 三连落空的根因）。二跑 run 44939082707 **全绿**：verify 腿过、身份/mise/node/uv 全 OK、
+  机器断言全部通过，例行动作面（bootstrap/幂等/快照/clean-legacy/exit）无一红。
