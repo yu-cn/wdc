@@ -50,6 +50,17 @@ jobs:
             exit 1
           }
           Write-Host "幂等重跑通过：第二遍零变更（核查 $($logs.Count) 份日志，排除项=身份占位提醒 + WT settings 环境写穿）"
+      # W-A exit 腿（v1-program / exit-mechanism 工单03，ADR-0010）：装了→退——完整退出后断言机器状态已清。
+      # runner 管理员上下文：无 UAC 重启，-Yes 免确认。声明包/扩展/注册表/dotfiles 全退；注册表按 runner
+      # 自身的 pre-install 快照逐值还原（工单01 快照在 bootstrap 首跑已落）。除名≠卸载的 Chrome 不在面内。
+      - name: wdc exit 完整退出（声明面全退 + 状态断言）
+        shell: pwsh
+        run: |
+          & pwsh -NoProfile -File "$env:RUNNER_TEMP\wdc\scripts\wdc.ps1" exit -Yes
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          if (Test-Path "$env:LOCALAPPDATA\wdc") { Write-Host '状态目录未清'; exit 1 }
+          if (Test-Path "$env:USERPROFILE\.wdc") { Write-Host '指针未清'; exit 1 }
+          Write-Host 'exit 腿通过：装了→退闭环（声明面全退 + 机器状态已清）'
       # run1 实录：cmd 步骤被 Ctrl+C 掐断仍报 success（假阳性），transcript 随 runner 销毁——
       # 成败都带日志工件回来，判读以日志为准、不看结论位
       - name: 上传 bootstrap 日志（成败都传）

@@ -28,6 +28,8 @@ param(
     [switch]$Version,
     [switch]$Full,
     [switch]$Fix,
+    [switch]$KeepTools,
+    [switch]$Yes,
     [switch]$Json,
     [int]$Lines = 40
 )
@@ -36,7 +38,7 @@ try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { }
 . (Join-Path $PSScriptRoot 'lib/common.ps1')
 . (Join-Path $PSScriptRoot 'lib/dotfiles-map.ps1')
 
-$wdcCommands = 'status', 'sync', 'verify', 'plan', 'triage', 'audit', 'clean-legacy', 'upgrade-git', 'log', 'help', 'version'
+$wdcCommands = 'status', 'sync', 'verify', 'plan', 'triage', 'audit', 'clean-legacy', 'upgrade-git', 'exit', 'log', 'help', 'version'
 # 报错/提示文案的命令列表一律由 $wdcCommands 动态拼（cli-ux 工单04：加命令只改这一处）
 $wdcCommandsDetail = @($wdcCommands | Where-Object { $_ -notin 'help', 'version' })
 
@@ -113,6 +115,7 @@ wdc — WDC 开发环境一键工具（裸命令只读快照；仓库在 ~/.wdc 
   wdc audit            winget 清单准入对账（只读恒 exit 0：已声明未装 / 自装未声明）
   wdc clean-legacy     版本残留清扫（按签名不按版本；报告默认，-Fix 清理 SafeToFix 项）
   wdc upgrade-git      Git for Windows 升级专用通道（坑14：会话内必被 in-use 拦——计划任务脱离进程树）
+  wdc exit             退出 WDC：默认完整退出 T2（确认后提权执行）；-KeepTools 只退状态；无 -Yes 非交互=预演
   wdc log [-Lines N]   最近一次 bootstrap 日志尾部（默认 40 行）
   wdc help [命令]      本总览或单命令详解（-h/--help 同义；子命令后接 -h 出该命令详解）
   wdc version          版本（-v/--version 同义）
@@ -178,6 +181,16 @@ wdc upgrade-git — Git for Windows 升级专用通道（坑14，工单43）
   先等本会话 bash/sh 清零且连续 3×5s 静默 → winget 升级 → 校验/还原 etc\gitconfig（坑14③）。
   未提权会话经 sudo 登记（UAC 弹窗请放行）；完成后 git --version 验证、wdc sync 恢复收敛；
   进度/排障日志：scripts/adhoc/git-upgrade-schtasks.log。
+'@
+    'exit' = @'
+wdc exit [-KeepTools] [-Yes] — 退出 WDC（ADR-0010）
+两档：T2 完整退出（默认）= 声明面全退、数据面不动——声明包逐 Id 卸载（坑7 逐版本）、VSCode 扩展卸载、
+注册表还原（pre-install 快照优先逐值还原，存量机降级 undo 表 Windows 默认值并明示）、dotfiles 落点
+（有 .bak 还原原文件/无则删除）、clean-legacy -Fix 清扫；T1 状态退出（-KeepTools）= 只删机器状态不动环境。
+安全：默认打印全计划后交互确认；非交互（管道/CI）且无 -Yes 自动降级为预演零变更——执行加 -Yes。
+T2 确认后自重启提权子回合（HKLM 注册表 + 机器级包卸载需要）。红线：自留地/语言数据面
+（runtime/venvs/cache）/已除名软件（Chrome）/~/.gitidentity/仓库 clone 一概不碰。WSL 侧（T3）另议。
+收尾自带退出断言（verify-exit：状态目录/指针/备份链已清）。幂等——失败重跑收尾。
 '@
     'log' = @'
 wdc log [-Lines N] — 最近一次 bootstrap 日志尾部（默认 40 行）
@@ -387,6 +400,12 @@ switch ($Command) {
     'clean-legacy' {
         $clArgs = @(); if ($Fix) { $clArgs += '-Fix' }
         & pwsh -NoProfile -File (Join-Path $repo 'scripts\clean-legacy.ps1') @clArgs
+        exit $LASTEXITCODE
+    }
+
+    'exit' {
+        $exArgs = @(); if ($KeepTools) { $exArgs += '-KeepTools' }; if ($Yes) { $exArgs += '-Yes' }
+        & pwsh -NoProfile -File (Join-Path $repo 'scripts\exit-wdc.ps1') @exArgs
         exit $LASTEXITCODE
     }
 

@@ -88,6 +88,7 @@ gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL b
 | `wdc sync` | 手动更新/回归入口（fetch → pull → bootstrap → verify -Quick 收尾；会请求一次 UAC；ADR-0009）。已收敛且声明未变（收敛账本=HEAD、工作区干净）走快速路径跳过 bootstrap，秒级完成；账本缺失/损坏或有新 pull 一律回退全量（宁可慢不可假绿），`-Full` 强制全量 |
 | `wdc verify [-Full]` / `wdc triage` / `wdc log` / `wdc help` | 机器断言（默认 -Quick）/ dotfiles 落点漂移分流 / 最近日志尾部 / 帮助与版本（子命令后接 `-h` 出该命令详解；Tab 补全词表解析自脚本单一来源） |
 | `wdc clean-legacy [-Fix]` | 版本残留清扫（按签名不按版本号；默认报告恒 exit 0，`-Fix` 只清安全项——fragments/vp/死计划任务） |
+| `wdc exit [-KeepTools] [-Yes]` | 退出 WDC（[ADR-0010](docs/adr/0010-wdc-exit.md)）：默认完整退出——声明面全退、数据面不动，pre-install 快照优先还原；`-KeepTools` 只退状态；非交互无 `-Yes` 自动预演 |
 | `pwsh bootstrap.ps1` | 完整收敛（更新/回归的显式重跑入口） |
 | `pwsh bootstrap.ps1 -ValidateOnly` | 只做无副作用校验（配置 schema + 脚本静态检查） |
 | `pwsh validate.ps1` | 同上的校验入口，独立可用 |

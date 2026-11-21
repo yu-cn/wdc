@@ -10,9 +10,10 @@
 ## [Unreleased]
 
 ### Added
+- `wdc exit [-KeepTools] [-Yes]`（exit-mechanism 工单03，[ADR-0010](docs/adr/0010-wdc-exit.md)）：一次性配置的退出面——T2 完整退出（默认）：VSCode 扩展逐个卸载、声明包逐 Id 卸载（坑7 多版本逐版本显式）、注册表还原（pre-install 快照优先**逐值**还原、绝不整键删除防连坐共享键，存量机降级 undo 表 Windows 默认值并明示）、dotfiles 落点处置（有 `.bak` 还原首次渲染前原文件、无则删除）、`clean-legacy -Fix` 清扫、机器状态删除，收尾自带退出断言（状态目录/指针/备份链已清），幂等失败重跑收尾；T1 状态退出（`-KeepTools`）只删机器状态环境原样。安全设计：默认打印全计划后交互确认，非交互且无 `-Yes` 自动降级预演零变更，T2 确认后自重启提权子回合。红线：语言数据面（runtime/venvs/cache）/自留地/已除名软件（Chrome）/~/.gitidentity/仓库 clone 一概不碰。cli-parity 契约同步（LDC 主作者位先行 09f8d1f）
 - pre-install 注册表快照（exit-mechanism 工单01 代码半边）：bootstrap Stage 3 首次 apply base-windows 前对全部声明 keyPath（15 个去重，自 .winget 单一来源提取）一次性 `reg export` 到 `%LOCALAPPDATA%\wdc\pre-install\`（marker=manifest.json 幂等）——`wdc exit` 的还原基准层；存量机（收敛账本在位=机制上线前已收敛）落 skipped-already-converged 标记，绝不拿已应用值冒充 pre-install（宁缺毋假），exit 还原降级走 undo 表 Windows 默认值
 - `wdc clean-legacy [-Fix]`（exit-mechanism 工单02）：版本残留清扫新子命令——按**签名**识别历史机制残留物、不按版本号（版本→残留映射不可靠），八节清单（符号链接落点/WT fragments/vp 残留/Cascadia per-user 字体/uv 双装遮蔽/死计划任务/状态目录陈旧物/LDC 孤儿 backup）；默认纯报告恒 exit 0（对齐 audit 对账口径），`-Fix` 只清 SafeToFix 项（fragments/vp/死任务），遮蔽类永远只报告。cli-parity 契约同步（LDC 主作者位先行 1754183）
-- undo 表（exit-mechanism 工单01 文档半边）：[docs/undo-table.md](docs/undo-table.md)——27 项注册表 opinion 逐项 undo 动作（删值 22 / 置默认 5，策略键 4 处连空键）+ 包 / VSCode 扩展 / dotfiles / WSL 四面撤销指针；pre-install 快照落地前的手工撤销正典，也是 `wdc exit` 的还原基准层（对照上游「每项设置文档化 undo」做法）
+- undo 表（exit-mechanism 工单01 文档半边）：[docs/undo-table.md](docs/undo-table.md)——27 项注册表 opinion 逐项 undo 动作（删值 20 / 置默认 7，策略键 4 处连空键）+ 包 / VSCode 扩展 / dotfiles / WSL 四面撤销指针；pre-install 快照落地前的手工撤销正典，也是 `wdc exit` 的还原基准层（对照上游「每项设置文档化 undo」做法）
 
 ### Changed
 - Chrome 除名声明面（v1-program 工单02，[ADR-0003 修订标注](docs/adr/0003-universal-core-only.md)）：通用核心判据补第二轴「开发环境相关性」——通用消费软件（浏览器等）即使人人用也出局；chrome 域整体退役（连带工单26 CI DODownloader 闪失败史源与工单33 useLatest 漂移噪声消亡）。**除名≠卸载**：存量机 Chrome 原样保留转机器自留地（ADR-0007 收敛-only），audit 自装清单 +1 属预期；Everything / PowerToys 经审视保留（系统级开发提效，无预装等价物）
