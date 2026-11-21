@@ -294,3 +294,46 @@ function Get-WdcConvergenceLedger {
     } catch { }
     return $null
 }
+
+# ---------------------------------------------------------------------------
+# pre-install 快照（exit-mechanism 工单01）：首次 apply base-windows 前对全部声明
+# keyPath 一次性 reg export，作为 wdc exit 的还原基准（快照优先，无快照降级走
+# docs/undo-table.md 的 Windows 默认值）。marker = manifest.json，一次性幂等。
+# 存量机（收敛账本已在 = 快照机制上线前已收敛）绝不拿 WDC 已应用值冒充 pre-install
+# （宁缺毋假）——manifest 记 skipped-already-converged。机器本地状态，不入仓库（ADR-0004）。
+# ---------------------------------------------------------------------------
+function Export-WdcPreInstallSnapshot {
+    [CmdletBinding()]
+    param(
+        # Fresh 仅供测试/诊断（跳过存量机判定）——对默认目录上已收敛的机器用 Fresh 会把
+        # WDC 已应用值误存为「pre-install」，生产路径（bootstrap）一律无参调用。
+        [string]$Dir = (Join-Path $env:LOCALAPPDATA 'wdc\pre-install'),
+        [string]$DomainFile = (Join-Path $PSScriptRoot '..\..\configs\base-windows.winget'),
+        [switch]$Fresh
+    )
+    $manifest = Join-Path $Dir 'manifest.json'
+    if (Test-Path -LiteralPath $manifest) {
+        return @{ Status = 'OK'; Note = '快照已在（marker 幂等跳过）' }
+    }
+    if (-not $Fresh -and (Test-Path -LiteralPath (Get-WdcConvergenceLedgerFile))) {
+        New-Item -ItemType Directory -Path $Dir -Force | Out-Null
+        @{ status = 'skipped-already-converged'; at = (Get-Date -Format 'o') } |
+            ConvertTo-Json | Set-Content -LiteralPath $manifest -Encoding utf8
+        return @{ Status = 'INFO'; Note = '存量机（快照机制上线前已收敛）——exit 还原走 undo 表 Windows 默认值' }
+    }
+    # keyPath 自声明单一来源提取（ configs/base-windows.winget），保序去重——keyPath 含空格（如
+    # "Terminal Server"），模式须取整行尾而非 \S+
+    $keys = @(Select-String -Path $DomainFile -Pattern 'keyPath:\s*(.+)$' |
+        ForEach-Object { $_.Matches[0].Groups[1].Value.Trim() } | Select-Object -Unique)
+    New-Item -ItemType Directory -Path $Dir -Force | Out-Null
+    $map = [ordered]@{}
+    foreach ($k in $keys) {
+        $slug = $k -replace '[\\/:]', '_'
+        $null = & reg.exe export $k (Join-Path $Dir "$slug.reg") /y 2>$null
+        $map[$slug] = @{ path = $k; present = ($LASTEXITCODE -eq 0) }
+    }
+    $absent = @($map.Values | Where-Object { -not $_.present }).Count
+    @{ status = 'ok'; at = (Get-Date -Format 'o'); keys = $map } |
+        ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $manifest -Encoding utf8
+    return @{ Status = 'OK'; Note = "$($keys.Count) 个 keyPath 已导出（缺席 $absent 个，缺席本身即还原信息）" }
+}

@@ -150,6 +150,12 @@ $null = Invoke-Stage 'Stage 3/7 - Apply 应用声明配置' {
     foreach ($domain in $domainOrder) {
         $file = Join-Path $PSScriptRoot "configs/$domain.winget"
         if (-not (Test-Path $file)) { Write-Step $domain 'SKIP' '尚未创建（后续工单）'; continue }
+        # pre-install 快照（exit-mechanism 工单01）：首次 apply base-windows 前一次性导出原值——
+        # wdc exit 的还原基准层；marker 幂等，存量机记「快照缺席」（宁缺毋假）
+        if ($domain -eq 'base-windows') {
+            $snap = Export-WdcPreInstallSnapshot
+            Write-Step 'pre-install 快照' $snap.Status $snap.Note
+        }
         $units = @(Select-String -Path $file -Pattern '^- type: ').Count
         Write-Step $domain 'INFO' "winget configure 应用中（$units 单元，长域可达 5–10 分钟）——逐单元流式输出见下（工单40：原整域收完回放致 base-windows 后长静默）"
         $unitOut = [System.Collections.Generic.List[string]]::new()

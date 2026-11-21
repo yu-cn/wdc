@@ -10,6 +10,8 @@
 ## [Unreleased]
 
 ### Added
+- pre-install 注册表快照（exit-mechanism 工单01 代码半边）：bootstrap Stage 3 首次 apply base-windows 前对全部声明 keyPath（15 个去重，自 .winget 单一来源提取）一次性 `reg export` 到 `%LOCALAPPDATA%\wdc\pre-install\`（marker=manifest.json 幂等）——`wdc exit` 的还原基准层；存量机（收敛账本在位=机制上线前已收敛）落 skipped-already-converged 标记，绝不拿已应用值冒充 pre-install（宁缺毋假），exit 还原降级走 undo 表 Windows 默认值
+- `wdc clean-legacy [-Fix]`（exit-mechanism 工单02）：版本残留清扫新子命令——按**签名**识别历史机制残留物、不按版本号（版本→残留映射不可靠），八节清单（符号链接落点/WT fragments/vp 残留/Cascadia per-user 字体/uv 双装遮蔽/死计划任务/状态目录陈旧物/LDC 孤儿 backup）；默认纯报告恒 exit 0（对齐 audit 对账口径），`-Fix` 只清 SafeToFix 项（fragments/vp/死任务），遮蔽类永远只报告。cli-parity 契约同步（LDC 主作者位先行 1754183）
 - undo 表（exit-mechanism 工单01 文档半边）：[docs/undo-table.md](docs/undo-table.md)——27 项注册表 opinion 逐项 undo 动作（删值 22 / 置默认 5，策略键 4 处连空键）+ 包 / VSCode 扩展 / dotfiles / WSL 四面撤销指针；pre-install 快照落地前的手工撤销正典，也是 `wdc exit` 的还原基准层（对照上游「每项设置文档化 undo」做法）
 
 ### Changed

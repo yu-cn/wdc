@@ -27,6 +27,7 @@ param(
     [Alias('v')]
     [switch]$Version,
     [switch]$Full,
+    [switch]$Fix,
     [switch]$Json,
     [int]$Lines = 40
 )
@@ -35,7 +36,7 @@ try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { }
 . (Join-Path $PSScriptRoot 'lib/common.ps1')
 . (Join-Path $PSScriptRoot 'lib/dotfiles-map.ps1')
 
-$wdcCommands = 'status', 'sync', 'verify', 'plan', 'triage', 'audit', 'upgrade-git', 'log', 'help', 'version'
+$wdcCommands = 'status', 'sync', 'verify', 'plan', 'triage', 'audit', 'clean-legacy', 'upgrade-git', 'log', 'help', 'version'
 # 报错/提示文案的命令列表一律由 $wdcCommands 动态拼（cli-ux 工单04：加命令只改这一处）
 $wdcCommandsDetail = @($wdcCommands | Where-Object { $_ -notin 'help', 'version' })
 
@@ -110,6 +111,7 @@ wdc — WDC 开发环境一键工具（裸命令只读快照；仓库在 ~/.wdc 
   wdc verify [-Full]   机器断言（默认 -Quick；-Full 含三域漂移约 3 分钟）
   wdc triage           dotfiles 落点漂移分流（逐文件 吸收/还原，交互式）
   wdc audit            winget 清单准入对账（只读恒 exit 0：已声明未装 / 自装未声明）
+  wdc clean-legacy     版本残留清扫（按签名不按版本；报告默认，-Fix 清理 SafeToFix 项）
   wdc upgrade-git      Git for Windows 升级专用通道（坑14：会话内必被 in-use 拦——计划任务脱离进程树）
   wdc log [-Lines N]   最近一次 bootstrap 日志尾部（默认 40 行）
   wdc help [命令]      本总览或单命令详解（-h/--help 同义；子命令后接 -h 出该命令详解）
@@ -159,6 +161,14 @@ wdc audit — winget 清单准入对账（只读恒 exit 0）
 两个方向（对齐 LDC audit）：① 已声明未装（configs/*.winget 逐 Id 核销，收敛待办）；
 ② 自装未声明（清单准入候选，Windows 侧噪声大——首版 INFO 计数 + 头部样例）。
 这是对账报告不是断言——机器自装面属机器自留地（ADR-0003），只报不裁。
+'@
+    'clean-legacy' = @'
+wdc clean-legacy [-Fix] — 版本残留清扫（报告默认，恒 exit 0）
+按签名识别历史机制残留物，不按版本号（版本→残留映射不可靠）：符号链接落点（pre-ADR-0015）、
+WT fragments 四路径、vp 退役三布局+PATH、Cascadia per-user 字体、uv 双装遮蔽、死计划任务、
+状态目录陈旧物、LDC 孤儿 backup。-Fix 只清 SafeToFix 项（fragments / vp / 死任务）；
+uv 遮蔽/符号链接/Cascadia/陈旧物/LDC 永远只报告（处置各有正道：重跑自愈 / triage / 手删 / LDC 定夺）。
+exit-mechanism 工单02；对账口径恒 exit 0（同 audit）。
 '@
     'upgrade-git' = @'
 wdc upgrade-git — Git for Windows 升级专用通道（坑14，工单43）
@@ -371,6 +381,12 @@ switch ($Command) {
 
     'audit' {
         & pwsh -NoProfile -File (Join-Path $repo 'scripts\audit-machine.ps1')
+        exit $LASTEXITCODE
+    }
+
+    'clean-legacy' {
+        $clArgs = @(); if ($Fix) { $clArgs += '-Fix' }
+        & pwsh -NoProfile -File (Join-Path $repo 'scripts\clean-legacy.ps1') @clArgs
         exit $LASTEXITCODE
     }
 

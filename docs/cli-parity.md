@@ -7,7 +7,7 @@
 
 ## 命令表
 
-<!-- wdc-commands: status sync verify plan triage audit upgrade-git log help version -->
+<!-- wdc-commands: status sync verify plan triage audit clean-legacy upgrade-git log help version -->
 <!-- ldc-commands: status sync verify plan audit triage log help version -->
 
 | 命令 | wdc | ldc | 备注 |
@@ -18,6 +18,7 @@
 | plan | ✓（sync 流投影） | ✓（安装面逐项投影） | 皆只读零变更、恒 exit 0 |
 | triage | ✓ | ✓ | dotfiles 落点漂移分流（交互式） |
 | audit | ✓ | ✓ | 清单准入对账（只读恒 exit 0） |
+| clean-legacy | ✓ `-Fix` 清理 SafeToFix 项 | — | 版本残留清扫（按签名不按版本；报告默认恒 exit 0，wdc exit-mechanism 工单02） |
 | upgrade-git | ✓ | — | Git for Windows 专用通道（坑14） |
 | log | ✓ `-Lines N` | ✓ `[N]` 位置参数 | wdc 强类型 / ldc 校验正整数 |
 | help | ✓ `help [命令]` | ✓ `help <topic>` | 总览或单命令详解 |
