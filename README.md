@@ -79,6 +79,18 @@ gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL b
 
   脚本里没有写死的仓库地址，fork 后无需改动即可 bootstrap；日后跟随上游演进的 recipe 见 [docs/forking.md](docs/forking.md)。例外：[scripts/get.ps1](scripts/get.ps1) 是面向上游的远程一键引导、写死上游地址——fork 用户走手动 clone 三行，或把它改成你的仓库地址再发布。
 
+## 一次性使用（外部用户：装完即走）
+
+只想配置这一次、之后 WDC 从你的生活里消失？三步：
+
+1. **装**：照「快速开始」跑一行命令（全席：工具 + 终端体验 + 系统调优 + WSL）；
+2. **验收**：`pwsh scripts/verify-machine.ps1` 全绿；
+3. **走**：`wdc exit -KeepTools`（清 WDC 机器状态与指针，环境原样保留）→ 删掉 clone 目录。
+
+留下的只有装上的工具和渲染好的配置（都是机器自持的实体文件——ADR-0015 起**运行时不依赖仓库**，shell 配置对仓库缺席优雅降级）；WDC 的管理机构（仓库/账本/命令）归零。装进 shell 的 `wdc` 命令在删库后降级为一行提示语，无害；想清理可在删除 clone 前顺手 `wdc exit`（完整退出：声明包卸载/注册表还原/dotfiles 处置，[ADR-0010](docs/adr/0010-wdc-exit.md)）。
+
+**想回来**：任何时候再跑同一行引导——全新 clone 后 bootstrap 幂等，已就位的全部跳过，分钟级通过。**想全退**：`wdc exit`（完整退出，还原基准见 [undo 表](docs/undo-table.md)）。
+
 ## 常用命令
 
 | 命令 | 用途 |
