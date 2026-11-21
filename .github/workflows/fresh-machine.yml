@@ -67,7 +67,10 @@ jobs:
         run: |
           $out = & pwsh -NoProfile -File "$env:RUNNER_TEMP\wdc\scripts\clean-legacy.ps1"
           $out | Write-Host
-          if ($out -notmatch '发现 0 项') { Write-Host 'clean-legacy 有发现——见上'; exit 1 }
+          # $out 是多行数组：数组 -notmatch 返回「不匹配行数组」非空恒真（run 44917510844 实录）——
+          # 先 join 成单串再判，断言的是汇总行「发现 0 项」
+          $text = $out -join "`n"
+          if ($text -notmatch '发现 0 项') { Write-Host 'clean-legacy 有发现——见上'; exit 1 }
       # W-A exit 腿（v1-program / exit-mechanism 工单03，ADR-0010）：装了→退——完整退出后断言机器状态已清。
       # runner 管理员上下文：无 UAC 重启，-Yes 免确认。声明包/注册表/dotfiles 全退；注册表按 runner
       # 自身的 pre-install 快照逐值还原（工单01 快照在 bootstrap 首跑已落）。除名≠卸载的 Chrome 不在面内。
