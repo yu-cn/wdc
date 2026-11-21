@@ -10,6 +10,7 @@
 ## [Unreleased]
 
 ### Fixed
+- `wdc exit` 不再卸载 VCRedist 基础设施运行库（v1-program 工单03 CI 死因定性）：公共依赖装机面极广——真实机器上 Chrome/无数无关应用共用，卸载即破坏用户环境（ADR-0010 红线补入）；CI 两轮同位实录（run 44917510844 / 44923793172）卸完 VCRedist 后下一次 winget 调用全步覆灭——App Installer 自身依赖 VC 运行时的强证据。undo 表包指针同步
 - pwsh 配置源不可知化（v1-program 工单05，主人跨机报告）：PowerShell 7.7.0 起 MSI 停发、MSIX 成 Windows 唯一官方渠道，而 WT 模板硬编码 MSI 路径——MSIX 机器上 WT profile 异常。三处修复：WT 模板 commandline 改裸 `pwsh.exe`（PATH 解析，MSI 机器级/用户级/MSIX 三态通吃，WindowsApps 别名路径版本无关）；bootstrap 入口 Get-PwshExe 候选补 MSIX 别名位、`winget upgrade` 摘除来源钉死（按已装包自身来源解析，msstore 装机也匹配）；git-upgrade 计划任务动作改运行时解析实际 pwsh（绝对路径要求不变）。存量机影响：WT 落点下次 sync 重渲染，行为正向
 
 ### Added
