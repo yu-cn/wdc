@@ -8,7 +8,7 @@
 ## 命令表
 
 <!-- wdc-commands: status sync verify plan triage audit clean-legacy upgrade-git exit log help version -->
-<!-- ldc-commands: status sync verify plan audit triage log help version -->
+<!-- ldc-commands: status sync verify plan audit triage exit log help version -->
 
 | 命令 | wdc | ldc | 备注 |
 |------|-----|-----|------|
@@ -20,7 +20,7 @@
 | audit | ✓ | ✓ | 清单准入对账（只读恒 exit 0） |
 | clean-legacy | ✓ `-Fix` 清理 SafeToFix 项 | — | 版本残留清扫（按签名不按版本；报告默认恒 exit 0，wdc exit-mechanism 工单02） |
 | upgrade-git | ✓ | — | Git for Windows 专用通道（坑14） |
-| exit | ✓ `-KeepTools` 状态退出；默认完整退出（`-Yes` 免确认；非交互且无 `-Yes` 自动降级为预演；`-WithWsl` WSL 平台层半档——.wslconfig 自动还原、发行版内只指路） | — | 一次性配置的退出面（ADR-0010：声明面全退数据面不动，快照优先还原） |
+| exit | ✓ `-KeepTools` 状态退出；默认完整退出（`-Yes` 免确认；非交互且无 `-Yes` 自动降级为预演；`-WithWsl` WSL 平台层半档——.wslconfig 自动还原、发行版内只指路） | ✓ `--keep-tools` 状态退出；默认完整退出（`--yes` 免确认；非 tty 自动预演） | 一次性配置的退出面（wdc ADR-0010 / ldc ADR-0024：声明面全退数据面不动；各仓共享资源豁免与数据面红线见各自 ADR） |
 | log | ✓ `-Lines N` | ✓ `[N]` 位置参数 | wdc 强类型 / ldc 校验正整数 |
 | help | ✓ `help [命令]` | ✓ `help <topic>` | 总览或单命令详解 |
 | version | ✓ `-v/--version` | ✓ `-v/--version` | git describe |
