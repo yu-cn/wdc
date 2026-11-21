@@ -173,13 +173,14 @@ function Exit-Step {
 
 if (-not $KeepTools) {
     # 1/4 声明包卸载（坑7：同 ID 多版本 0x8A150016 → 逐版本显式）
-    # 基础设施运行库不卸（工单03 CI 死因定性 2026-11-22）：VCRedist 是装机面极广的公共依赖——
-    # 真实机器上 Chrome/无数无关应用共用，卸它=破坏用户环境（ADR-0010 红线精神）；CI 两轮实录
-    # 卸完 VCRedist 后下一次 winget 调用全步覆灭（App Installer 自身依赖 VC 运行时的强证据）
+    # 基础设施共享资源不卸（工单03 CI 死因定性 2026-11-22，三轮恒死于字体包卸载 run 44917510844/
+    # 44923793172/44926977603——卸载瞬间的字体变更广播掀翻无头控制台/进程树，强证据）：
+    #   VCRedist=公共运行库（Chrome 等无数无关应用共用）；NF 字体=系统级共享（卸之其他终端渲染豆腐块）
+    # 两者退出后照常服务其他软件——留驻即「不弄坏用户环境」红线的延伸
     Write-Phase '退出 1/4 - 声明包卸载'
     foreach ($id in $pkgs) {
-        if ($id -like 'Microsoft.VCRedist*') {
-            Write-Step "包 $id" 'OK' '基础设施运行库不卸（公共依赖，退出后照常服务他软件）'
+        if ($id -like 'Microsoft.VCRedist*' -or $id -like 'DEVCOM.*') {
+            Write-Step "包 $id" 'OK' '基础设施共享资源不卸（公共运行库/NF 字体——退出后照常服务他软件）'
             continue
         }
         $null = & winget uninstall --id $id --silent --disable-interactivity 2>$null
