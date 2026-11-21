@@ -9,6 +9,9 @@
 
 ## [Unreleased]
 
+### Added
+- undo 表（exit-mechanism 工单01 文档半边）：[docs/undo-table.md](docs/undo-table.md)——27 项注册表 opinion 逐项 undo 动作（删值 22 / 置默认 5，策略键 4 处连空键）+ 包 / VSCode 扩展 / dotfiles / WSL 四面撤销指针；pre-install 快照落地前的手工撤销正典，也是 `wdc exit` 的还原基准层（对照上游「每项设置文档化 undo」做法）
+
 ### Changed
 - WDC 定位改「一次性配置 + 显式更新/回归」（oneshot-positioning 工单01，[ADR-0009](docs/adr/0009-oneshot-manual-update-reconverge.md)）：bootstrap 跑一次即休眠，机器日常归用户、漂移合法（不再是待 triage 的异常）；`wdc sync` 从「日常一键同步」降格为手动更新/回归入口，`wdc` 快照 / verify / triage / audit 定性为按需诊断，`wdc plan` 升格为回归前推荐预演（漂移积累越久，单次回归覆盖面越大）。**纯姿态与叙事变更，零行为变更**——bootstrap 幂等、渲染拷贝、收敛账本快速路径、运行锁、ADR-0007 移除清单语义原样；多机「随时全绿」承诺收缩为各机手动时点对齐（README/GLOSSARY/wdc 帮助文本同批改口径，命令名/旗标/退出码不动）
 
