@@ -30,11 +30,6 @@ function Get-ExitPackageIds {
     }
 }
 
-function Get-ExitExtensionIds {
-    @(Get-Content (Join-Path $repo 'configs\vscode-extensions.txt') |
-        Where-Object { $_ -and $_ -notmatch '^\s*#' })
-}
-
 function Get-ExitRegistryUnits {
     # base-windows.winget 的 (name, keyPath, valueName) 三元组逐单元提取——
     # 单元起点是 '- type:' 行，name/keyPath/valueName 均为缩进行（缩进深度不一，用 \s+ 匹配）
@@ -110,7 +105,6 @@ function Get-SnapshotValue {
 # 计划构建（只读，两回合共用）
 # ---------------------------------------------------------------------------
 $pkgs = @(Get-ExitPackageIds)
-$exts = @(Get-ExitExtensionIds)
 $regs = @(Get-ExitRegistryUnits)
 $map = Get-DotfilesMap
 $dotfilesPlan = @($map | ForEach-Object {
@@ -126,7 +120,6 @@ function Show-ExitPlan {
     Write-Step '档位' 'INFO' ($(if ($KeepTools) { 'T1 状态退出（-KeepTools）——只删 WDC 机器状态，环境原样' } else { 'T2 完整退出（默认）——声明面全退、数据面不动' }))
     if (-not $KeepTools) {
         Write-Step '声明包卸载' 'INFO' "$($pkgs.Count) 个（cli-tools + editors 域逐 Id；同 ID 多版本逐版本显式——坑7）"
-        Write-Step 'VSCode 扩展卸载' 'INFO' "$($exts.Count) 个（configs/vscode-extensions.txt）"
         Write-Step '注册表还原' 'INFO' "$($regs.Count) 项；基准 = $snapMode"
         Write-Step 'dotfiles 落点处置' 'INFO' (($dotfilesPlan | ForEach-Object { "$($_.Name)=$(if ($_.HasBak) { '还原 .bak 原文件' } else { '删除（WDC 创建）' })" }) -join '；')
         Write-Step '残留清扫' 'INFO' 'clean-legacy -Fix（WT fragments / vp / 死计划任务）'
@@ -179,17 +172,8 @@ function Exit-Step {
 }
 
 if (-not $KeepTools) {
-    # 1/5 VSCode 扩展（用户级）
-    Write-Phase '退出 1/5 - VSCode 扩展卸载'
-    $codeCmd = Join-Path $env:LOCALAPPDATA 'Programs\Microsoft VS Code\bin\code.cmd'
-    if (-not (Test-Path $codeCmd)) { $codeCmd = 'code' }
-    foreach ($ext in $exts) {
-        $null = & $codeCmd --uninstall-extension $ext 2>$null
-        Exit-Step "扩展 $ext" ($LASTEXITCODE -eq 0) ($(if ($LASTEXITCODE -eq 0) { '已卸载' } else { "code CLI 退出码 $LASTEXITCODE（未装则无害）" }))
-    }
-
-    # 2/5 声明包卸载（坑7：同 ID 多版本 0x8A150016 → 逐版本显式）
-    Write-Phase '退出 2/5 - 声明包卸载'
+    # 1/4 声明包卸载（坑7：同 ID 多版本 0x8A150016 → 逐版本显式）
+    Write-Phase '退出 1/4 - 声明包卸载'
     foreach ($id in $pkgs) {
         $null = & winget uninstall --id $id --silent --disable-interactivity 2>$null
         $code = $LASTEXITCODE -band 0xFFFFFFFF
@@ -209,8 +193,8 @@ if (-not $KeepTools) {
         else { Exit-Step "包 $id" $false "winget 退出码 $code" }
     }
 
-    # 3/5 注册表还原（快照优先逐值还原；无快照走 undo 表；绝不整键删除——共享键连坐非 WDC 值）
-    Write-Phase '退出 3/5 - 注册表还原'
+    # 2/4 注册表还原（快照优先逐值还原；无快照走 undo 表；绝不整键删除——共享键连坐非 WDC 值）
+    Write-Phase '退出 2/4 - 注册表还原'
     $snapDir = Join-Path $env:LOCALAPPDATA 'wdc\pre-install'
     foreach ($u in $regs) {
         $action = $null; $via = 'undo 表'
@@ -237,8 +221,8 @@ if (-not $KeepTools) {
         }
     }
 
-    # 4/5 dotfiles 落点处置（.bak 本体=首次渲染前原文件且永不清理——还原它；无 .bak=WDC 创建——删除）
-    Write-Phase '退出 4/5 - dotfiles 落点处置'
+    # 3/4 dotfiles 落点处置（.bak 本体=首次渲染前原文件且永不清理——还原它；无 .bak=WDC 创建——删除）
+    Write-Phase '退出 3/4 - dotfiles 落点处置'
     foreach ($d in $dotfilesPlan) {
         if (Test-Path -LiteralPath $d.Target) {
             if ($d.HasBak) {
@@ -252,8 +236,8 @@ if (-not $KeepTools) {
         } else { Exit-Step "落点 $($d.Name)" $true '本就不在' }
     }
 
-    # 5/5 残留清扫（fragments / vp / 死计划任务）
-    Write-Phase '退出 5/5 - 残留清扫（clean-legacy -Fix）'
+    # 4/4 残留清扫（fragments / vp / 死计划任务）
+    Write-Phase '退出 4/4 - 残留清扫（clean-legacy -Fix）'
     & (Join-Path $PSScriptRoot 'clean-legacy.ps1') -Fix
 }
 

@@ -175,12 +175,12 @@ $null = Invoke-Stage 'Stage 3/7 - Apply 应用声明配置' {
 }
 
 # ---------------------------------------------------------------------------
-# Stage 4/7 · 用户级安装（语言默认环境 + VSCode 扩展；无需提权）
+# Stage 4/7 · 用户级安装（语言默认环境；无需提权）
 # ---------------------------------------------------------------------------
-$null = Invoke-Stage 'Stage 4/7 - 用户级安装（语言默认环境 + VSCode 扩展）' {
+$null = Invoke-Stage 'Stage 4/7 - 用户级安装（语言默认环境）' {
     if ($ValidateOnly) { Write-Step '用户级安装' 'SKIP' '-ValidateOnly 模式不执行'; return $true }
     $allOk = $true
-    foreach ($s in 'install-languages.ps1', 'install-vscode-extensions.ps1') {
+    foreach ($s in 'install-languages.ps1') {
         if (-not (Invoke-Subscript -Label $s -Path (Join-Path $PSScriptRoot "scripts/$s"))) { $allOk = $false }
     }
     return $allOk

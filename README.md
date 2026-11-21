@@ -38,7 +38,7 @@ bootstrap 先确保 PowerShell 7 就位（裸机自动安装），再依次跑�
 1. **UAC 提权**——未提权启动会自动请求，点一次确认
 2. **重启**——全新机器 bootstrap 会在提权回合内自动启用 WSL 并提示重启；重启登录后由一次性续跑任务**自动重跑** bootstrap 安装 Ubuntu 并收尾（GLOSSARY「续跑任务」：任意一次 bootstrap 启动即清除、绝不循环；自动登记未成时手工路径：重启后重跑 `bootstrap.ps1`，或管理员终端 `wsl --install`，流程相同）
 3. **填写身份**——bootstrap 生成 `~/.gitidentity` 占位后，填上**本机**的 git name/email（各机身份不同；不填则 git 拒绝提交，这是防错护栏）
-4. **关闭 VSCode 设置同步**——首次启动 VSCode 若已登录账号（齿轮/账户图标 → 设置同步 → 关闭）。设置同步是账号级开关、配置文件管不到它；不关的话云端会与仓库 dotfiles 打架（仓库是唯一主人）
+4. **登录 VSCode 开启设置同步**——首次启动 VSCode 登录账号并开启设置同步（齿轮/账户图标），扩展/设置/键位自动回来。WDC 只装本体：账号态归 VSCode 自己的同步机制，仓库管机器环境态（v1-program 工单03，2026-11-21 主人定夺全让位——对照上游 WindowsDeveloperConfig 同款边界：不装扩展、不碰 VSCode 配置文件）
 
 </details>
 
@@ -54,7 +54,7 @@ bootstrap 先确保 PowerShell 7 就位（裸机自动安装），再依次跑�
 Git · GitHub CLI · Everything · PowerToys · lazygit · delta · fzf / fd / ripgrep / zoxide / bat / jq · make · JetBrainsMono NF 字体（PowerShell 7 由入口引导层负责安装与升级；浏览器不入声明——Edge 预装等价，Chrome 等属机器自留地，ADR-0003 第二轴）
 
 **编辑器**（[editors 域](configs/editors.winget)）
-VS Code + 32 个扩展（Python / Jupyter 全家、Remote-WSL / SSH / Containers、Prettier / Vitest / oxc、中文语言包等，[完整清单](configs/vscode-extensions.txt)）
+VS Code 本体——扩展/设置/键位走 VSCode 原生**设置同步**（账号态，新机登录即回；ADR-0003 第二轴判例，WDC 不与原生机制打架）
 
 **语言运行时**
 Node 归 **mise**（默认 `node@lts` 随收敛更新）、Python 归 **uv**——Windows / WSL 两侧同工具同习惯
@@ -71,7 +71,7 @@ gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL b
 
 - **直接用**：照上文「快速开始」clone 本仓库跑 bootstrap。仓库不含作者的身份与机器派生值——`~/.gitidentity` 填你自己的 git name/email，WSL 终端配置按你本机发行版渲染（[ADR-0004](docs/adr/0004-machine-adaptive-rendering.md)）——之后想跟进上游演进时显式跑 `wdc sync`（手动更新，ADR-0009）。
 - **fork 改造（推荐）**：fork 成你自己的仓库再 bootstrap（引导命令前设 `$env:WDC_REPO` 指向你的仓库即可，get.ps1 写死的是上游地址），偏好由你定。改造清单：
-  1. `configs/*.winget` 与 `configs/vscode-extensions.txt`——软件与扩展清单，删你不用的
+   1. `configs/*.winget`——软件清单，删你不用的（VSCode 扩展/设置归其原生设置同步，不入仓）
   2. `dotfiles/`——shell / git / 终端 / 编辑器偏好
   3. `LICENSE`——版权人换成你自己
   4. `.scratch/`——作者的内部工单流，可删可留（留作方法参考）

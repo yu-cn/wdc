@@ -11,13 +11,13 @@ function Get-WtLocalStateDir {
 function Get-DotfilesMap {
     # 每项：Name（展示名）/ Source（仓库内相对 dotfiles/ 的路径）/ Target（机器侧绝对落点）
     # WT 的 WSL profile 不在此列——它是模板里的静态声明（ADR-0006），随 settings.json 渲染一起落地，无机器侧动作
+    # VSCode settings/keybindings 不在此列（v1-program 工单03，2026-11-21 主人定夺全让位）：扩展/设置/键位
+    # 属账号态（跟人走），归 VSCode 原生设置同步；WDC 只装本体——仓库管机器环境态，账号态归账号自己的机制
     $docs = [Environment]::GetFolderPath('MyDocuments')
     @(
         @{ Name = 'gitconfig';          Source = 'windows/gitconfig';               Target = (Join-Path $HOME '.gitconfig') }
         @{ Name = 'bashrc';             Source = 'windows/bashrc';                  Target = (Join-Path $HOME '.bashrc') }
         @{ Name = 'pwsh profile';       Source = 'windows/pwsh-profile.ps1';        Target = (Join-Path $docs 'PowerShell\Microsoft.PowerShell_profile.ps1') }
-        @{ Name = 'VSCode settings';    Source = 'windows/vscode-settings.json';    Target = (Join-Path $env:APPDATA 'Code\User\settings.json') }
-        @{ Name = 'VSCode keybindings'; Source = 'windows/vscode-keybindings.json'; Target = (Join-Path $env:APPDATA 'Code\User\keybindings.json') }
         @{ Name = 'WT settings';        Source = 'windows/terminal-settings.json';  Target = (Join-Path (Get-WtLocalStateDir) 'settings.json') }
         @{ Name = 'starship';           Source = 'shared/starship.toml';            Target = (Join-Path $HOME '.config\starship.toml') }
     )

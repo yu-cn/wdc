@@ -184,7 +184,7 @@ wdc upgrade-git — Git for Windows 升级专用通道（坑14，工单43）
 '@
     'exit' = @'
 wdc exit [-KeepTools] [-Yes] — 退出 WDC（ADR-0010）
-两档：T2 完整退出（默认）= 声明面全退、数据面不动——声明包逐 Id 卸载（坑7 逐版本）、VSCode 扩展卸载、
+两档：T2 完整退出（默认）= 声明面全退、数据面不动——声明包逐 Id 卸载（坑7 逐版本）、
 注册表还原（pre-install 快照优先逐值还原，存量机降级 undo 表 Windows 默认值并明示）、dotfiles 落点
 （有 .bak 还原原文件/无则删除）、clean-legacy -Fix 清扫；T1 状态退出（-KeepTools）= 只删机器状态不动环境。
 安全：默认打印全计划后交互确认；非交互（管道/CI）且无 -Yes 自动降级为预演零变更——执行加 -Yes。
