@@ -18,7 +18,7 @@
 | plan | ✓（sync 流投影） | ✓（安装面逐项投影） | 皆只读零变更、恒 exit 0 |
 | triage | ✓ | ✓ | dotfiles 落点漂移分流（交互式） |
 | audit | ✓ | ✓ | 清单准入对账（只读恒 exit 0） |
-| clean-legacy | ✓ `-Fix` 清理 SafeToFix 项 | — | 版本残留清扫（按签名不按版本；报告默认恒 exit 0，wdc exit-mechanism 工单02） |
+| clean-legacy | ✓ `-Fix` 清理 SafeToFix 项 | —（无此面：vp 随航 ADR-0016 / wsl-comfort 一次性清档 ADR-0018 / 链接残形渲染期替换 ADR-0015——LDC 无版本残留清扫面，2026-11-22 1.0.0 定性） | 版本残留清扫（按签名不按版本；报告默认恒 exit 0，wdc exit-mechanism 工单02） |
 | upgrade-git | ✓ | — | Git for Windows 专用通道（坑14） |
 | exit | ✓ `-KeepTools` 状态退出；默认完整退出（`-Yes` 免确认；非交互且无 `-Yes` 自动降级为预演；`-WithWsl` WSL 平台层半档——.wslconfig 自动还原、发行版内只指路） | ✓ `--keep-tools` 状态退出；默认完整退出（`--yes` 免确认；非 tty 自动预演） | 一次性配置的退出面（wdc ADR-0010 / ldc ADR-0024：声明面全退数据面不动；各仓共享资源豁免与数据面红线见各自 ADR） |
 | log | ✓ `-Lines N` | ✓ `[N]` 位置参数 | wdc 强类型 / ldc 校验正整数 |
