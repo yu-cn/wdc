@@ -9,6 +9,12 @@
 
 ## [Unreleased]
 
+### Fixed
+- verify 扩展断言残留（v1-program 09 票，ASUS 48h 补验发现）：bef1b63 VSCode 全让位批删除 `configs/vscode-extensions.txt` 但漏改 verify——`wdc verify` 在 v1.0.0 任何机器必 FAIL（断言无条件读已删清单）。断言块退役（扩展归账号态 Settings Sync，无机器侧断言面）；同根勘误三处：`docs/undo-table.md` 扩展 undo 行、`configs/editors.winget` 头注释（均仍指已删编排层/让位前口径）、CHANGELOG 1.0.0 版本节 exit T2「VSCode 扩展逐个卸载」表述（bef1b63 先于 tag 落地，发布行为无此段，undo 表「四面」改「三面」）
+
+### Added
+- fresh-machine CI 增 verify 腿（09 票根因放大器补面——v1.0.0 六腿皆无 verify 面，断言残留绿灯放行）：幂等重跑后跑 `wdc verify -Quick` 断言收敛态。runner 两类已知噪声按幂等腿先例处理：预填一次性 CI 身份消除占位 FAIL；WT settings 落点写穿（坑6 类）滤网放行；其余 FAIL 非零即红，无汇总行的异常中断亦红
+
 ## [1.0.0] - 2026-11-22
 
 > **里程碑**：产品定位定型（[ADR-0009](docs/adr/0009-oneshot-manual-update-reconverge.md) 一次性配置 + 显式更新/回归）+ 退出面补齐（[ADR-0010](docs/adr/0010-wdc-exit.md)）。**1.0.0 起 SemVer 完整生效**——破坏性变更走 MAJOR。验证锚点：全环 CI run 44930767170 六腿全绿（bootstrap→幂等→快照断言→clean-legacy 零发现→exit 全退→退了→装）。
@@ -21,10 +27,10 @@
 ### Added
 - `wdc exit -WithWsl`（T3a，[ADR-0010](docs/adr/0010-wdc-exit.md)）：WSL 平台层还原半档——`.wslconfig` 自动还原（.bak 原文件/无则删）；wsl.conf 声明键与 LDC 侧打印指引不代跑（摘键归未来的 `ldc exit`）；`wsl --unregister` 永不代跑（发行版内有用户数据）。边界一页化 [docs/wsl-and-ldc.md](docs/wsl-and-ldc.md)（分层表+想改什么找谁）
 - wdc CLI 注入改为用户选择（v1-program 工单07）：bootstrap 首跑在入口层问一次「是否把 wdc 命令装进 shell」（默认 Y；`-NoCli`/`-Cli` 旗标预设跳过；非交互 CI/管道默认装），选择记 `%LOCALAPPDATA%\wdc\cli.json` 后不再问（`wdc exit` 删状态后重装会再问）。选择「不装」时 pwsh profile 与 bashrc 的 wdc 段（函数/Tab 补全/漂移提示）渲染期剥除（模板 `wdc-cli:begin/end` 标记段 + dotfiles-map 单一来源变换，六方漂移判定共用不破坏）——shell 配置零 WDC 痕迹；「装」时渲染内容与原模板字节一致（存量机零回归实测）。
-- `wdc exit [-KeepTools] [-Yes]`（exit-mechanism 工单03，[ADR-0010](docs/adr/0010-wdc-exit.md)）：一次性配置的退出面——T2 完整退出（默认）：VSCode 扩展逐个卸载、声明包逐 Id 卸载（坑7 多版本逐版本显式）、注册表还原（pre-install 快照优先**逐值**还原、绝不整键删除防连坐共享键，存量机降级 undo 表 Windows 默认值并明示）、dotfiles 落点处置（有 `.bak` 还原首次渲染前原文件、无则删除）、`clean-legacy -Fix` 清扫、机器状态删除，收尾自带退出断言（状态目录/指针/备份链已清），幂等失败重跑收尾；T1 状态退出（`-KeepTools`）只删机器状态环境原样。安全设计：默认打印全计划后交互确认，非交互且无 `-Yes` 自动降级预演零变更，T2 确认后自重启提权子回合。红线：语言数据面（runtime/venvs/cache）/自留地/已除名软件（Chrome）/~/.gitidentity/仓库 clone 一概不碰。cli-parity 契约同步（LDC 主作者位先行 09f8d1f）
+- `wdc exit [-KeepTools] [-Yes]`（exit-mechanism 工单03，[ADR-0010](docs/adr/0010-wdc-exit.md)）：一次性配置的退出面——T2 完整退出（默认）：声明包逐 Id 卸载（坑7 多版本逐版本显式）、注册表还原（pre-install 快照优先**逐值**还原、绝不整键删除防连坐共享键，存量机降级 undo 表 Windows 默认值并明示）、dotfiles 落点处置（有 `.bak` 还原首次渲染前原文件、无则删除）、`clean-legacy -Fix` 清扫、机器状态删除，收尾自带退出断言（状态目录/指针/备份链已清），幂等失败重跑收尾；T1 状态退出（`-KeepTools`）只删机器状态环境原样。安全设计：默认打印全计划后交互确认，非交互且无 `-Yes` 自动降级预演零变更，T2 确认后自重启提权子回合。红线：语言数据面（runtime/venvs/cache）/自留地/已除名软件（Chrome）/~/.gitidentity/仓库 clone 一概不碰。cli-parity 契约同步（LDC 主作者位先行 09f8d1f）。（09 票勘误：原文含「VSCode 扩展逐个卸载」——bef1b63 全让位先于本 tag 落地，发布行为无此段）
 - pre-install 注册表快照（exit-mechanism 工单01 代码半边）：bootstrap Stage 3 首次 apply base-windows 前对全部声明 keyPath（15 个去重，自 .winget 单一来源提取）一次性 `reg export` 到 `%LOCALAPPDATA%\wdc\pre-install\`（marker=manifest.json 幂等）——`wdc exit` 的还原基准层；存量机（收敛账本在位=机制上线前已收敛）落 skipped-already-converged 标记，绝不拿已应用值冒充 pre-install（宁缺毋假），exit 还原降级走 undo 表 Windows 默认值
 - `wdc clean-legacy [-Fix]`（exit-mechanism 工单02）：版本残留清扫新子命令——按**签名**识别历史机制残留物、不按版本号（版本→残留映射不可靠），八节清单（符号链接落点/WT fragments/vp 残留/Cascadia per-user 字体/uv 双装遮蔽/死计划任务/状态目录陈旧物/LDC 孤儿 backup）；默认纯报告恒 exit 0（对齐 audit 对账口径），`-Fix` 只清 SafeToFix 项（fragments/vp/死任务），遮蔽类永远只报告。cli-parity 契约同步（LDC 主作者位先行 1754183）
-- undo 表（exit-mechanism 工单01 文档半边）：[docs/undo-table.md](docs/undo-table.md)——27 项注册表 opinion 逐项 undo 动作（删值 20 / 置默认 7，策略键 4 处连空键）+ 包 / VSCode 扩展 / dotfiles / WSL 四面撤销指针；pre-install 快照落地前的手工撤销正典，也是 `wdc exit` 的还原基准层（对照上游「每项设置文档化 undo」做法）
+- undo 表（exit-mechanism 工单01 文档半边）：[docs/undo-table.md](docs/undo-table.md)——27 项注册表 opinion 逐项 undo 动作（删值 20 / 置默认 7，策略键 4 处连空键）+ 包 / dotfiles / WSL 三面撤销指针（VSCode 扩展随账号走，非机器侧退面——bef1b63 后口径，09 票勘误）；pre-install 快照落地前的手工撤销正典，也是 `wdc exit` 的还原基准层（对照上游「每项设置文档化 undo」做法）
 
 ### Changed
 - WT 模板五项优化（v1-program 收官批，主人 2026-11-22 选定）：`bellStyle none`（关终端响铃）；Git Bash commandline/icon 改 `%ProgramFiles%` 变量（非 C 盘系统盘适应性，pwsh 源不可知同族）；`font.size` 钉 11（跨机观感一致）；`windowingBehavior useExisting`（wt 启动复用窗口）；`copyOnSelect true`（选中即复制）。已知事项：`wdc exit` 删除状态目录时 Ubuntu profile 图标（机器本地资产）随之消失、回退默认图标（语义一致——WDC 的资产随 WDC 走）

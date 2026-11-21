@@ -68,6 +68,6 @@
 ## 非注册表面的 undo 指针
 
 - **包**（cli-tools / editors 两域；chrome 域已除名退役——存量机 Chrome 属机器自留地，不在退出面内；**VCRedist 与 NF 字体等基础设施共享资源不卸**——公共运行库/系统级字体，退出后照常服务其他软件与终端）：`winget uninstall --id <Id>`，同 ID 多版本并存须逐版本显式（坑7）；Id 清单即 `configs/*.winget`。
-- **VSCode 扩展**（32 个）：`code --uninstall-extension <id>`，清单 `configs/vscode-extensions.txt`。
+- **VSCode 扩展**：已随 v1.0.0 让位归账号态（Settings Sync，bef1b63）——非机器侧安装面，退出无涉。
 - **dotfiles 落点**：`wdc exit` 处置——有 `.bak`（首次渲染前原文件，永不清理）还原之；无 `.bak` 即 WDC 创建，删除。
 - **WSL 侧**（.wslconfig / wsl.conf / LDC）：归 `wdc exit` T3 档（工单03），LDC 侧卸载器在姊妹仓另议。

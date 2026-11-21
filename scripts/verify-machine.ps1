@@ -52,12 +52,7 @@ Write-Phase '3/6 · 移除清单核销'
 # 商店安装必为 Store 签名，按签名只拦真商店版（identity 包按包名卸了会随每次自更新回归）
 Assert 'VSCode 单版本(商店 MSIX 已卸)' { -not (Get-AppxPackage -Name 'Microsoft.VisualStudioCode' -ErrorAction SilentlyContinue | Where-Object SignatureKind -eq 'Store') }
 Assert '.NET Desktop 运行时保留' { ((Get-ChildItem "$env:ProgramFiles\dotnet\shared\Microsoft.WindowsDesktop.App" -EA SilentlyContinue | Measure-Object).Count -ge 1) -or ((Get-ChildItem "${env:ProgramFiles(x86)}\dotnet\shared\Microsoft.WindowsDesktop.App" -EA SilentlyContinue | Measure-Object).Count -ge 1) }
-# 清单精确核销（只核有无缺失；机器自装扩展属自留地不核销，ADR-0003）
-Assert '扩展清单全部在位' {
-    $wanted = @(Get-Content (Join-Path $repo 'configs\vscode-extensions.txt') | Where-Object { $_ -and $_ -notmatch '^\s*#' })
-    $have = @(& code --list-extensions 2>$null)
-    @($wanted | Where-Object { $have -notcontains $_ }).Count -eq 0
-}
+# 扩展断言已随 bef1b63 全让位退役——扩展归账号态（Settings Sync），无机器侧断言面（v1-program 09 票）
 
 Write-Phase '4/6 · 语言栈'
 Assert 'mise Windows 侧就位（cli-tools 域 winget）' { Get-Command mise -ErrorAction SilentlyContinue }

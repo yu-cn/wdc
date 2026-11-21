@@ -55,6 +55,28 @@ jobs:
             exit 1
           }
           Write-Host "幂等重跑通过：第二遍零变更（核查 $($logs.Count) 份日志，排除项=身份占位提醒 + WT settings 环境写穿）"
+      # 09 票 verify 腿（v1.0.0 断言残留绿灯放行的根因放大器补面）：收敛后的机器断言必须全绿。
+      # runner 两类已知环境噪声（幂等腿同源实录）：① 身份占位（无人填）——本步预填一次性 CI 身份
+      # 消除（.gitidentity 属 exit 红线自留物不随退场走，退了→装重 bootstrap 幂等「已存在」）；
+      # ② WT settings 落点写穿（坑6 动态生成器类，run 40352220515 实录）——环境噪声非机器漂移，
+      # 滤网放行；其余 FAIL 零容忍。防「断言引用已删文件」类残留再绿灯出厂（bef1b63 实录）。
+      - name: wdc verify 机器断言（收敛后应全绿）
+        shell: pwsh
+        run: |
+          $id = Join-Path $env:USERPROFILE '.gitidentity'
+          if (-not (Test-Path $id)) {
+            "[user]`n    name = wdc-ci`n    email = wdc-ci@users.noreply.github.com`n" | Set-Content -LiteralPath $id -Encoding utf8
+          }
+          $out = @(& pwsh -NoProfile -File "$env:RUNNER_TEMP\wdc\scripts\verify-machine.ps1" -Quick)
+          $code = $LASTEXITCODE
+          $out | Write-Host
+          $fails = @($out | Where-Object { $_ -match '^\[FAIL\]' -and $_ -notmatch '^\[FAIL\] WT settings' })
+          if ($fails.Count -gt 0) { Write-Host '=== verify FAIL（非已知噪声）==='; $fails | ForEach-Object { Write-Host $_ }; exit 1 }
+          if ($code -eq 0) { Write-Host 'verify 腿通过：机器断言全绿'; exit 0 }
+          if (@($out | Where-Object { $_ -match '^\[FAIL\] 机器断言' }).Count -gt 0) {
+            Write-Host 'verify 腿通过：FAIL 仅剩 runner 已知环境噪声（WT settings 写穿——坑6 类，幂等腿同源排除）'; exit 0
+          }
+          Write-Host "verify 异常中断（无汇总行，退出码 $code）"; exit 1
       # W-B2 快照覆盖腿（v1-program）：fresh 机器首跑 bootstrap 必须已落 pre-install 快照（工单01），
       # manifest status=ok 且 15 keyPath 全在——exit 还原基准的存在性断言
       - name: pre-install 快照断言
