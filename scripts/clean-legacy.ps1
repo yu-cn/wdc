@@ -124,7 +124,7 @@ if ($script:found -eq $base) { Write-Step '死计划任务' 'OK' '无' }
 # ---------------------------------------------------------------------------
 Write-Phase '残留清扫 7/8 - 状态目录陈旧物'
 $stateDir = Join-Path $env:LOCALAPPDATA 'wdc'
-$known = @('converged.json', 'rendered.sha256', 'ubuntu.ico', 'cache', 'pre-install')
+$known = @('converged.json', 'rendered.sha256', 'ubuntu.ico', 'cache', 'pre-install', 'cli.json')   # cli.json=工单07 CLI 选择；新状态文件须同步此清单（run 44925436956 防回归腿实录）
 if (Test-Path $stateDir) {
     $stale = @(Get-ChildItem -Path $stateDir -Force | Where-Object { $_.Name -notin $known })
     if ($stale.Count -gt 0) {
