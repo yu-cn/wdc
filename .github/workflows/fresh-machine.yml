@@ -6,8 +6,13 @@ name: fresh-machine
 # （对齐 LDC fresh-container：第二遍除「身份文件」占位提醒外零 [CHANGED] 才放行）。
 on:
   workflow_dispatch:
+    inputs:
+      full-loop:
+        description: '发版全环：含「退了→装」重装腿（例行月度不带——四腿 ~30min vs 全环 ~60min，2026-11-22 主人定夺）'
+        type: boolean
+        default: false
   schedule:
-    - cron: '0 5 1 * *'   # 每月 1 日 05:00 UTC
+    - cron: '0 5 1 * *'   # 每月 1 日 05:00 UTC（例行四腿：bootstrap→幂等→快照→clean-legacy→exit）
 jobs:
   smoke:
     runs-on: windows-latest
@@ -84,7 +89,10 @@ jobs:
           Write-Host 'exit 腿通过：装了→退闭环（声明面全退 + 机器状态已清）'
       # W-D 退了→装 腿（v1-program 回归环的 CI 半场）：exit 后重新 bootstrap 必须全绿——
       # 真正的「装了退、退了装」闭环。本地存量机闭环（LETH）另走主人窗口。
+      # 例行月度不带（inputs.full-loop 仅手动 dispatch 有值；schedule 无输入恒 false）——发版前
+      # `gh workflow run fresh-machine.yml -f full-loop=true` 跑全环（v1-program 工单04 执行序①）
       - name: 退了→装（exit 后重新 bootstrap）
+        if: ${{ inputs.full-loop }}
         shell: cmd
         run: |
           powershell -NoProfile -ExecutionPolicy Bypass -File "%RUNNER_TEMP%\wdc\bootstrap.ps1"

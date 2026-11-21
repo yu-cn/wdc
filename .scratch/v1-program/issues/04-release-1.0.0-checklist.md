@@ -30,4 +30,4 @@ Type: task
 
 ## 发布执行序（主人指令后同会话）
 
-① fresh-machine dispatch 确认绿 → ② WDC CHANGELOG 收节 commit → ③ LDC CHANGELOG 收节 commit（WSL 内）→ ④ 双仓 tag v1.0.0 → ⑤ 双仓 release（--latest、四段笔记、效果优先）→ ⑥ 工单04 归档
+① fresh-machine dispatch 确认绿（**全环须带 `-f full-loop=true`**：`gh workflow run fresh-machine.yml -f full-loop=true`——例行月度只跑四腿，2026-11-22 主人定夺瘦身） → ② WDC CHANGELOG 收节 commit → ③ LDC CHANGELOG 收节 commit（WSL 内）→ ④ 双仓 tag v1.0.0 → ⑤ 双仓 release（--latest、四段笔记、效果优先）→ ⑥ 工单04 归档
