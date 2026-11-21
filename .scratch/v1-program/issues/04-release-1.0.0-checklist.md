@@ -6,7 +6,7 @@ Type: task
 ## 门槛（P4）
 
 - [ ] fresh-machine 全环 CI 绿（run 44917510844 实证中：bootstrap → 幂等重跑 → 快照断言 → clean-legacy 零发现 → exit 全退断言 → 退了→装重装；后续任一跑全绿即过）
-- [ ] **ASUS 双机终验**（主人动作）：ASUS 上 `wdc sync`（收敛到含本日全部批次的 HEAD）→ `wdc verify -Quick` 全绿 → `wdc clean-legacy` 报告可接受（uv/Cascadia 类发现按 LETH 同款处置）
+- [ ] **ASUS 双机终验（发布后 48h 内补验——2026-11-22 主人定夺改序）**：ASUS 上 `wdc sync`（收敛到含本日全部批次的 HEAD）→ `wdc verify -Quick` 全绿 → `wdc clean-legacy` 报告可接受（uv/Cascadia 类发现按 LETH 同款处置）；**发现的问题以 v1.0.1 收口**，不回改 1.0.0 tag。release notes 已知事项需披露此补验安排
 - [ ] LETH 本地 W-D 回归环（可选，主人窗口）：真跑 `wdc exit`（T2）→ 重新 bootstrap → verify 全绿——存量机降级路径的终极实证；CI 已覆盖 fresh-machine 半场
 - [ ] LDC 侧 fresh-container CI 绿（P3 批 85f3171 后首跑）
 - [ ] 文档一致终查：README / GLOSSARY / undo-table / ADR-0003/0009/0010 / cli-parity / docs/research/v1-comparison.md
@@ -16,12 +16,12 @@ Type: task
 
 ## 里程碑加持（「里程碑版本」应有的额外面——2026-11-22 主人定调补充）
 
-- [ ] **README 里程碑翻新**：对外门面整体校——「一条命令得到什么」清单已变（扩展/Chrome 让位后）；首段后可加「1.0.0 承诺面」一句话；demo 产物与现命令集的差异说明（重录为可选项）
-- [ ] **SemVer 1.0.0 语义宣告**：CHANGELOG 前言与 release notes 明示「1.0.0 起 SemVer 完整生效（此前 v0.x 破坏性走 MINOR）」——里程碑的正式含义
-- [ ] **坑档收编两条新实录**（collaboration.md）：① winget 拒绝跨安装技术升级且退出码 0 假绿（MSI→MSIX，2026-11-21 LETH）；② pwsh 数组 `-notmatch` 返回不匹配行数组非空恒真（CI 断言腿 run 44917510844 实录）
-- [ ] **钉版回退预案**入 release notes 已知事项一句：出问题可 `WDC_TAG=v0.14.0` 钉旧版重跑（get.ps1 既有能力）
+- [x] **README 里程碑翻新**：「一条命令得到什么」更新（包数 18+Starship+VCRedist/编辑器段让位口径）、首跑配合四→五件事（含 CLI 选择）、1.0.0 承诺面句+装完即走锚链、钉版示例 v0.14.0（14b70a0 文案全检批）
+- [x] **SemVer 1.0.0 语义宣告**：CHANGELOG 前言明示「1.0.0 起 SemVer 完整生效——破坏性走 MAJOR」（a4f72e7）
+- [x] **坑档收编两条新实录**（collaboration.md）：坑19 winget 拒跨形态升级退出码 0 假绿；坑20 pwsh 数组 -notmatch 恒真
+- [x] **钉版回退预案**：release notes 已知事项将写 `WDC_TAG=v0.14.0` 回退姿势（执行序⑤时落）
 - [ ] 归档卫生：exit-mechanism 工单02 随 ASUS 终验收口；v1-program 工单全归档（本票发布时收）
-- [ ] 可选（主人定）：demo.gif 重录（现 gif 为旧命令集 wdc/verify 循环，1.0.0 新面貌 plan/exit/clean-legacy）
+- [x] demo.gif 重录（f53fe1f 终版：84 列/NSimSun CJK 等宽/提示符/快照-plan-exit 三段；字节级+帧级双验证；根因笔误实录入 commit）
 
 ## 遗留观察（不阻塞，主人另定）
 
