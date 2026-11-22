@@ -9,9 +9,6 @@
 
 ## [Unreleased]
 
-### Changed
-- validate CI 增 winget State 目录缓存，消首调 ~22-24s 的 MSStore DSC 处理器安装尝试（三轮诊断定案，run 44989461063 日志实录：ProductId 9NVTPZWRC6KQ entitlement + store 执行 ~20s 后 8007139F 失败、validate 以降级处理器照常通过；「已尝试」态落 config.db，同机二调即 4s——缓存令后续 job 免付）。同批证伪存档：源索引自动更新说（source-list 首调仅 0.7s，settings 关自动更新无效已撤）、DSC 模块下载说（两轮 validate 后无 Modules 落盘，缓存 Configuration 目录零命中——真身在 State 下）
-
 ## [1.0.1] - 2026-11-22
 
 > 补丁版：v1.0.0 让位批（bef1b63）漏网收口——`wdc verify` 误报修复 + 同族文档勘误；CI 增 verify 防回归腿。验证锚点：全环 CI run 44984713777 八腿全绿（bootstrap→幂等重跑→**verify 断言（新）**→快照断言→clean-legacy 零发现→exit 全退→退了→装）。

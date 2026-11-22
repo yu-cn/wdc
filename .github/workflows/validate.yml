@@ -11,18 +11,13 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v5
-      # winget DSC 尝试态缓存（2026-11-22 优化批，三轮诊断定案）：validate 首调 ~22-24s 实测为 winget
-      # 尝试自 MSStore 安装 DSC 处理器（ProductId 9NVTPZWRC6KQ；run 44989461063 日志实录 entitlement +
-      # store 执行 ~20s 后 8007139F 失败收场，validate 以降级处理器照常通过）——「已尝试」态落
-      # WinGet\State 的 config.db，同机二调即 4s。缓存 State 目录令后续 job 免付该税。三轮证伪存档：
-      # 源索引自动更新说（source-list 首调仅 0.7s，settings 关自动更新无效已撤）、DSC 模块下载说
-      # （两轮 validate 后无 Modules 落盘）、缓存 Configuration 目录（真身在 State 下，首次缓存零命中）。
-      # 键 v1 静态：内容为尝试态标记 + 空 history，与配置内容无关；winget 大版本不兼容时删缓存键重置。
-      - name: 缓存 winget DSC 尝试态（State 目录）
-        uses: actions/cache@v4
-        with:
-          path: C:\Users\runneradmin\AppData\Local\Microsoft\WinGet\State
-          key: winget-state-v1
+      # 已知地板（2026-11-22 优化批五连实验定案，勿再追）：validate 步 ~30-40s 中首调 ~22-24s 为 winget
+      # 冷机上尝试自 MSStore 安装 DSC 处理器（ProductId 9NVTPZWRC6KQ，日志实录 entitlement + store 执行
+      # ~20s 后 8007139F 失败收场，validate 以降级处理器照常通过）——处理器装上后此税消失（本机实测
+      # 首调 6.5s），但 MSIX 落系统层（WindowsApps），用户目录缓存不可达：缓存 WinGet\State（含
+      # config.db）暖跑无效、settings 关源自动更新无效（source-list 首调仅 0.7s）。存档锚点：d570d3a
+      # 及其前置 babf008/d3f5773/38a8846/35060f1、run 44989461063。若要根除：GitHub releases 钉版下载
+      # dsc + 管理员设置 ConfigurationProcessorPath 指过去（供应链双钉 + 主人定夺）。
       - name: 无副作用校验（winget schema + 脚本静态检查）
         shell: pwsh
         run: ./validate.ps1
