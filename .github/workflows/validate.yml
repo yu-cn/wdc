@@ -18,23 +18,10 @@ jobs:
       # config.db）暖跑无效、settings 关源自动更新无效（source-list 首调仅 0.7s）。存档锚点：d570d3a
       # 及其前置 babf008/d3f5773/38a8846/35060f1、run 44989461063。若要根除：GitHub releases 钉版下载
       # dsc + 管理员设置 ConfigurationProcessorPath 指过去（供应链双钉 + 主人定夺）。
-      # 钉版 dsc 处理器（首调税根除路落地，2026-11-22 主人定夺）：GitHub releases 钉版下载 dsc
-      # （版本 + sha256 双钉，ADR-0011 模式，哈希自官方资产实算），经 validate.ps1 -DscPath 透传
-      # --processor-path——winget 源码实证传入即钉自定义处理器路径、短路「找包→MSStore 试装」状态机
-      # （ProcessorSettings.EffectiveDscExecutablePath），winget 自行开文件算哈希出审计块。
-      # 升级 = $v 与 $pin 同批改（对齐 LDC ADR-0020 钉子哲学：只提醒不自动升）。
-      - name: 钉版 dsc 处理器（免 MSStore 试装税）
-        shell: pwsh
-        run: |
-          $v = '3.3.0'
-          $pin = '3f8b27f648661903d066cc19d5a6e7a8c13bd07eb738d4d765ce7239619b8b5f'
-          $url = "https://github.com/PowerShell/DSC/releases/download/v$v/DSC-$v-x86_64-pc-windows-msvc.zip"
-          $zip = "$env:RUNNER_TEMP\dsc.zip"
-          $dir = "$env:RUNNER_TEMP\dsc"
-          Invoke-WebRequest -Uri $url -OutFile $zip
-          if ((Get-FileHash $zip -Algorithm SHA256).Hash -ne $pin) { throw "dsc 资产 sha256 不符（钉 v$v）" }
-          Expand-Archive -Path $zip -DestinationPath $dir -Force
-          "DSC_PATH=$dir\dsc.exe" >> $env:GITHUB_ENV
+      # 钉版 dsc 根除路已试败撤销（实验⑥，cce325a 实测）：GitHub releases 双钉 dsc + --processor-path
+      # 确实短路 store 试装（机制源码实证），但冷机首调反涨至 85s——30MB 未签名处理器/适配器解压 +
+      # 首用初始化比 store 试装税贵四倍，整跑 111s 全场最差。经验阶梯终局：基线 ~50s < settings 关源
+      # 更新 57s < State 目录缓存 54s < 钉版 dsc 111s——基线即地板。
       - name: 无副作用校验（winget schema + 脚本静态检查）
         shell: pwsh
-        run: ./validate.ps1 -DscPath $env:DSC_PATH
+        run: ./validate.ps1

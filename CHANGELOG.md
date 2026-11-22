@@ -9,9 +9,6 @@
 
 ## [Unreleased]
 
-### Changed
-- validate CI 钉版 dsc 处理器根除首调税：GitHub releases 下载 dsc（v3.3.0，版本 + sha256 双钉，ADR-0011 模式）经 `validate.ps1 -DscPath` 透传 `--processor-path`——winget 源码实证传入即钉自定义处理器、短路「找包→MSStore 试装」状态机，首调 ~22-24s 试装税归零（五连实验定案见 c3aea7a 注释存档）；本地不传参、行为不变
-
 ## [1.0.1] - 2026-11-22
 
 > 补丁版：v1.0.0 让位批（bef1b63）漏网收口——`wdc verify` 误报修复 + 同族文档勘误；CI 增 verify 防回归腿。验证锚点：全环 CI run 44984713777 八腿全绿（bootstrap→幂等重跑→**verify 断言（新）**→快照断言→clean-legacy 零发现→exit 全退→退了→装）。
