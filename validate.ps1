@@ -2,7 +2,12 @@
 # validate.ps1 - 无副作用校验入口：配置文件 schema 校验 + PowerShell 脚本静态检查
 # 独立可用（不需要管理员）：pwsh validate.ps1
 [CmdletBinding()]
-param()
+param(
+    # 可选：DSC v3 处理器路径，透传 winget configure validate --processor-path——传入即钉住自定义处理器，
+    # 短路「找包→MSStore 试装」状态机（CI 冷机首调 ~22s 试装税的根除路，2026-11-22 定案；winget 源码
+    # ProcessorSettings.EffectiveDscExecutablePath 实证）。本地不传、行为不变（store 已装 dsc 无此税）。
+    [string]$DscPath
+)
 $ErrorActionPreference = 'Stop'
 # 控制台统一 UTF-8：修正中文在 GBK 代码页窗口里的乱码
 try {
@@ -24,7 +29,9 @@ if ($configFiles.Count -eq 0) {
 foreach ($f in $configFiles) {
     # 退出码语义一处定义于 common.ps1 的 Test-WingetExitCode（含 1=仅警告的良性判定与出处注释）；
     # --ignore-warnings 抑制警告文本输出，不改变退出码
-    & winget configure validate --file $f.FullName --ignore-warnings 2>&1 | Out-Null
+    $wingetArgs = @('configure', 'validate', '--file', $f.FullName, '--ignore-warnings')
+    if ($DscPath) { $wingetArgs += @('--processor-path', $DscPath) }
+    & winget @wingetArgs 2>&1 | Out-Null
     $code = $LASTEXITCODE
     if (-not (Test-WingetExitCode -ExitCode $code -Operation 'validate')) {
         # 抖动吸收（两段式，皆只在失败路径付成本）：热源抖动 5s 后原样重试；
@@ -32,11 +39,11 @@ foreach ($f in $configFiles) {
         # 实录：push-CI 三红皆 base-windows 首调（0x80070002/E_FAIL，随后即绿）；
         # fresh-machine 冷源曾连败两次（2026-10-21 run 39635213895）。确定性 schema 错误三试仍红，不掩盖真问题
         Start-Sleep -Seconds 5
-        & winget configure validate --file $f.FullName --ignore-warnings 2>&1 | Out-Null
+        & winget @wingetArgs 2>&1 | Out-Null
         $code = $LASTEXITCODE
         if (-not (Test-WingetExitCode -ExitCode $code -Operation 'validate')) {
             & winget source update --disable-interactivity 2>&1 | Out-Null
-            & winget configure validate --file $f.FullName --ignore-warnings 2>&1 | Out-Null
+            & winget @wingetArgs 2>&1 | Out-Null
             $code = $LASTEXITCODE
         }
     }
