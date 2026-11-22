@@ -9,6 +9,10 @@
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-11-22
+
+> 补丁版：v1.0.0 让位批（bef1b63）漏网收口——`wdc verify` 误报修复 + 同族文档勘误；CI 增 verify 防回归腿。验证锚点：全环 CI run 44984713777 八腿全绿（bootstrap→幂等重跑→**verify 断言（新）**→快照断言→clean-legacy 零发现→exit 全退→退了→装）。
+
 ### Fixed
 - verify 扩展断言残留（v1-program 09 票，ASUS 48h 补验发现）：bef1b63 VSCode 全让位批删除 `configs/vscode-extensions.txt` 但漏改 verify——`wdc verify` 在 v1.0.0 任何机器必 FAIL（断言无条件读已删清单）。断言块退役（扩展归账号态 Settings Sync，无机器侧断言面）。同族文档勘误六处（发版全面检查补扫）：`docs/undo-table.md` 扩展 undo 行、`configs/editors.winget` 头注释（均仍指已删编排层/让位前口径）、CHANGELOG 1.0.0 版本节 exit T2「VSCode 扩展逐个卸载」表述（bef1b63 先于 tag 落地，发布行为无此段，undo 表「四面」改「三面」）、README 各层职责两行（configs「+ 扩展清单」/scripts「VSCode 扩展」均指已删物）、GLOSSARY exit 词条（声明面枚举中的「扩展」）、ADR-0010 补修订标注（T2 不再卸扩展，指回 ADR-0003 修订标注二）
 
@@ -179,7 +183,8 @@
 ### Added
 - 开源基线（[v0.1.0](https://github.com/yu-cn/wdc/releases/tag/v0.1.0)）：MIT、README 门面化、CONTRIBUTING、fork 跟随指南；裸机入口降门槛（PowerShell 5.1 自举 PowerShell 7）；WSL 侧 Docker Engine 纳入默认；pre-commit 钩子接线 + verify 断言 + dotfiles 漂移即时提示；fresh-machine 手动冒烟工作流
 
-[Unreleased]: https://github.com/yu-cn/wdc/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/yu-cn/wdc/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/yu-cn/wdc/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/yu-cn/wdc/compare/v0.14.0...v1.0.0
 [0.14.0]: https://github.com/yu-cn/wdc/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/yu-cn/wdc/compare/v0.12.0...v0.13.0
