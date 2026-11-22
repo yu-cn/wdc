@@ -21,6 +21,25 @@ jobs:
           Set-Content -Encoding utf8 `
             -Path (Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe\LocalState\settings.json') `
             -Value '{"$schema":"https://aka.ms/winget-settings.schema.json","source":{"autoUpdateIntervalMinutes":0}}'
+      - name: 诊断 winget 首调成本（临时实验步）
+        shell: pwsh
+        run: |
+          $sw = [Diagnostics.Stopwatch]::StartNew()
+          & winget source list --disable-interactivity 2>&1 | Out-Null
+          "source-list 首调: $([math]::Round($sw.Elapsed.TotalSeconds,1))s"
+          foreach ($i in 1..2) {
+            $sw.Restart()
+            & winget configure validate --file configs/base-windows.winget --ignore-warnings --disable-interactivity 2>&1 | Out-Null
+            "validate #$i : $([math]::Round($sw.Elapsed.TotalSeconds,1))s rc=$LASTEXITCODE"
+          }
+          '=== WinGet 目录树（runner 实况） ==='
+          Get-ChildItem "$env:LOCALAPPDATA\Microsoft\WinGet" -Recurse -ErrorAction SilentlyContinue |
+            ForEach-Object { $_.FullName.Replace($env:LOCALAPPDATA, '%LOCALAPPDATA%') + $(if ($_.PSIsContainer) { '/' } else { " ($($_.Length) B)" }) }
+          '=== DesktopAppInstaller LocalState 目录树 ==='
+          Get-ChildItem "$env:LOCALAPPDATA\Packages\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe\LocalState" -Recurse -Depth 2 -ErrorAction SilentlyContinue |
+            ForEach-Object { $_.FullName.Replace($env:LOCALAPPDATA, '%LOCALAPPDATA%') + $(if ($_.PSIsContainer) { '/' } else { " ($($_.Length) B)" }) }
+          '=== settings.json 回读 ==='
+          Get-Content "$env:LOCALAPPDATA\Packages\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe\LocalState\settings.json" -Raw
       - name: 无副作用校验（winget schema + 脚本静态检查）
         shell: pwsh
         run: ./validate.ps1
