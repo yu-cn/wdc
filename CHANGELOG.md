@@ -10,7 +10,7 @@
 ## [Unreleased]
 
 ### Changed
-- validate CI 关 winget 源自动更新（步内预写 settings `autoUpdateIntervalMinutes: 0`）：首调 ~22s 冷启动实测归因 runner 镜像源索引陈旧触发的首调整源（本地冷机首调仅 ~6.5s 佐证），关自动更新后首调与暖态同阶；索引坏态兜底仍走 validate.ps1 两段式重试（显式 source update 不受影响）。同批先行的「winget configure 处理器/模块缓存」实验撤销——runner 上该目录不存在、validate 不下载 DSC 模块，缓存零命中证伪「模块下载说」
+- validate CI 增 winget State 目录缓存，消首调 ~22-24s 的 MSStore DSC 处理器安装尝试（三轮诊断定案，run 44989461063 日志实录：ProductId 9NVTPZWRC6KQ entitlement + store 执行 ~20s 后 8007139F 失败、validate 以降级处理器照常通过；「已尝试」态落 config.db，同机二调即 4s——缓存令后续 job 免付）。同批证伪存档：源索引自动更新说（source-list 首调仅 0.7s，settings 关自动更新无效已撤）、DSC 模块下载说（两轮 validate 后无 Modules 落盘，缓存 Configuration 目录零命中——真身在 State 下）
 
 ## [1.0.1] - 2026-11-22
 

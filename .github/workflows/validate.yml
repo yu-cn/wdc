@@ -11,35 +11,18 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v5
-      # 关 winget 源自动更新（2026-11-22 优化批二段）：validate 步 ~30s 里 28s 是 winget 三连，CI 特有的
-      # 首调 ~22s 实测归因「runner 镜像源索引陈旧 → 首调自动更新整源」——本地同冷机首调仅 ~6.5s（源新鲜）
-      # 佐证；一段的处理器/模块缓存实验已证伪「模块下载说」（runner 上该目录不存在，validate 不下载模块）撤除。
-      # 索引坏态兜底不变：validate.ps1 两段式重试里的显式 source update 仍可用。
-      - name: 关 winget 源自动更新（防首调 ~22s 源索引刷新）
-        shell: pwsh
-        run: |
-          Set-Content -Encoding utf8 `
-            -Path (Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe\LocalState\settings.json') `
-            -Value '{"$schema":"https://aka.ms/winget-settings.schema.json","source":{"autoUpdateIntervalMinutes":0}}'
-      - name: 诊断 winget 首调成本（临时实验步）
-        shell: pwsh
-        run: |
-          $sw = [Diagnostics.Stopwatch]::StartNew()
-          & winget source list --disable-interactivity 2>&1 | Out-Null
-          "source-list 首调: $([math]::Round($sw.Elapsed.TotalSeconds,1))s"
-          foreach ($i in 1..2) {
-            $sw.Restart()
-            & winget configure validate --file configs/base-windows.winget --ignore-warnings --disable-interactivity 2>&1 | Out-Null
-            "validate #$i : $([math]::Round($sw.Elapsed.TotalSeconds,1))s rc=$LASTEXITCODE"
-          }
-          '=== WinGet 目录树（runner 实况） ==='
-          Get-ChildItem "$env:LOCALAPPDATA\Microsoft\WinGet" -Recurse -ErrorAction SilentlyContinue |
-            ForEach-Object { $_.FullName.Replace($env:LOCALAPPDATA, '%LOCALAPPDATA%') + $(if ($_.PSIsContainer) { '/' } else { " ($($_.Length) B)" }) }
-          '=== winget 日志（首调 28s 去向取证） ==='
-          Get-ChildItem "$env:LOCALAPPDATA\Packages\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe\LocalState\DiagOutputDir" -Filter '*.log' |
-            Sort-Object LastWriteTime | Select-Object -Last 2 |
-            ForEach-Object { "--- $($_.Name) ---"; Get-Content $_.FullName }
-          exit 0
+      # winget DSC 尝试态缓存（2026-11-22 优化批，三轮诊断定案）：validate 首调 ~22-24s 实测为 winget
+      # 尝试自 MSStore 安装 DSC 处理器（ProductId 9NVTPZWRC6KQ；run 44989461063 日志实录 entitlement +
+      # store 执行 ~20s 后 8007139F 失败收场，validate 以降级处理器照常通过）——「已尝试」态落
+      # WinGet\State 的 config.db，同机二调即 4s。缓存 State 目录令后续 job 免付该税。三轮证伪存档：
+      # 源索引自动更新说（source-list 首调仅 0.7s，settings 关自动更新无效已撤）、DSC 模块下载说
+      # （两轮 validate 后无 Modules 落盘）、缓存 Configuration 目录（真身在 State 下，首次缓存零命中）。
+      # 键 v1 静态：内容为尝试态标记 + 空 history，与配置内容无关；winget 大版本不兼容时删缓存键重置。
+      - name: 缓存 winget DSC 尝试态（State 目录）
+        uses: actions/cache@v4
+        with:
+          path: C:\Users\runneradmin\AppData\Local\Microsoft\WinGet\State
+          key: winget-state-v1
       - name: 无副作用校验（winget schema + 脚本静态检查）
         shell: pwsh
         run: ./validate.ps1
