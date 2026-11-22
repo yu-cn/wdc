@@ -46,19 +46,19 @@
 ## 命令行工具版本
 
 - git: git version 2.55.0.windows.5  [C:\Program Files\Git\mingw64\bin\git.exe]
-- node: v24.22.0  [C:\Users\User\.vite-plus\bin\node.exe]
-- npm: 12.2.0  [C:\Users\User\.vite-plus\bin\npm.exe]
-- pnpm: 12.14.0  [C:\Users\User\.vite-plus\bin\pnpm.exe]
-- python: Python 3.13.14  [C:\Users\User\.local\bin\python.exe]
-- uv: uv 0.13.1 (62faed335 2026-10-13 x86_64-pc-windows-msvc)  [C:\Users\User\.local\bin\uv.exe]
+- node: v24.22.0  [%USERPROFILE%\.vite-plus\bin\node.exe]
+- npm: 12.2.0  [%USERPROFILE%\.vite-plus\bin\npm.exe]
+- pnpm: 12.14.0  [%USERPROFILE%\.vite-plus\bin\pnpm.exe]
+- python: Python 3.13.14  [%USERPROFILE%\.local\bin\python.exe]
+- uv: uv 0.13.1 (62faed335 2026-10-13 x86_64-pc-windows-msvc)  [%USERPROFILE%\.local\bin\uv.exe]
 - go: 未安装
 - rustc: 未安装
 - docker: 未安装
 - gh: gh version 2.102.0 (2026-09-30)  [C:\Program Files\GitHub CLI\gh.exe]
 - starship: starship 1.26.0  [C:\Program Files\starship\bin\starship.exe]
-- fzf: 0.74.4 (a140afeb)  [C:\Users\User\AppData\Local\Microsoft\WinGet\Links\fzf.exe]
-- zoxide: zoxide 0.10.0  [C:\Users\User\AppData\Local\Microsoft\WinGet\Links\zoxide.exe]
-- vp: vp v1.3.0  [C:\Users\User\.vite-plus\bin\vp.exe]
+- fzf: 0.74.4 (a140afeb)  [%USERPROFILE%\AppData\Local\Microsoft\WinGet\Links\fzf.exe]
+- zoxide: zoxide 0.10.0  [%USERPROFILE%\AppData\Local\Microsoft\WinGet\Links\zoxide.exe]
+- vp: vp v1.3.0  [%USERPROFILE%\.vite-plus\bin\vp.exe]
 
 ## 版本管理器痕迹
 
@@ -78,13 +78,13 @@
 
 ## dotfiles 存在性（只报有无与大小，不读内容）
 
-- ~/.gitconfig: 0KB [ SymbolicLink -> D:\Devs\Repos\WDC\dotfiles\windows\gitconfig ]
-- ~/.bashrc: 0KB [ SymbolicLink -> D:\Devs\Repos\WDC\dotfiles\windows\bashrc ]
-- pwsh profile: 0KB [ SymbolicLink -> D:\Devs\Repos\WDC\dotfiles\windows\pwsh-profile.ps1 ]
-- VSCode settings: 0KB [ SymbolicLink -> D:\Devs\Repos\WDC\dotfiles\windows\vscode-settings.json ]
-- VSCode keybindings: 0KB [ SymbolicLink -> D:\Devs\Repos\WDC\dotfiles\windows\vscode-keybindings.json ]
-- WT settings: 0KB [ SymbolicLink -> D:\Devs\Repos\WDC\dotfiles\windows\terminal-settings.json ]
-- starship.toml: 0KB [ SymbolicLink -> D:\Devs\Repos\WDC\dotfiles\shared\starship.toml ]
+- ~/.gitconfig: 0KB [ SymbolicLink -> <repo>\dotfiles\windows\gitconfig ]
+- ~/.bashrc: 0KB [ SymbolicLink -> <repo>\dotfiles\windows\bashrc ]
+- pwsh profile: 0KB [ SymbolicLink -> <repo>\dotfiles\windows\pwsh-profile.ps1 ]
+- VSCode settings: 0KB [ SymbolicLink -> <repo>\dotfiles\windows\vscode-settings.json ]
+- VSCode keybindings: 0KB [ SymbolicLink -> <repo>\dotfiles\windows\vscode-keybindings.json ]
+- WT settings: 0KB [ SymbolicLink -> <repo>\dotfiles\windows\terminal-settings.json ]
+- starship.toml: 0KB [ SymbolicLink -> <repo>\dotfiles\shared\starship.toml ]
 - ~/.gitidentity: 0.1KB
 
 ## VSCode 扩展

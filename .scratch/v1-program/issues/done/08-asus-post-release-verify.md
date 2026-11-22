@@ -17,7 +17,7 @@ Type: task
   Microsoft.WinGet/Package [Mise]
     The configuration unit failed while attempting to apply the desired state.
   2026-11-21T18:17:48Z ERROR Failed to run process 'winget': ... remove_all: Access is denied.:
-    "C:\Users\User\AppData\Local\Microsoft\WinGet\Packages\jdx.mise_Microsoft.Winget.Source_8wekyb3d8bbwe\mise"
+    "%USERPROFILE%\AppData\Local\Microsoft\WinGet\Packages\jdx.mise_Microsoft.Winget.Source_8wekyb3d8bbwe\mise"
   [FAIL] cli-tools - winget configure 退出码 -1978286075
   ```
 
@@ -31,7 +31,7 @@ Type: task
 - 单项 FAIL，系 v1.0.0 遗留断言（bef1b63 让位批漏改，另立 09 票收口）：
 
   ```
-  [FAIL] 扩展清单全部在位 - Cannot find path 'D:\Devs\Repos\WDC\configs\vscode-extensions.txt' because it does not exist.
+  [FAIL] 扩展清单全部在位 - Cannot find path '<repo>\configs\vscode-extensions.txt' because it does not exist.
   ```
 
 - 其余全绿：Windows 侧 5 落点内容一致 / 身份与注册表 / 语言栈 / WSL 平台配置两半边 / LDC verify --quick 全过；

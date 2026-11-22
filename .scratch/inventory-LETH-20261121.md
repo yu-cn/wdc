@@ -51,19 +51,19 @@
 ## 命令行工具版本
 
 - git: git version 2.56.1.windows.1  [C:\Program Files\Git\ucrt64\bin\git.exe]
-- node: v26.13.1  [C:\Users\User\AppData\Local\mise\installs\node\26.13.1\node.exe]
-- npm: 11.20.0  [C:\Users\User\AppData\Local\mise\installs\node\26.13.1\npm.ps1]
+- node: v26.13.1  [%USERPROFILE%\AppData\Local\mise\installs\node\26.13.1\node.exe]
+- npm: 11.20.0  [%USERPROFILE%\AppData\Local\mise\installs\node\26.13.1\npm.ps1]
 - pnpm: 未安装
-- python: Python 3.13.14  [C:\Users\User\.local\bin\python.exe]
-- uv: uv 0.13.8 (3d97a6aad 2026-11-12 x86_64-pc-windows-msvc)  [C:\Users\User\AppData\Local\Microsoft\WinGet\Links\uv.exe]
+- python: Python 3.13.14  [%USERPROFILE%\.local\bin\python.exe]
+- uv: uv 0.13.8 (3d97a6aad 2026-11-12 x86_64-pc-windows-msvc)  [%USERPROFILE%\AppData\Local\Microsoft\WinGet\Links\uv.exe]
 - go: 未安装
 - rustc: 未安装
 - docker: 未安装
 - gh: gh version 2.104.0 (2026-11-12)  [C:\Program Files\GitHub CLI\gh.exe]
 - starship: starship 1.27.0  [C:\Program Files\starship\bin\starship.exe]
-- fzf: 0.75.0 (c7bf2b8e)  [C:\Users\User\AppData\Local\Microsoft\WinGet\Links\fzf.exe]
-- zoxide: zoxide 0.10.0  [C:\Users\User\AppData\Local\Microsoft\WinGet\Links\zoxide.exe]
-- mise: 2026.11.2 windows-x64 (2026-11-05)  [C:\Users\User\AppData\Local\Microsoft\WinGet\Links\mise.exe]
+- fzf: 0.75.0 (c7bf2b8e)  [%USERPROFILE%\AppData\Local\Microsoft\WinGet\Links\fzf.exe]
+- zoxide: zoxide 0.10.0  [%USERPROFILE%\AppData\Local\Microsoft\WinGet\Links\zoxide.exe]
+- mise: 2026.11.2 windows-x64 (2026-11-05)  [%USERPROFILE%\AppData\Local\Microsoft\WinGet\Links\mise.exe]
 
 ## 版本管理器痕迹
 

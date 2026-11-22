@@ -10,6 +10,7 @@
 - **打 tag 与发 release 同一会话收口**：push tag 不等于 release 发布（v0.3.0 实录：tag 已推、release 漏建，次日才补发）——打 tag 后同一会话内 `gh release create <tag> --latest --title <名> --notes-file <笔记>` 收口；笔记以 tag 注释的主题句为骨架、按上一版 release 的版式扩写（非 draft、非 prerelease、无附件）。
 - **红线**：机器自留地工具（JetBrains/Typora 等）一概不碰（ADR-0003）；`~/.gitidentity` 内容不得出现在任何产出物（校验用「非空」检查，不打印值）；dotfiles 模板提交前 `git status` 核对无漂移（[LDC ADR-0015](https://github.com/yu-cn/ldc/blob/main/docs/adr/0015-copy-render-not-symlink.md) 渲染拷贝后仓库不可能被工具写穿，本项守的是「未提交模板编辑」收口——profile/bashrc 第二路提示同源）。
 - **长操作要有心跳**：轮询/后台任务以 30–45 秒级可见进度汇报，勿长时间静默。
+- **产出物不写本地真实路径**（2026-11-22 主人指示）：工单/文档/脚本一律占位形态——`%USERPROFILE%`、`%LOCALAPPDATA%`、`~`、`<repo>`；日志取证引用同样占位化（保含义不保字面）。真实路径只活在运行时输出与 `logs/`（不入仓）；脚本需要本机路径时运行时解析（`$env:`/`$PSScriptRoot`），不写字面量。
 - **文档语言**：散文中文；标识符与既定格式保持英文（Status 标签词表、工单行格式如 `Status:`/`Blocked by:`、文件名、命令、代码）。
 
 ## 已知坑（真机实录）

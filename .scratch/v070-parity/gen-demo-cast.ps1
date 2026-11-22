@@ -3,9 +3,12 @@ $ErrorActionPreference = 'Stop'
 $st = Get-Content (Join-Path $env:TEMP 'wdc-status-real.txt') -Encoding utf8 | Where-Object { $_.Trim() -ne '' -and $_ -notmatch '^$' -and $_ -notmatch 'wdc: dotfiles' }
 $vf = Get-Content (Join-Path $env:TEMP 'wdc-verify-real.txt') -Encoding utf8 | Where-Object { $_.Trim() -ne '' -and $_ -notmatch '^\s*$' }
 
+# 脱敏源不写死本机路径（collaboration.md「产出物不写本地真实路径」）：仓库根取自脚本位置、
+# 用户目录取自运行时环境——任何机器上跑同一脚本行为一致
+$script:repoRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 function Sanitize([string]$s) {
-    $s = $s -replace [regex]::Escape('D:\Devs\Repos\wdc'), '~\wdc'
-    $s = $s -replace [regex]::Escape('C:\Users\User'), 'C:\Users\demo'
+    $s = $s -replace [regex]::Escape($script:repoRoot), '~\wdc'
+    $s = $s -replace [regex]::Escape($env:USERPROFILE), 'C:\Users\demo'
     $s = $s -replace 'bootstrap-\d{8}-\d{6}', 'bootstrap-YYYYMMDD-HHMMSS'
     return $s
 }

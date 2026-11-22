@@ -50,19 +50,19 @@
 ## 命令行工具版本
 
 - git: git version 2.56.0.windows.4  [C:\Program Files\Git\ucrt64\bin\git.exe]
-- node: v26.13.0  [C:\Users\User\AppData\Local\mise\installs\node\26.13.0\node.exe]
-- npm: 11.20.0  [C:\Users\User\AppData\Local\mise\installs\node\26.13.0\npm.ps1]
-- pnpm:   [C:\Users\User\AppData\Local\mise\shims\pnpm.exe]
-- python: Python 3.13.14  [C:\Users\User\.local\bin\python.exe]
-- uv: uv 0.13.1 (62faed335 2026-10-13 x86_64-pc-windows-msvc)  [C:\Users\User\.local\bin\uv.exe]
+- node: v26.13.0  [%USERPROFILE%\AppData\Local\mise\installs\node\26.13.0\node.exe]
+- npm: 11.20.0  [%USERPROFILE%\AppData\Local\mise\installs\node\26.13.0\npm.ps1]
+- pnpm:   [%USERPROFILE%\AppData\Local\mise\shims\pnpm.exe]
+- python: Python 3.13.14  [%USERPROFILE%\.local\bin\python.exe]
+- uv: uv 0.13.1 (62faed335 2026-10-13 x86_64-pc-windows-msvc)  [%USERPROFILE%\.local\bin\uv.exe]
 - go: 未安装
-- rustc: rustc 1.99.1 (58cf8f9c3 2026-10-13)  [C:\Users\User\.cargo\bin\rustc.exe]
+- rustc: rustc 1.99.1 (58cf8f9c3 2026-10-13)  [%USERPROFILE%\.cargo\bin\rustc.exe]
 - docker: 未安装
 - gh: gh version 2.103.3 (2026-10-26)  [C:\Program Files\GitHub CLI\gh.exe]
 - starship: starship 1.27.0  [C:\Program Files\starship\bin\starship.exe]
-- fzf: 0.74.5 (c0a193e0)  [C:\Users\User\AppData\Local\Microsoft\WinGet\Links\fzf.exe]
-- zoxide: zoxide 0.10.0  [C:\Users\User\AppData\Local\Microsoft\WinGet\Links\zoxide.exe]
-- mise: 2026.11.2 windows-x64 (2026-11-05)  [C:\Users\User\AppData\Local\Microsoft\WinGet\Links\mise.exe]
+- fzf: 0.74.5 (c0a193e0)  [%USERPROFILE%\AppData\Local\Microsoft\WinGet\Links\fzf.exe]
+- zoxide: zoxide 0.10.0  [%USERPROFILE%\AppData\Local\Microsoft\WinGet\Links\zoxide.exe]
+- mise: 2026.11.2 windows-x64 (2026-11-05)  [%USERPROFILE%\AppData\Local\Microsoft\WinGet\Links\mise.exe]
 
 ## 版本管理器痕迹
 

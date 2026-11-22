@@ -6,7 +6,7 @@
 
 **Status:** ready-for-agent
 
-- [x] 事实固化：本机 Windows vp v1.3.0 在 `C:\Users\User\.vite-plus\bin`（官方默认布局）；WSL vp v1.3.0 在 `~/.vite-plus`，node shim 可用
+- [x] 事实固化：本机 Windows vp v1.3.0 在 `%USERPROFILE%\.vite-plus\bin`（官方默认布局）；WSL vp v1.3.0 在 `~/.vite-plus`，node shim 可用
 - [x] 修复①②：Windows 侧与 WSL 侧探测均改为双布局候选（默认布局在前）
 - [x] 修复③：`Remove-WingetPackage` 改为枚举已装版本、逐版本 `--version` 显式卸载
 - [x] 修复后通过 validate.ps1，实测 WSL 探测输出 go/uv/vp/node/shell 全绿

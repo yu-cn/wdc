@@ -6,7 +6,7 @@
 
 **Status:** ready-for-agent
 
-- [x] 敏感信息审计：git 提交作者均为 GitHub noreply 邮箱；全库无明文邮箱/token/密码；dotfiles 无机器派生值（terminal-settings.json 的 GUID 均为 Windows Terminal 内置静态 GUID，WSL 条目按 ADR-0004 安装期渲染）；gitconfig 身份走每机本地 `~/.gitidentity`；脚本无写死仓库地址（fork 可直接 bootstrap）。`.scratch/` 实录含机器名（ASUS）与 `C:\Users\User` 本机路径——通用用户名、无凭据，属轻度个人化内容
+- [x] 敏感信息审计：git 提交作者均为 GitHub noreply 邮箱；全库无明文邮箱/token/密码；dotfiles 无机器派生值（terminal-settings.json 的 GUID 均为 Windows Terminal 内置静态 GUID，WSL 条目按 ADR-0004 安装期渲染）；gitconfig 身份走每机本地 `~/.gitidentity`；脚本无写死仓库地址（fork 可直接 bootstrap）。`.scratch/` 实录含机器名（ASUS）——通用代号、无凭据；本机路径曾以真实形态留存，2026-11-22 按「产出物不写本地真实路径」规矩（collaboration.md）全量占位化
 - [x] LICENSE（MIT，版权人 yu-cn——默认放置，最终定夺见工单 02）
 - [x] README：删「私有仓库，需登录」措辞；intro 标注开源与 MIT；新增「朋友怎么用」节（两种用法 + fork 改造清单）；文档节收 CONTRIBUTING；文末增许可证节
 - [x] CONTRIBUTING.md：fork 自用为主、通用核心判据（ADR-0003）、外部走 GitHub Issues/PR、CI 即 validate

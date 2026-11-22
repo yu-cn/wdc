@@ -14,7 +14,7 @@ exit-wdc.ps1 等 12 处，但漏了三处仍引用已删文件的地方；CI 又
    机器本体收敛无恙——bootstrap 全绿）：
 
    ```
-   [FAIL] 扩展清单全部在位 - Cannot find path 'D:\Devs\Repos\WDC\configs\vscode-extensions.txt' because it does not exist.
+   [FAIL] 扩展清单全部在位 - Cannot find path '<repo>\configs\vscode-extensions.txt' because it does not exist.
    ```
 
    建议方向：断言整块退役（扩展已归账号态/自留地，ADR-0003 口径下无机器侧断言面）；或以清单文件存在为
