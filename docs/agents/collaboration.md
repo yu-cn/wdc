@@ -45,3 +45,5 @@
 19. **winget 拒绝跨安装技术升级且退出码 0 假绿**（2026-11-21 LETH 实录，MSI→MSIX 时代面）：PowerShell 7.7.0 起官方停发 MSI（MSIX 成 Windows 唯一渠道），MSI 旧机跑 `winget upgrade -e --id Microsoft.PowerShell` 回「找到了较新的版本，但安装技术与当前安装的版本不同。请卸载包并安装较新的版本」且 **EXIT=0**——按退出码判升级态的脚本全数假绿。处置：跨形态升级手动两步（`winget uninstall` → `winget install`，第二步用户级 MSIX 无需提权）；WDC 适配已落（v1-program 工单05 源不可知化：WT 裸 `pwsh.exe` / 入口层候选含 WindowsApps 别名 / schtasks 动作运行时解析）。存量机指引见 docs/upgrade-v1.md。
 
 20. **pwsh 数组 `-notmatch` 恒真**（2026-11-21 CI run 44917510844 实录）：`$out = & pwsh -File <脚本>` 得到的是多行**数组**——`if ($out -notmatch 'x')` 里数组 `-notmatch` 返回「不匹配行组成的数组」，非空数组在布尔上下文恒 `$true`，断言腿永红（当日 clean-legacy 零发现腿实际八节全 OK 仍报失败）。处置：先 `$text = $out -join "\`n"` 归一成单串再匹配；CI 断言已修（fresh-machine.yml 留注）。
+
+21. **agent 会话宿主把命令串里的 `\\` 折叠为 `\`——发生在 bash 之前，单引号挡不住**（2026-11-22 ASUS 实录，机制实证：bash 内建 `printf '%s\n' 'a\\b'` 输出 `a\b`——bash 本体不可能改写单引号内内容，折叠在宿主转发层完成）：依赖 `\\` 转义的一行式（sed/perl/正则）在 agent 驱动的 Git Bash 里静默退化——如 perl `s/C:\\Users\\User\b/…/` 塌成单杠后 `\U` 成大小写转义、匹配面全变、不报错零命中（当日实录：占位化批量替换 perl 一行式全军覆没，换 python 脚本文件一发过）。处置：反斜杠密集的一行式不走内联命令——落临时脚本文件执行（python/pwsh 皆可）。注意与坑2（MSYS 路径转换，`MSYS_NO_PATHCONV=1` 可解）互不覆盖：坑2 在转发后 MSYS 对原生程序实参的转换，本坑在更上游的命令转发层。
