@@ -9,6 +9,9 @@
 
 ## [Unreleased]
 
+### Changed
+- validate 的 push 触发加 paths 过滤：只圈 validate.ps1 实际读取面（configs / scripts / bootstrap 双入口 / cli-parity 契约 / validate.ps1 / 本工作流），纯文档提交（CHANGELOG、README、ADR、GLOSSARY、AGENTS、.scratch）不再起 runner——代价是这类 push 无 CI 绿勾记录（本地 pre-commit 硬关不因此松；PR 触发不过滤、外部贡献照旧全跑）
+
 ## [1.0.1] - 2026-11-22
 
 > 补丁版：v1.0.0 让位批（bef1b63）漏网收口——`wdc verify` 误报修复 + 同族文档勘误；CI 增 verify 防回归腿。验证锚点：全环 CI run 44984713777 八腿全绿（bootstrap→幂等重跑→**verify 断言（新）**→快照断言→clean-legacy 零发现→exit 全退→退了→装）。

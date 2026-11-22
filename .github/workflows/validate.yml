@@ -4,6 +4,18 @@ name: validate
 on:
   push:
     branches: [main]
+    # paths 过滤（2026-11-22）：只圈 validate.ps1 实际读取面——configs/*.winget、scripts/**（含 wsl 侧
+    # shellcheck 与 wdc.ps1 命令表）、bootstrap 双入口、cli-parity 契约、本入口与工作流自身；其余提交
+    # （CHANGELOG/README/ADR/GLOSSARY/AGENTS/.scratch）不触发——纯文档跑 winget 三连是白付首调税。
+    # pre-commit 本地硬关不因此松（有钩子的机器每提交仍全量校验）；PR 触发不过滤，外部贡献照旧全跑。
+    paths:
+      - 'configs/**'
+      - 'scripts/**'
+      - 'docs/cli-parity.md'
+      - 'validate.ps1'
+      - 'bootstrap.ps1'
+      - 'bootstrap-main.ps1'
+      - '.github/workflows/validate.yml'
   pull_request:
 
 jobs:
