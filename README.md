@@ -111,8 +111,8 @@ gitconfig（delta / rerere / zdiff3）· starship.toml（pwsh / Git Bash / WSL b
 ## 各层职责（ADR-0002）
 
 ```
-configs/    声明式层：按域拆分的 winget configuration（base-windows / cli-tools / editors + 扩展清单）
-scripts/    编排层：bootstrap 入口、语言默认环境（mise）、VSCode 扩展、移除清单、WSL 委托包装
+configs/    声明式层：按域拆分的 winget configuration（base-windows / cli-tools / editors）
+scripts/    编排层：bootstrap 入口、语言默认环境（mise）、移除清单、WSL 委托包装
 dotfiles/   dotfiles 层：windows / shared（wsl 已冻结，Linux 模板归姊妹仓库 LDC），渲染拷贝安装（旧文件备份 *.bak；.wslconfig 例外走机器派生值公式渲染，ADR-0008）
 ```
 

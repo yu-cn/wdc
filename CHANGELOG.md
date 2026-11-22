@@ -10,10 +10,10 @@
 ## [Unreleased]
 
 ### Fixed
-- verify 扩展断言残留（v1-program 09 票，ASUS 48h 补验发现）：bef1b63 VSCode 全让位批删除 `configs/vscode-extensions.txt` 但漏改 verify——`wdc verify` 在 v1.0.0 任何机器必 FAIL（断言无条件读已删清单）。断言块退役（扩展归账号态 Settings Sync，无机器侧断言面）；同根勘误三处：`docs/undo-table.md` 扩展 undo 行、`configs/editors.winget` 头注释（均仍指已删编排层/让位前口径）、CHANGELOG 1.0.0 版本节 exit T2「VSCode 扩展逐个卸载」表述（bef1b63 先于 tag 落地，发布行为无此段，undo 表「四面」改「三面」）
+- verify 扩展断言残留（v1-program 09 票，ASUS 48h 补验发现）：bef1b63 VSCode 全让位批删除 `configs/vscode-extensions.txt` 但漏改 verify——`wdc verify` 在 v1.0.0 任何机器必 FAIL（断言无条件读已删清单）。断言块退役（扩展归账号态 Settings Sync，无机器侧断言面）。同族文档勘误六处（发版全面检查补扫）：`docs/undo-table.md` 扩展 undo 行、`configs/editors.winget` 头注释（均仍指已删编排层/让位前口径）、CHANGELOG 1.0.0 版本节 exit T2「VSCode 扩展逐个卸载」表述（bef1b63 先于 tag 落地，发布行为无此段，undo 表「四面」改「三面」）、README 各层职责两行（configs「+ 扩展清单」/scripts「VSCode 扩展」均指已删物）、GLOSSARY exit 词条（声明面枚举中的「扩展」）、ADR-0010 补修订标注（T2 不再卸扩展，指回 ADR-0003 修订标注二）
 
 ### Added
-- fresh-machine CI 增 verify 腿（09 票根因放大器补面——v1.0.0 六腿皆无 verify 面，断言残留绿灯放行）：幂等重跑后跑 `wdc verify -Quick` 断言收敛态。runner 两类已知噪声按幂等腿先例处理：预填一次性 CI 身份消除占位 FAIL；WT settings 落点写穿（坑6 类）滤网放行；其余 FAIL 非零即红，无汇总行的异常中断亦红
+- fresh-machine CI 增 verify 腿（09 票根因放大器补面——v1.0.0 六腿皆无 verify 面，断言残留绿灯放行）：幂等重跑后跑 `wdc verify -Quick` 断言收敛态。runner 环境适配三处（首跑 44937389307 实录）：bootstrap 必生成空值身份占位→无条件覆写一次性 CI 身份；winget 装机 PATH 增量只进注册表不进 job 进程环境快照→自 Machine+User 重建；WT settings 落点写穿（坑6 类）按幂等腿先例滤网放行；其余 FAIL 非零即红、无汇总行的异常中断亦红。二跑 44939082707 全绿收官
 
 ## [1.0.0] - 2026-11-22
 

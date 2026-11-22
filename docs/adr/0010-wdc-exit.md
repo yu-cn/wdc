@@ -5,6 +5,8 @@ ADR-0009 把 WDC 定位为「一次性配置 + 显式更新/回归」后，退�
 ## 决策
 
 - **`wdc exit [-KeepTools] [-Yes]`**，执行体 `scripts/exit-wdc.ps1`。T2 完整退出（默认）：VSCode 扩展逐个卸载 → 声明包逐 Id 卸载（同 ID 多版本 0x8A150016 逐版本显式，坑7）→ 注册表还原 → dotfiles 落点处置 → `clean-legacy -Fix` 清扫 → 机器状态删除。T1 状态退出（`-KeepTools`）：只删机器状态（`%LOCALAPPDATA%\wdc`、`~/.wdc`、死计划任务），环境原样。
+
+  **修订标注（2026-11-21，v1-program 工单03 / ADR-0003 修订标注二）**：T2 **不再卸载 VSCode 扩展**——扩展/设置/键位属账号态（Settings Sync 跟人走），数据面不动原则的延伸；上文「VSCode 扩展逐个卸载 →」为让位前口径，已不现行。
 - **还原基准优先级**：pre-install 快照 > undo 表 Windows 默认值。快照还原**逐值**进行——绝不 `reg delete` 整键（Explorer\Advanced 等共享键上会连坐非 WDC 值）；快照值类型不可自动还原（hex 二进制类）时降级 undo 表。存量机（快照缺席）在输出明示「恢复默认值而非原始值」。
 - **交互安全**：默认打印全计划后确认；非交互（stdin 重定向，如 CI/管道）且无 `-Yes` 自动降级为**预演零变更**；T2 确认后自重启提权子回合（bootstrap 同款 `Start-Process -Verb RunAs`）。
 - **红线**：机器自留地不碰（ADR-0003）；**语言数据面不动**（mise/uv 本体随声明面卸载，其 runtime/venvs/cache 留在原位）；除名≠卸载（Chrome 等已除名软件不在退出面）；`~/.gitidentity` 与仓库 clone 不删（机器数据/用户自处置）；**基础设施共享资源不卸**（VCRedist 公共运行库 + NF 字体——系统级共享，卸之即伤及无关软件与终端渲染；CI 三轮恒死于字体包卸载的字体变更广播，2026-11-22 补入）。

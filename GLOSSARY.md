@@ -29,7 +29,7 @@ _Avoid_: 自动更新
 _Avoid_: 回滚（指回到旧版本或配置前状态，另一回事）、同步（旧叙事的日常口径已废）
 
 **退出（exit）**:
-`wdc exit` 的完整退出语义（ADR-0010）：声明面全退（声明包/扩展/注册表 opinion/dotfiles 落点）、数据面不动（语言 runtime/venvs/cache、自留地、除名软件、身份文件、仓库 clone 一概不碰）；还原基准 pre-install 快照优先（逐值还原，绝不整键删除）、无快照降级 undo 表 Windows 默认值并明示。`-KeepTools` 为只删机器状态的 T1 档。
+`wdc exit` 的完整退出语义（ADR-0010）：声明面全退（声明包/注册表 opinion/dotfiles 落点）、数据面不动（语言 runtime/venvs/cache、自留地、除名软件、身份文件、仓库 clone 一概不碰；VSCode 扩展属账号态随同步走，不在退出面）；还原基准 pre-install 快照优先（逐值还原，绝不整键删除）、无快照降级 undo 表 Windows 默认值并明示。`-KeepTools` 为只删机器状态的 T1 档。
 _Avoid_: 卸载脚本（指代形态而非语义）、重置（数据面不动，非全清）
 
 ## 分层
