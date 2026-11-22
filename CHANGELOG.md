@@ -9,6 +9,9 @@
 
 ## [Unreleased]
 
+### Changed
+- validate CI 增 winget configure 处理器/模块缓存（actions/cache，键 = 配置内容 hash，restore-keys 前缀垫底）：validate 步 ~30s 中 28s 为 winget 三连、首调冷启动 ~22s 系一次性下载 dscv3 processor 与 DSC 资源模块（落 %LOCALAPPDATA% 下 WinGet\Configuration），runner 用后即焚每 push 重付——缓存命中后冷启动塌缩至暖态秒级
+
 ## [1.0.1] - 2026-11-22
 
 > 补丁版：v1.0.0 让位批（bef1b63）漏网收口——`wdc verify` 误报修复 + 同族文档勘误；CI 增 verify 防回归腿。验证锚点：全环 CI run 44984713777 八腿全绿（bootstrap→幂等重跑→**verify 断言（新）**→快照断言→clean-legacy 零发现→exit 全退→退了→装）。
