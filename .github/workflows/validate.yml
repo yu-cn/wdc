@@ -11,16 +11,16 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v5
-      # winget configure 处理器/模块缓存（2026-11-22 优化批）：validate 步 ~30s 里 28s 是 winget 三连，
-      # 其中首调冷启动 ~22s 为一次性下载 dscv3 processor + DSC 资源模块（落 %LOCALAPPDATA% 下
-      # WinGet\Configuration）——runner 用后即焚，每 push 重付。缓存键 = 配置内容 hash（配置变→重拉），
-      # restore-keys 前缀垫底旧缓存、winget 自行补差；命中后冷启动塌缩至暖态秒级。
-      - name: 缓存 winget configure 处理器与模块
-        uses: actions/cache@v4
-        with:
-          path: ~\AppData\Local\Microsoft\WinGet\Configuration
-          key: winget-config-${{ hashFiles('configs/*.winget') }}
-          restore-keys: winget-config-
+      # 关 winget 源自动更新（2026-11-22 优化批二段）：validate 步 ~30s 里 28s 是 winget 三连，CI 特有的
+      # 首调 ~22s 实测归因「runner 镜像源索引陈旧 → 首调自动更新整源」——本地同冷机首调仅 ~6.5s（源新鲜）
+      # 佐证；一段的处理器/模块缓存实验已证伪「模块下载说」（runner 上该目录不存在，validate 不下载模块）撤除。
+      # 索引坏态兜底不变：validate.ps1 两段式重试里的显式 source update 仍可用。
+      - name: 关 winget 源自动更新（防首调 ~22s 源索引刷新）
+        shell: pwsh
+        run: |
+          Set-Content -Encoding utf8 `
+            -Path (Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe\LocalState\settings.json') `
+            -Value '{"$schema":"https://aka.ms/winget-settings.schema.json","source":{"autoUpdateIntervalMinutes":0}}'
       - name: 无副作用校验（winget schema + 脚本静态检查）
         shell: pwsh
         run: ./validate.ps1

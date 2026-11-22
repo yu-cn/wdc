@@ -10,7 +10,7 @@
 ## [Unreleased]
 
 ### Changed
-- validate CI 增 winget configure 处理器/模块缓存（actions/cache，键 = 配置内容 hash，restore-keys 前缀垫底）：validate 步 ~30s 中 28s 为 winget 三连、首调冷启动 ~22s 系一次性下载 dscv3 processor 与 DSC 资源模块（落 %LOCALAPPDATA% 下 WinGet\Configuration），runner 用后即焚每 push 重付——缓存命中后冷启动塌缩至暖态秒级
+- validate CI 关 winget 源自动更新（步内预写 settings `autoUpdateIntervalMinutes: 0`）：首调 ~22s 冷启动实测归因 runner 镜像源索引陈旧触发的首调整源（本地冷机首调仅 ~6.5s 佐证），关自动更新后首调与暖态同阶；索引坏态兜底仍走 validate.ps1 两段式重试（显式 source update 不受影响）。同批先行的「winget configure 处理器/模块缓存」实验撤销——runner 上该目录不存在、validate 不下载 DSC 模块，缓存零命中证伪「模块下载说」
 
 ## [1.0.1] - 2026-11-22
 
