@@ -35,11 +35,11 @@ jobs:
           '=== WinGet 目录树（runner 实况） ==='
           Get-ChildItem "$env:LOCALAPPDATA\Microsoft\WinGet" -Recurse -ErrorAction SilentlyContinue |
             ForEach-Object { $_.FullName.Replace($env:LOCALAPPDATA, '%LOCALAPPDATA%') + $(if ($_.PSIsContainer) { '/' } else { " ($($_.Length) B)" }) }
-          '=== DesktopAppInstaller LocalState 目录树 ==='
-          Get-ChildItem "$env:LOCALAPPDATA\Packages\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe\LocalState" -Recurse -Depth 2 -ErrorAction SilentlyContinue |
-            ForEach-Object { $_.FullName.Replace($env:LOCALAPPDATA, '%LOCALAPPDATA%') + $(if ($_.PSIsContainer) { '/' } else { " ($($_.Length) B)" }) }
-          '=== settings.json 回读 ==='
-          Get-Content "$env:LOCALAPPDATA\Packages\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe\LocalState\settings.json" -Raw
+          '=== winget 日志（首调 28s 去向取证） ==='
+          Get-ChildItem "$env:LOCALAPPDATA\Packages\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe\LocalState\DiagOutputDir" -Filter '*.log' |
+            Sort-Object LastWriteTime | Select-Object -Last 2 |
+            ForEach-Object { "--- $($_.Name) ---"; Get-Content $_.FullName }
+          exit 0
       - name: 无副作用校验（winget schema + 脚本静态检查）
         shell: pwsh
         run: ./validate.ps1
